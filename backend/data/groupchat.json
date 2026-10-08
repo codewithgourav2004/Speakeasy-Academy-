@@ -1,0 +1,17 @@
+{
+  "nextId": 9,
+  "rooms": {
+    "general": [
+      {
+        "id": 8,
+        "studentId": "admin",
+        "name": "Admin",
+        "admin": true,
+        "text": "no one is allowed",
+        "at": "2026-10-08T05:01:03.034Z"
+      }
+    ],
+    "grammar": []
+  },
+  "enabled": true
+}

@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Speakeasy Academy</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="alternate icon" href="favicon.svg">
+  <meta name="theme-color" content="#4f46e5">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="adminLogin" class="overlay" hidden>
+    <form id="adminForm" class="modal">
+      <div class="logo">🛡️</div>
+      <h2>Admin Login</h2>
+      <input id="adminPwInput" type="password" placeholder="Admin password" autocomplete="current-password" required>
+      <p id="adminErr" class="err small"></p>
+      <button type="submit">Sign in</button>
+      <button type="button" id="adminCancelBtn" class="ghost">Cancel</button>
+    </form>
+  </div>
+
+  <div id="welcome" class="overlay" hidden>
+    <form id="welcomeForm" class="modal">
+      <div class="logo">🎓</div>
+      <h2>Welcome to Speakeasy Academy</h2>
+      <p class="small">Enter your name to start. Your chats and test scores are saved under it, so use the same name next time to continue.</p>
+      <input id="nameInput" placeholder="Your name" maxlength="40" autocomplete="name" required>
+      <input id="ageInput" type="number" min="3" max="100" placeholder="Your age" required>
+      <select id="levelInput" aria-label="Your level">
+        <option value="beginner">Beginner</option>
+        <option value="intermediate" selected>Intermediate</option>
+        <option value="advanced">Advanced</option>
+      </select>
+      <p id="welcomeErr" class="err small"></p>
+      <button type="submit">Start learning</button>
+    </form>
+  </div>
+
+  <header>
+    <h1><span class="logo-mark">🎓</span> Speakeasy <b>Academy</b></h1>
+    <nav>
+      <button data-tab="speak" class="active">💬 Speak</button>
+      <button data-tab="grammar">✏️ Grammar</button>
+      <button data-tab="test">📝 Test</button>
+      <button data-tab="discuss">🗣️ Discuss</button>
+      <button data-tab="groupchat">👥 Group Chat</button>
+      <button data-tab="interview">🎤 Interview</button>
+      <button data-tab="progress">📊 Progress</button>
+      <button data-tab="dictionary">📖 Dictionary</button>
+      <button data-tab="translate">🔤 Translate</button>
+      <button data-tab="admin" id="adminTab" hidden>🛡️ Admin</button>
+    </nav>
+    <div class="user">
+      <span id="userChip" class="chip" hidden></span>
+      <button id="logoutBtn" class="ghost" title="Switch student" hidden>Switch</button>
+      <button id="adminBtn" class="ghost" title="Admin login">🔒</button>
+      <button id="themeBtn" class="ghost" title="Toggle dark/light mode">🌙</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="speak" class="tab active">
+      <div class="toolbar">
+        <label class="small"><input type="checkbox" id="ttsToggle" checked> Read replies aloud</label>
+        <button id="clearChat" class="ghost">New chat</button>
+      </div>
+      <div id="chatLog" class="chatlog"></div>
+      <div class="row">
+        <button id="micBtn" class="mic" title="Hold to talk / click to toggle">🎤 Speak</button>
+        <input id="chatInput" placeholder="…or type here and press Enter">
+        <button id="sendBtn">Send</button>
+      </div>
+      <p id="speechNote" class="small"></p>
+    </section>
+
+    <section id="grammar" class="tab">
+      <div class="pagehead"><h2>Grammar Check</h2><p class="small">Paste a sentence or paragraph. It checks tense, modals, passive voice, narration and non-finites.</p></div>
+      <textarea id="gText" rows="6" placeholder="Type or paste your text here…"></textarea>
+      <div class="starters" id="gExamples">
+        <span class="small">Try:</span>
+        <button class="chipbtn" data-ex="She said that she would have been invited if she had arrived earlier.">Reported speech</button>
+        <button class="chipbtn" data-ex="The report must be finished before the meeting starts.">Modal + passive</button>
+        <button class="chipbtn" data-ex="Having finished his homework, he went out to play.">Non-finite</button>
+      </div>
+      <button id="gBtn">Check grammar</button>
+      <div id="gOut"></div>
+    </section>
+
+    <section id="test" class="tab">
+      <div id="testSetup">
+        <div class="seg" id="testModeSwitch">
+          <button data-tmode="grammar" class="on">📝 Grammar MCQ</button>
+          <button data-tmode="translation">🔤 Hindi Writing</button>
+        </div>
+
+        <div id="grammarSetup">
+          <div class="pagehead"><h2>Grammar Test</h2><p class="small">Pick the topics you want to practise, then start.</p></div>
+          <div id="topicBoxes" class="topics"></div>
+          <div class="card diffbox">
+            <div class="diffhead">
+              <b>Difficulty</b>
+              <select id="tDiff" aria-label="Test difficulty">
+                <option value="auto">Auto (recommended)</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+            <p id="diffHint" class="small"></p>
+          </div>
+          <div class="startrow">
+            <label class="small">Questions <input id="tCount" type="number" min="1" max="100" value="10"></label>
+            <button id="tStart">Start test →</button>
+          </div>
+          <h3>Recent results</h3>
+          <div id="history"></div>
+        </div>
+
+        <div id="trSetup" hidden>
+          <div class="pagehead"><h2>Hindi Writing Test</h2><p class="small">Read each Hindi sentence and write its English translation. You are scored on both meaning and grammar (2 pts = perfect, 1 pt = meaning correct with grammar errors, 0 = wrong).</p></div>
+          <div class="seg" id="trDiffSwitch">
+            <button data-trdiff="all" class="on">All levels</button>
+            <button data-trdiff="easy">Easy</button>
+            <button data-trdiff="medium">Medium</button>
+            <button data-trdiff="hard">Hard</button>
+          </div>
+          <div class="startrow">
+            <label class="small">Questions <input id="trCount" type="number" min="1" max="15" value="5"></label>
+            <button id="trStart">Start test →</button>
+          </div>
+          <h3>Recent results</h3>
+          <div id="trHistory"></div>
+        </div>
+      </div>
+
+      <div id="testRun" hidden></div>
+      <div id="testResult" hidden></div>
+      <div id="trTestRun" hidden></div>
+      <div id="trTestResult" hidden></div>
+    </section>
+    <section id="discuss" class="tab">
+      <div class="pagehead"><h2>Discussion &amp; Presentation</h2><p class="small">Pick a topic, read the points and questions, then practise it out loud with your coach.</p></div>
+      <div class="seg" id="discMode">
+        <button data-mode="gd" class="on">Group Discussion</button>
+        <button data-mode="presentation">Presentation</button>
+      </div>
+      <div class="starters" id="discCats"></div>
+      <div id="discOut"></div>
+    </section>
+    <section id="interview" class="tab">
+      <div id="ivSetup">
+        <div class="pagehead"><h2>Interview Practice</h2><p class="small">Prepare for job interviews, IELTS speaking, or university admissions. The AI acts as your interviewer and gives detailed feedback after each answer.</p></div>
+        <div class="seg" id="ivTypeSwitch">
+          <button data-ivtype="job" class="on">💼 Job</button>
+          <button data-ivtype="ielts">📋 IELTS</button>
+          <button data-ivtype="university">🎓 University</button>
+          <button data-ivtype="general">💬 General</button>
+        </div>
+        <div id="ivRoleRow">
+          <input id="ivRole" placeholder="Job role (e.g. Software Engineer, Teacher, Sales Manager)" maxlength="80" style="width:100%;margin-bottom:12px;">
+        </div>
+        <button id="ivStart">Start interview →</button>
+      </div>
+      <div id="ivRun" hidden>
+        <div class="toolbar">
+          <span id="ivProgress" class="small"></span>
+          <button id="ivEnd" class="ghost">End interview</button>
+        </div>
+        <div id="ivLog" class="chatlog"></div>
+        <div class="row" id="ivRow">
+          <button id="ivMic" class="mic" title="Click to speak your answer">🎤 Speak</button>
+          <input id="ivInput" placeholder="Type your answer and press Enter…">
+          <button id="ivSend">Send</button>
+        </div>
+        <p id="ivNote" class="small"></p>
+      </div>
+      <div id="ivSummary" hidden>
+        <div id="ivSummaryOut"></div>
+        <button id="ivAgain">Try another interview</button>
+      </div>
+    </section>
+    <section id="groupchat" class="tab">
+      <div class="pagehead"><h2>Group Chat</h2><p class="small">Chat in English with other students. Be kind and respectful. Links are not allowed. <span id="gcOnline" class="online"></span></p></div>
+      <details class="card gcmembers" id="gcMembers" open>
+        <summary id="gcMembersSum">👥 Members</summary>
+        <div id="gcMembersList" class="gcchips"></div>
+      </details>
+      <div class="starters" id="gcRooms"></div>
+      <div id="gcLog" class="chatlog gclog"></div>
+      <div class="row">
+        <input id="gcInput" maxlength="500" placeholder="Write a message in English…" autocomplete="off">
+        <button id="gcSend">Send</button>
+      </div>
+      <p id="gcBanner" class="gcbanner" hidden></p>
+      <p id="gcErr" class="err small"></p>
+    </section>
+    <section id="progress" class="tab">
+      <div id="progressOut"></div>
+    </section>
+    <section id="translate" class="tab">
+      <div class="pagehead"><h2>Hindi → English Translator</h2><p class="small">Write in Hindi (हिंदी) or Roman letters (e.g. "mujhe waha jana hai"). You get the full English sentence, its grammar type (tense, modal, passive or simple), word-by-word vocabulary and a tip. Press Ctrl+Enter to translate.</p></div>
+      <textarea id="trInput" rows="5" placeholder="यहाँ हिंदी में लिखें… or type in Roman letters"></textarea>
+      <div class="starters" id="trExamples">
+        <span class="small">Try:</span>
+        <button class="chipbtn" data-ex="मुझे अंग्रेजी सीखनी है।">I want to learn English</button>
+        <button class="chipbtn" data-ex="आज मौसम बहुत अच्छा है।">Today's weather</button>
+        <button class="chipbtn" data-ex="क्या आप मेरी मदद कर सकते हैं?">Can you help me?</button>
+        <button class="chipbtn" data-ex="मैं कल दिल्ली जाऊंगा।">Future tense</button>
+        <button class="chipbtn" data-ex="तुम्हें रोज़ पढ़ाई करनी चाहिए।">Modal</button>
+        <button class="chipbtn" data-ex="यह किताब मेरे दोस्त ने लिखी थी।">Passive</button>
+        <button class="chipbtn" data-ex="वह स्कूल जाता है।">Simple</button>
+      </div>
+      <button id="trBtn">Translate</button>
+      <div id="trOut"></div>
+    </section>
+    <section id="admin" class="tab">
+      <div id="adminOut"></div>
+    </section>
+    <section id="dictionary" class="tab">
+      <div class="pagehead"><h2>Dictionary</h2><p class="small">Look up any English word — definitions, pronunciation, examples and synonyms.</p></div>
+      <div class="dict-search">
+        <input id="dictInput" placeholder="Enter a word…" autocomplete="off" spellcheck="false">
+        <button id="dictBtn">Look up</button>
+      </div>
+      <div id="dictOut"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="logo-mark">🎓</span>
+        <div>
+          <div class="footer-title">Speakeasy Academy</div>
+          <div class="footer-owner">Built &amp; owned by <strong>Gourav Kumar</strong></div>
+          <div class="footer-dev">Software Developer</div>
+        </div>
+      </div>
+      <div class="footer-tech">
+        <div class="footer-label">Built with</div>
+        <div class="footer-tags">
+          <span>Node.js</span><span>Express.js</span><span>Google Gemini AI</span>
+          <span>Vanilla JS</span><span>Web Speech API</span><span>HTML / CSS</span>
+        </div>
+      </div>
+      <div class="footer-contact">
+        <div class="footer-label">Contact Gourav</div>
+        <a href="mailto:gk154139@gmail.com">gk154139@gmail.com</a>
+        <a href="tel:+917042289480">+91 70422 89480</a>
+        <a href="https://wa.me/917042289480" target="_blank" rel="noopener">WhatsApp: +91 70422 89480</a>
+        <div class="footer-cta">Need a website? Get in touch!</div>
+      </div>
+    </div>
+  </footer>
+
+  <button id="stopVoice" class="stopvoice" hidden title="Stop the voice (Esc)">⏹ Stop voice</button>
+
+  <div id="userDetailModal" class="overlay" hidden>
+    <div class="modal" style="max-width:780px;width:100%;max-height:90vh;overflow-y:auto;text-align:left">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h2 id="userDetailName" style="margin:0;font-size:1.2rem"></h2>
+        <button id="closeUserDetail" class="ghost">✕ Close</button>
+      </div>
+      <div id="userDetailOut"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

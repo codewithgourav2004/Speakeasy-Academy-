@@ -1,0 +1,1881 @@
+{
+  "tense": [
+    {
+      "q": "By the time we arrived, the film ___.",
+      "options": [
+        "had already started",
+        "already started",
+        "has already started",
+        "was already starting"
+      ],
+      "answer": "had already started",
+      "explain": "Past perfect shows an action completed before another past action (arrived).",
+      "difficulty": "medium"
+    },
+    {
+      "q": "She ___ in Delhi since 2015.",
+      "options": [
+        "has lived",
+        "lived",
+        "is living",
+        "had lived"
+      ],
+      "answer": "has lived",
+      "explain": "'Since' + a starting point with a situation continuing to now needs present perfect.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "I ___ dinner when the phone rang.",
+      "options": [
+        "was cooking",
+        "cooked",
+        "have cooked",
+        "cook"
+      ],
+      "answer": "was cooking",
+      "explain": "Past continuous for an action in progress interrupted by a shorter past action.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "This time next week, we ___ on a beach.",
+      "options": [
+        "will be lying",
+        "will lie",
+        "are lying",
+        "lay"
+      ],
+      "answer": "will be lying",
+      "explain": "Future continuous describes an action in progress at a future moment.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "He ___ to school every day.",
+      "options": [
+        "goes",
+        "is going",
+        "go",
+        "went"
+      ],
+      "answer": "goes",
+      "explain": "Simple present for habits; third person singular takes -s.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "By 2030 she ___ her degree.",
+      "options": [
+        "will have completed",
+        "will complete",
+        "completes",
+        "has completed"
+      ],
+      "answer": "will have completed",
+      "explain": "Future perfect: completed before a future time ('by 2030').",
+      "difficulty": "hard"
+    },
+    {
+      "q": "I ___ him yesterday.",
+      "options": [
+        "saw",
+        "have seen",
+        "had seen",
+        "see"
+      ],
+      "answer": "saw",
+      "explain": "A finished time word ('yesterday') requires simple past.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "They ___ for two hours when it began to rain.",
+      "options": [
+        "had been playing",
+        "have been playing",
+        "were played",
+        "played"
+      ],
+      "answer": "had been playing",
+      "explain": "Past perfect continuous: duration of an action before another past event.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "She is exhausted because she ___ all day.",
+      "options": [
+        "has been working",
+        "worked",
+        "is working",
+        "had worked"
+      ],
+      "answer": "has been working",
+      "explain": "Present perfect continuous links a long activity to its present result (being tired).",
+      "difficulty": "hard"
+    },
+    {
+      "q": "No sooner ___ the door than the phone rang.",
+      "options": [
+        "had she opened",
+        "she opened",
+        "did she open",
+        "she had opened"
+      ],
+      "answer": "had she opened",
+      "explain": "'No sooner' at the start of a sentence needs inversion with past perfect: no sooner had + subject + V3 + than.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "I will text you as soon as I ___ home.",
+      "options": [
+        "get",
+        "will get",
+        "would get",
+        "am getting"
+      ],
+      "answer": "get",
+      "explain": "After time words (as soon as, when, before), use the present simple for the future.",
+      "difficulty": "medium"
+    }
+  ],
+  "modals": [
+    {
+      "q": "You ___ see a doctor about that cough; it's been weeks.",
+      "options": [
+        "should",
+        "might",
+        "needn't",
+        "used"
+      ],
+      "answer": "should",
+      "explain": "'Should' gives advice.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "___ I open the window? It's hot in here.",
+      "options": [
+        "Shall",
+        "Ought",
+        "Must",
+        "Need"
+      ],
+      "answer": "Shall",
+      "explain": "'Shall I...?' offers or asks for a suggestion.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "You ___ pay now; you can pay later.",
+      "options": [
+        "needn't",
+        "mustn't",
+        "can't",
+        "shouldn't"
+      ],
+      "answer": "needn't",
+      "explain": "'Needn't' = no obligation; 'mustn't' = prohibition.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "You ___ smoke here; it is prohibited.",
+      "options": [
+        "mustn't",
+        "needn't",
+        "don't have to",
+        "might not"
+      ],
+      "answer": "mustn't",
+      "explain": "'Mustn't' expresses prohibition.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "When I was young, I ___ swim across this river.",
+      "options": [
+        "could",
+        "can",
+        "may",
+        "must"
+      ],
+      "answer": "could",
+      "explain": "'Could' expresses past general ability.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "He ___ have taken the keys; I can't find them anywhere.",
+      "options": [
+        "might",
+        "need",
+        "shall",
+        "ought"
+      ],
+      "answer": "might",
+      "explain": "'Might have + V3' = past possibility. 'Ought' would need 'to'.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "I ___ have told her the truth, but I didn't.",
+      "options": [
+        "should",
+        "must",
+        "can",
+        "may"
+      ],
+      "answer": "should",
+      "explain": "'Should have + V3' expresses regret or an unfulfilled duty.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "If I were you, I ___ accept the offer.",
+      "options": [
+        "would",
+        "will",
+        "shall",
+        "can"
+      ],
+      "answer": "would",
+      "explain": "Second conditional uses 'would' in the main clause.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "He ___ have left already; his coat isn't here.",
+      "options": [
+        "must",
+        "should",
+        "ought",
+        "needn't"
+      ],
+      "answer": "must",
+      "explain": "'Must have + V3' expresses a strong logical deduction about the past.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "You ___ have bought a gift; I had already got one.",
+      "options": [
+        "needn't",
+        "mustn't",
+        "can't",
+        "daren't"
+      ],
+      "answer": "needn't",
+      "explain": "'Needn't have + V3' means you did something that was not necessary.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "I would rather you ___ smoke here.",
+      "options": [
+        "didn't",
+        "don't",
+        "won't",
+        "wouldn't"
+      ],
+      "answer": "didn't",
+      "explain": "'Would rather' + subject + past simple expresses a preference about someone else's action.",
+      "difficulty": "hard"
+    }
+  ],
+  "passive": [
+    {
+      "q": "The window ___ by the boy yesterday.",
+      "options": [
+        "was broken",
+        "broke",
+        "has broken",
+        "is broken"
+      ],
+      "answer": "was broken",
+      "explain": "Passive past simple: was/were + V3.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "English ___ all over the world.",
+      "options": [
+        "is spoken",
+        "speaks",
+        "is speaking",
+        "spoke"
+      ],
+      "answer": "is spoken",
+      "explain": "Passive present simple: is/are + V3.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "The report ___ by Friday.",
+      "options": [
+        "will be finished",
+        "will finish",
+        "is finishing",
+        "finished"
+      ],
+      "answer": "will be finished",
+      "explain": "Passive future: will be + V3.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "Passive of 'They are building a bridge.'",
+      "options": [
+        "A bridge is being built.",
+        "A bridge is built.",
+        "A bridge has been built.",
+        "A bridge was building."
+      ],
+      "answer": "A bridge is being built.",
+      "explain": "Present continuous passive: is/are being + V3.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "The letter ___ before I arrived.",
+      "options": [
+        "had been sent",
+        "has been sent",
+        "was sending",
+        "had sent"
+      ],
+      "answer": "had been sent",
+      "explain": "Past perfect passive: had been + V3.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "He was made ___ the room.",
+      "options": [
+        "to clean",
+        "clean",
+        "cleaning",
+        "cleaned"
+      ],
+      "answer": "to clean",
+      "explain": "After 'make' in the passive, the bare infinitive becomes a to-infinitive.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "Passive of 'Who wrote this novel?'",
+      "options": [
+        "By whom was this novel written?",
+        "By whom this novel was written?",
+        "Who was written by this novel?",
+        "By whom is this novel wrote?"
+      ],
+      "answer": "By whom was this novel written?",
+      "explain": "Wh-question passive: By whom + was + subject + V3?",
+      "difficulty": "hard"
+    },
+    {
+      "q": "The house ___ painted at the moment.",
+      "options": [
+        "is being",
+        "is",
+        "has",
+        "was"
+      ],
+      "answer": "is being",
+      "explain": "Present continuous passive: is being + V3.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "The manager is believed ___ the company last year.",
+      "options": [
+        "to have left",
+        "to leave",
+        "leaving",
+        "having left"
+      ],
+      "answer": "to have left",
+      "explain": "Passive reporting structure for a past event: is believed + to have + V3.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "I don't like ___ like that.",
+      "options": [
+        "being spoken to",
+        "speaking to",
+        "to speak to",
+        "being spoke to"
+      ],
+      "answer": "being spoken to",
+      "explain": "After 'like' the passive gerund is 'being + V3'.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "Passive of 'People say that he is rich.'",
+      "options": [
+        "He is said to be rich.",
+        "It said that he is rich.",
+        "He is said that he is rich.",
+        "He was said to be rich."
+      ],
+      "answer": "He is said to be rich.",
+      "explain": "'People say that...' becomes 'He is said to + infinitive'.",
+      "difficulty": "hard"
+    }
+  ],
+  "narration": [
+    {
+      "q": "He said, \"I am tired.\" → Indirect:",
+      "options": [
+        "He said that he was tired.",
+        "He said that I was tired.",
+        "He said that he is tired.",
+        "He said that he had been tired."
+      ],
+      "answer": "He said that he was tired.",
+      "explain": "Reporting verb in past: present → past, pronoun I → he.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "She said to me, \"Where do you live?\" → Indirect:",
+      "options": [
+        "She asked me where I lived.",
+        "She asked me where did I live.",
+        "She told me where I lived.",
+        "She asked me where do I live."
+      ],
+      "answer": "She asked me where I lived.",
+      "explain": "Reported questions use statement word order, with no auxiliary 'do'.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "The teacher said, \"The earth moves round the sun.\" → Indirect:",
+      "options": [
+        "The teacher said that the earth moves round the sun.",
+        "The teacher said that the earth moved round the sun.",
+        "The teacher said that earth had moved round the sun.",
+        "The teacher told that the earth moves round the sun."
+      ],
+      "answer": "The teacher said that the earth moves round the sun.",
+      "explain": "Universal truths keep the present tense in reported speech.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "He said to me, \"Please help me.\" → Indirect:",
+      "options": [
+        "He requested me to help him.",
+        "He said me to help him.",
+        "He requested me that I help him.",
+        "He asked that please help him."
+      ],
+      "answer": "He requested me to help him.",
+      "explain": "Requests become 'requested + object + to-infinitive'.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "\"Let's go for a walk,\" said Ravi. → Indirect:",
+      "options": [
+        "Ravi suggested that they should go for a walk.",
+        "Ravi said let us go for a walk.",
+        "Ravi ordered them to go for a walk.",
+        "Ravi suggested to go for a walk."
+      ],
+      "answer": "Ravi suggested that they should go for a walk.",
+      "explain": "'Let's' = suggestion → suggested that ... should.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "She said, \"I will call you tomorrow.\" → Indirect:",
+      "options": [
+        "She said that she would call me the next day.",
+        "She said that she will call you tomorrow.",
+        "She said that she would call you tomorrow.",
+        "She said that she would have called me next day."
+      ],
+      "answer": "She said that she would call me the next day.",
+      "explain": "will → would, you → me, tomorrow → the next day.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "He said, \"I have finished my work.\" → Indirect:",
+      "options": [
+        "He said that he had finished his work.",
+        "He said that he has finished his work.",
+        "He said that he finished his work.",
+        "He said that I had finished my work."
+      ],
+      "answer": "He said that he had finished his work.",
+      "explain": "Present perfect → past perfect; my → his.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "\"Shut the door,\" he said to me. → Indirect:",
+      "options": [
+        "He ordered me to shut the door.",
+        "He said me to shut the door.",
+        "He ordered me that shut the door.",
+        "He asked that the door shut."
+      ],
+      "answer": "He ordered me to shut the door.",
+      "explain": "Commands become 'ordered + object + to-infinitive'.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "He said, \"How beautiful the garden is!\" → Indirect:",
+      "options": [
+        "He exclaimed that the garden was very beautiful.",
+        "He asked how beautiful the garden was.",
+        "He said how beautiful the garden is.",
+        "He exclaimed how beautiful was the garden."
+      ],
+      "answer": "He exclaimed that the garden was very beautiful.",
+      "explain": "Exclamations become statements with 'exclaimed that ... very ...'.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "She said, \"If I were you, I would apologise.\" → Indirect:",
+      "options": [
+        "She said that if she were me, she would apologise.",
+        "She said that if she had been me, she would have apologised.",
+        "She said that if she was me, she will apologise.",
+        "She said that if I were her, I would apologise."
+      ],
+      "answer": "She said that if she were me, she would apologise.",
+      "explain": "'Were' (subjunctive) and 'would' do not change in reported speech; only the pronouns change.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "He said to her, \"Will you marry me?\" → Indirect:",
+      "options": [
+        "He asked her if she would marry him.",
+        "He asked her will she marry him.",
+        "He asked her that she would marry him.",
+        "He told her if she will marry him."
+      ],
+      "answer": "He asked her if she would marry him.",
+      "explain": "Yes/no questions are reported with 'if' or 'whether', in statement order.",
+      "difficulty": "medium"
+    }
+  ],
+  "nonfinites": [
+    {
+      "q": "She enjoys ___ novels.",
+      "options": [
+        "reading",
+        "to read",
+        "read",
+        "reads"
+      ],
+      "answer": "reading",
+      "explain": "'Enjoy' is followed by a gerund.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "He decided ___ abroad.",
+      "options": [
+        "to go",
+        "going",
+        "go",
+        "gone"
+      ],
+      "answer": "to go",
+      "explain": "'Decide' is followed by a to-infinitive.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "___ the door, he entered the room.",
+      "options": [
+        "Having opened",
+        "Having open",
+        "Opens",
+        "Been opened"
+      ],
+      "answer": "Having opened",
+      "explain": "Perfect participle shows the action finished before the main verb.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "I look forward to ___ you.",
+      "options": [
+        "seeing",
+        "see",
+        "seen",
+        "to see"
+      ],
+      "answer": "seeing",
+      "explain": "In 'look forward to', 'to' is a preposition and takes a gerund.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "The boy ___ in the garden is my brother.",
+      "options": [
+        "playing",
+        "played",
+        "plays",
+        "to play"
+      ],
+      "answer": "playing",
+      "explain": "Present participle used as a reduced relative clause.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "She made me ___ the work again.",
+      "options": [
+        "do",
+        "to do",
+        "doing",
+        "done"
+      ],
+      "answer": "do",
+      "explain": "'Make' + object takes a bare infinitive in the active voice.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "He is too weak ___ the box.",
+      "options": [
+        "to lift",
+        "lifting",
+        "lift",
+        "lifted"
+      ],
+      "answer": "to lift",
+      "explain": "'Too + adjective + to-infinitive'.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "I saw the thief ___ over the wall.",
+      "options": [
+        "climb",
+        "to climbed",
+        "climbs",
+        "to be climbed"
+      ],
+      "answer": "climb",
+      "explain": "Perception verbs ('saw') + object take a bare infinitive.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "I remember ___ the letter, so it must be in the post.",
+      "options": [
+        "posting",
+        "to post",
+        "post",
+        "having to post"
+      ],
+      "answer": "posting",
+      "explain": "'Remember + gerund' = recall a past action; 'remember + to-infinitive' = not forget to do something.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "He appears ___ his job last month.",
+      "options": [
+        "to have lost",
+        "to lose",
+        "losing",
+        "lost"
+      ],
+      "answer": "to have lost",
+      "explain": "Perfect infinitive (to have + V3) shows an action earlier than the main verb.",
+      "difficulty": "hard"
+    }
+  ],
+  "articles": [
+    {
+      "q": "She is ___ honest girl.",
+      "options": [
+        "an",
+        "a",
+        "the",
+        "no article"
+      ],
+      "answer": "an",
+      "explain": "'Honest' starts with a vowel sound (silent h), so use 'an'.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "___ sun rises in the east.",
+      "options": [
+        "The",
+        "A",
+        "An",
+        "No article"
+      ],
+      "answer": "The",
+      "explain": "Use 'the' for unique things (the sun, the moon).",
+      "difficulty": "easy"
+    },
+    {
+      "q": "He plays ___ guitar very well.",
+      "options": [
+        "the",
+        "a",
+        "an",
+        "no article"
+      ],
+      "answer": "the",
+      "explain": "Use 'the' with musical instruments.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "I had ___ egg for breakfast.",
+      "options": [
+        "an",
+        "a",
+        "the",
+        "no article"
+      ],
+      "answer": "an",
+      "explain": "'Egg' begins with a vowel sound.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "My brother is ___ university student.",
+      "options": [
+        "a",
+        "an",
+        "the",
+        "no article"
+      ],
+      "answer": "a",
+      "explain": "'University' begins with a /j/ (consonant) sound, so use 'a'.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "___ Nile is the longest river in Africa.",
+      "options": [
+        "The",
+        "A",
+        "An",
+        "No article"
+      ],
+      "answer": "The",
+      "explain": "Use 'the' with names of rivers.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "The children go to ___ school by bus every day.",
+      "options": [
+        "no article",
+        "the",
+        "a",
+        "an"
+      ],
+      "answer": "no article",
+      "explain": "No article when 'school' means the activity of studying.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "She waited for ___ hour.",
+      "options": [
+        "an",
+        "a",
+        "the",
+        "no article"
+      ],
+      "answer": "an",
+      "explain": "'Hour' starts with a vowel sound (silent h).",
+      "difficulty": "medium"
+    }
+  ],
+  "prepositions": [
+    {
+      "q": "He is good ___ mathematics.",
+      "options": [
+        "at",
+        "in",
+        "on",
+        "for"
+      ],
+      "answer": "at",
+      "explain": "'Good at' a subject or skill.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "The meeting is ___ Monday.",
+      "options": [
+        "on",
+        "in",
+        "at",
+        "by"
+      ],
+      "answer": "on",
+      "explain": "Use 'on' with days.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "She was born ___ 1998.",
+      "options": [
+        "in",
+        "on",
+        "at",
+        "during"
+      ],
+      "answer": "in",
+      "explain": "Use 'in' with years, months and seasons.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "I am afraid ___ spiders.",
+      "options": [
+        "of",
+        "from",
+        "at",
+        "with"
+      ],
+      "answer": "of",
+      "explain": "'Afraid of'.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "He has been waiting ___ two hours.",
+      "options": [
+        "for",
+        "since",
+        "from",
+        "during"
+      ],
+      "answer": "for",
+      "explain": "'For' + a length of time; 'since' + a starting point.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "The cat jumped ___ the table.",
+      "options": [
+        "onto",
+        "into",
+        "from",
+        "among"
+      ],
+      "answer": "onto",
+      "explain": "'Onto' shows movement to the surface of something.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "We arrived ___ the airport at noon.",
+      "options": [
+        "at",
+        "in",
+        "to",
+        "on"
+      ],
+      "answer": "at",
+      "explain": "Arrive 'at' a place (airport, station); 'in' a city or country.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "She is married ___ a doctor.",
+      "options": [
+        "to",
+        "with",
+        "by",
+        "for"
+      ],
+      "answer": "to",
+      "explain": "'Married to'.",
+      "difficulty": "medium"
+    }
+  ],
+  "conditionals": [
+    {
+      "q": "If it rains, we ___ at home.",
+      "options": [
+        "will stay",
+        "would stay",
+        "stayed",
+        "would have stayed"
+      ],
+      "answer": "will stay",
+      "explain": "First conditional: if + present, will + verb.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "If I ___ rich, I would travel the world.",
+      "options": [
+        "were",
+        "am",
+        "will be",
+        "had been"
+      ],
+      "answer": "were",
+      "explain": "Second conditional uses 'were' for all subjects in formal English.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "If she had studied, she ___ the exam.",
+      "options": [
+        "would have passed",
+        "would pass",
+        "will pass",
+        "had passed"
+      ],
+      "answer": "would have passed",
+      "explain": "Third conditional: if + past perfect, would have + V3.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "Unless you hurry, you ___ the train.",
+      "options": [
+        "will miss",
+        "won't miss",
+        "would have missed",
+        "missed"
+      ],
+      "answer": "will miss",
+      "explain": "'Unless' = 'if not'. 'Unless you hurry' means 'if you don't hurry', so you will miss it.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "If you mix red and blue, you ___ purple.",
+      "options": [
+        "get",
+        "would get",
+        "had got",
+        "are getting"
+      ],
+      "answer": "get",
+      "explain": "Zero conditional (general truths): if + present, present.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "I wish I ___ more free time.",
+      "options": [
+        "had",
+        "have",
+        "will have",
+        "would have"
+      ],
+      "answer": "had",
+      "explain": "'Wish' + past simple for an unreal present situation.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "If he ___ earlier, he wouldn't have missed the bus.",
+      "options": [
+        "had left",
+        "left",
+        "leaves",
+        "would leave"
+      ],
+      "answer": "had left",
+      "explain": "Third conditional needs past perfect in the if-clause.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "___ I known, I would have helped.",
+      "options": [
+        "Had",
+        "Have",
+        "If",
+        "Did"
+      ],
+      "answer": "Had",
+      "explain": "Inverted third conditional: 'Had I known' = 'If I had known'.",
+      "difficulty": "hard"
+    }
+  ],
+  "agreement": [
+    {
+      "q": "Neither of the boys ___ here.",
+      "options": [
+        "is",
+        "are",
+        "were",
+        "have been"
+      ],
+      "answer": "is",
+      "explain": "'Neither of' takes a singular verb.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "Each of the students ___ a book.",
+      "options": [
+        "has",
+        "have",
+        "are having",
+        "were having"
+      ],
+      "answer": "has",
+      "explain": "'Each' is singular.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "Mathematics ___ my favourite subject.",
+      "options": [
+        "is",
+        "are",
+        "were",
+        "have been"
+      ],
+      "answer": "is",
+      "explain": "Subjects ending in -ics (mathematics, physics) are singular.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "The police ___ looking for the thief.",
+      "options": [
+        "are",
+        "is",
+        "was",
+        "has"
+      ],
+      "answer": "are",
+      "explain": "'Police' is a plural collective noun.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "Either the teacher or the students ___ responsible.",
+      "options": [
+        "are",
+        "is",
+        "was",
+        "has been"
+      ],
+      "answer": "are",
+      "explain": "With either...or, the verb agrees with the nearer subject (students).",
+      "difficulty": "hard"
+    },
+    {
+      "q": "One of my friends ___ a doctor.",
+      "options": [
+        "is",
+        "are",
+        "were",
+        "have"
+      ],
+      "answer": "is",
+      "explain": "The subject is 'one', not 'friends'.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "The news ___ surprising.",
+      "options": [
+        "is",
+        "are",
+        "were",
+        "have been"
+      ],
+      "answer": "is",
+      "explain": "'News' looks plural but is uncountable and singular.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "A number of students ___ absent today.",
+      "options": [
+        "are",
+        "is",
+        "was",
+        "has been"
+      ],
+      "answer": "are",
+      "explain": "'A number of' + plural noun takes a plural verb ('The number of' takes singular).",
+      "difficulty": "hard"
+    }
+  ],
+  "relatives": [
+    {
+      "q": "The man ___ lives next door is a doctor.",
+      "options": [
+        "who",
+        "which",
+        "whose",
+        "whom"
+      ],
+      "answer": "who",
+      "explain": "'Who' is the subject relative pronoun for people.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "This is the book ___ I told you about.",
+      "options": [
+        "that",
+        "who",
+        "whose",
+        "what"
+      ],
+      "answer": "that",
+      "explain": "'That' (or 'which') refers to things.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "She is the girl ___ father is a pilot.",
+      "options": [
+        "whose",
+        "who",
+        "whom",
+        "which"
+      ],
+      "answer": "whose",
+      "explain": "'Whose' shows possession.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "That's the house ___ I was born.",
+      "options": [
+        "where",
+        "which",
+        "who",
+        "whose"
+      ],
+      "answer": "where",
+      "explain": "'Where' refers to a place.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "He is the man to ___ I gave the money.",
+      "options": [
+        "whom",
+        "who",
+        "whose",
+        "that"
+      ],
+      "answer": "whom",
+      "explain": "After a preposition, use 'whom'.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "Everything ___ he said was true.",
+      "options": [
+        "that",
+        "which",
+        "what",
+        "who"
+      ],
+      "answer": "that",
+      "explain": "After 'everything', 'all', 'something', use 'that'.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "I know the reason ___ she left.",
+      "options": [
+        "why",
+        "which",
+        "who",
+        "where"
+      ],
+      "answer": "why",
+      "explain": "'Why' follows 'reason'.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "My brother, ___ lives in Pune, is an engineer.",
+      "options": [
+        "who",
+        "that",
+        "whom",
+        "which"
+      ],
+      "answer": "who",
+      "explain": "In non-defining clauses (with commas) 'that' is not used.",
+      "difficulty": "hard"
+    }
+  ],
+  "comparison": [
+    {
+      "q": "She is ___ than her sister.",
+      "options": [
+        "taller",
+        "more tall",
+        "tallest",
+        "tall"
+      ],
+      "answer": "taller",
+      "explain": "Short adjectives take -er in the comparative.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "This is the ___ book I have ever read.",
+      "options": [
+        "best",
+        "better",
+        "good",
+        "most good"
+      ],
+      "answer": "best",
+      "explain": "Superlative of 'good' is 'best'.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "He is the ___ of the three brothers.",
+      "options": [
+        "youngest",
+        "younger",
+        "more young",
+        "most young"
+      ],
+      "answer": "youngest",
+      "explain": "Superlative for three or more.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "She is as ___ as her mother.",
+      "options": [
+        "beautiful",
+        "more beautiful",
+        "most beautiful",
+        "beautifully"
+      ],
+      "answer": "beautiful",
+      "explain": "'As ... as' uses the base form of the adjective.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "This problem is ___ than that one.",
+      "options": [
+        "more difficult",
+        "difficulter",
+        "most difficult",
+        "much difficult"
+      ],
+      "answer": "more difficult",
+      "explain": "Long adjectives use 'more'.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "The more you practise, ___ you become.",
+      "options": [
+        "the better",
+        "better",
+        "the best",
+        "best"
+      ],
+      "answer": "the better",
+      "explain": "Double comparative: the + comparative, the + comparative.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "He runs ___ than I do.",
+      "options": [
+        "faster",
+        "more fast",
+        "fastest",
+        "fast"
+      ],
+      "answer": "faster",
+      "explain": "'Fast' is both adjective and adverb; its comparative is 'faster'.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "Gold is ___ than silver.",
+      "options": [
+        "more valuable",
+        "most valuable",
+        "valuabler",
+        "as valuable"
+      ],
+      "answer": "more valuable",
+      "explain": "Comparative of a long adjective.",
+      "difficulty": "easy"
+    }
+  ],
+  "conjunctions": [
+    {
+      "q": "He was tired, ___ he kept working.",
+      "options": [
+        "yet",
+        "so",
+        "because",
+        "unless"
+      ],
+      "answer": "yet",
+      "explain": "'Yet' shows contrast.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "___ it was raining, we went out.",
+      "options": [
+        "Although",
+        "Because",
+        "Unless",
+        "So"
+      ],
+      "answer": "Although",
+      "explain": "'Although' introduces a contrast.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "Hurry up, ___ you will miss the bus.",
+      "options": [
+        "or",
+        "and",
+        "but",
+        "so"
+      ],
+      "answer": "or",
+      "explain": "'Or' = otherwise.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "She didn't come ___ she was ill.",
+      "options": [
+        "because",
+        "although",
+        "unless",
+        "so that"
+      ],
+      "answer": "because",
+      "explain": "'Because' gives a reason.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "I will call you ___ I reach home.",
+      "options": [
+        "as soon as",
+        "unless",
+        "although",
+        "whereas"
+      ],
+      "answer": "as soon as",
+      "explain": "'As soon as' links two actions in time.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "He works hard ___ he can pass the exam.",
+      "options": [
+        "so that",
+        "because",
+        "although",
+        "unless"
+      ],
+      "answer": "so that",
+      "explain": "'So that' expresses purpose.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "Neither Tom ___ Jerry attended the party.",
+      "options": [
+        "nor",
+        "or",
+        "and",
+        "but"
+      ],
+      "answer": "nor",
+      "explain": "'Neither' pairs with 'nor'.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "You can't go out ___ you finish your homework.",
+      "options": [
+        "until",
+        "although",
+        "because",
+        "whereas"
+      ],
+      "answer": "until",
+      "explain": "'Until' = up to the time that.",
+      "difficulty": "medium"
+    }
+  ],
+  "tags": [
+    {
+      "q": "You are coming, ___?",
+      "options": [
+        "aren't you",
+        "are you",
+        "don't you",
+        "isn't you"
+      ],
+      "answer": "aren't you",
+      "explain": "A positive statement takes a negative tag with the same auxiliary.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "She doesn't like tea, ___?",
+      "options": [
+        "does she",
+        "doesn't she",
+        "is she",
+        "did she"
+      ],
+      "answer": "does she",
+      "explain": "A negative statement takes a positive tag.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "Let's go out, ___?",
+      "options": [
+        "shall we",
+        "will we",
+        "don't we",
+        "let us"
+      ],
+      "answer": "shall we",
+      "explain": "'Let's' takes the tag 'shall we'.",
+      "difficulty": "medium"
+    },
+    {
+      "q": "He can swim, ___?",
+      "options": [
+        "can't he",
+        "doesn't he",
+        "isn't he",
+        "won't he"
+      ],
+      "answer": "can't he",
+      "explain": "Repeat the modal verb in the tag.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "I am late, ___?",
+      "options": [
+        "aren't I",
+        "am not I",
+        "amn't I",
+        "don't I"
+      ],
+      "answer": "aren't I",
+      "explain": "'I am' takes the special tag 'aren't I'.",
+      "difficulty": "hard"
+    },
+    {
+      "q": "Open the door, ___?",
+      "options": [
+        "will you",
+        "don't you",
+        "do you",
+        "aren't you"
+      ],
+      "answer": "will you",
+      "explain": "Imperatives take 'will you' (or 'won't you').",
+      "difficulty": "medium"
+    },
+    {
+      "q": "They have finished, ___?",
+      "options": [
+        "haven't they",
+        "don't they",
+        "didn't they",
+        "aren't they"
+      ],
+      "answer": "haven't they",
+      "explain": "Repeat the auxiliary 'have' in negative form.",
+      "difficulty": "easy"
+    },
+    {
+      "q": "Nobody called, ___?",
+      "options": [
+        "did they",
+        "didn't they",
+        "did he",
+        "didn't he"
+      ],
+      "answer": "did they",
+      "explain": "'Nobody' is negative in meaning, so use a positive tag with 'they'.",
+      "difficulty": "hard"
+    }
+  ],
+  "translation": [
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "वह रोज़ स्कूल जाता है।",
+      "options": [
+        "He goes to school every day.",
+        "He is going to school every day.",
+        "He went to school every day.",
+        "He has gone to school every day."
+      ],
+      "answer": "He goes to school every day.",
+      "explain": "A daily habit uses the Simple Present; with 'he' the verb takes -s (goes). (Type: Simple sentence, Simple Present)",
+      "stype": "Simple sentence",
+      "sdetail": "Simple Present",
+      "difficulty": "easy"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "मैं एक किताब पढ़ता हूँ।",
+      "options": [
+        "I read a book.",
+        "I am reading a book.",
+        "I was reading a book.",
+        "I have read a book."
+      ],
+      "answer": "I read a book.",
+      "explain": "'पढ़ता हूँ' is the Simple Present: subject + V1. (Type: Simple sentence, Simple Present)",
+      "stype": "Simple sentence",
+      "sdetail": "Simple Present",
+      "difficulty": "easy"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "राम ने कल एक फ़िल्म देखी।",
+      "options": [
+        "Ram watched a film yesterday.",
+        "Ram watches a film yesterday.",
+        "Ram has watched a film yesterday.",
+        "Ram will watch a film yesterday."
+      ],
+      "answer": "Ram watched a film yesterday.",
+      "explain": "A finished past action ('yesterday') takes the Simple Past: watched. (Type: Simple sentence, Simple Past)",
+      "stype": "Simple sentence",
+      "sdetail": "Simple Past",
+      "difficulty": "easy"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "वह एक डॉक्टर है।",
+      "options": [
+        "He is a doctor.",
+        "He was a doctor.",
+        "He will be a doctor.",
+        "He has a doctor."
+      ],
+      "answer": "He is a doctor.",
+      "explain": "'है' = is. Use the article 'a' before a profession. (Type: Simple sentence, Simple Present (verb 'to be'))",
+      "stype": "Simple sentence",
+      "sdetail": "Simple Present (verb 'to be')",
+      "difficulty": "easy"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "मैं हर सुबह टहलने जाता हूँ।",
+      "options": [
+        "I go for a walk every morning.",
+        "I am going for a walk every morning.",
+        "I went for a walk every morning.",
+        "I have gone for a walk every morning."
+      ],
+      "answer": "I go for a walk every morning.",
+      "explain": "'हर सुबह' (every morning) shows a habit, so use the Simple Present. (Type: Simple sentence, Simple Present)",
+      "stype": "Simple sentence",
+      "sdetail": "Simple Present",
+      "difficulty": "easy"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "बच्चे पार्क में खेल रहे हैं।",
+      "options": [
+        "The children are playing in the park.",
+        "The children play in the park.",
+        "The children played in the park.",
+        "The children have played in the park."
+      ],
+      "answer": "The children are playing in the park.",
+      "explain": "'खेल रहे हैं' (action happening now) = is/are + V-ing. (Type: Tense, Present Continuous)",
+      "stype": "Tense",
+      "sdetail": "Present Continuous",
+      "difficulty": "easy"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "मैं अगले सप्ताह दिल्ली जाऊँगा।",
+      "options": [
+        "I will go to Delhi next week.",
+        "I go to Delhi next week.",
+        "I went to Delhi next week.",
+        "I have gone to Delhi next week."
+      ],
+      "answer": "I will go to Delhi next week.",
+      "explain": "'जाऊँगा' is the future: will + V1. (Type: Tense, Simple Future)",
+      "stype": "Tense",
+      "sdetail": "Simple Future",
+      "difficulty": "easy"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "मैं आजकल अंग्रेज़ी सीख रहा हूँ।",
+      "options": [
+        "I am learning English these days.",
+        "I learnt English these days.",
+        "I am learn English these days.",
+        "I was learning English these days."
+      ],
+      "answer": "I am learning English these days.",
+      "explain": "A temporary, ongoing activity: am + V-ing. (Type: Tense, Present Continuous)",
+      "stype": "Tense",
+      "sdetail": "Present Continuous",
+      "difficulty": "easy"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "वह तैर सकता है।",
+      "options": [
+        "He can swim.",
+        "He swims.",
+        "He is swimming.",
+        "He swam."
+      ],
+      "answer": "He can swim.",
+      "explain": "'सकता है' expresses ability: can + V1. (Type: Modal, can (ability))",
+      "stype": "Modal",
+      "sdetail": "can (ability)",
+      "difficulty": "easy"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "क्या मैं अंदर आ सकता हूँ?",
+      "options": [
+        "Can I come in?",
+        "Do I come in?",
+        "Did I come in?",
+        "Am I coming in?"
+      ],
+      "answer": "Can I come in?",
+      "explain": "A request for permission uses a modal: Can I...? (Type: Modal, can (permission))",
+      "stype": "Modal",
+      "sdetail": "can (permission)",
+      "difficulty": "easy"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "तुम्हें रोज़ पढ़ाई करनी चाहिए।",
+      "options": [
+        "You should study every day.",
+        "You can study every day.",
+        "You may study every day.",
+        "You will study every day."
+      ],
+      "answer": "You should study every day.",
+      "explain": "'चाहिए' = should; it gives advice. (Type: Modal, should (advice))",
+      "stype": "Modal",
+      "sdetail": "should (advice)",
+      "difficulty": "medium"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "आपको यहाँ धूम्रपान नहीं करना चाहिए।",
+      "options": [
+        "You should not smoke here.",
+        "You do not smoke here.",
+        "You will not smoke here.",
+        "You have not smoked here."
+      ],
+      "answer": "You should not smoke here.",
+      "explain": "'नहीं करना चाहिए' = should not + V1. (Type: Modal, should not (advice))",
+      "stype": "Modal",
+      "sdetail": "should not (advice)",
+      "difficulty": "medium"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "मुझे सुबह जल्दी उठना है।",
+      "options": [
+        "I have to get up early in the morning.",
+        "I get up early in the morning.",
+        "I got up early in the morning.",
+        "I have got up early in the morning."
+      ],
+      "answer": "I have to get up early in the morning.",
+      "explain": "'मुझे ... उठना है' expresses necessity: have to + V1 (a semi-modal). (Type: Modal, have to (obligation))",
+      "stype": "Modal",
+      "sdetail": "have to (obligation)",
+      "difficulty": "medium"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "मैंने अभी खाना खाया है।",
+      "options": [
+        "I have just eaten my meal.",
+        "I just eat my meal.",
+        "I am just eating my meal.",
+        "I had just eaten my meal."
+      ],
+      "answer": "I have just eaten my meal.",
+      "explain": "A recent action with a present result: have/has + V3 (with 'just'). (Type: Tense, Present Perfect)",
+      "stype": "Tense",
+      "sdetail": "Present Perfect",
+      "difficulty": "medium"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "जब तुमने फ़ोन किया, मैं खाना बना रहा था।",
+      "options": [
+        "I was cooking when you called.",
+        "I cooked when you called.",
+        "I am cooking when you called.",
+        "I have been cooking when you called."
+      ],
+      "answer": "I was cooking when you called.",
+      "explain": "An action in progress in the past, interrupted by another: was/were + V-ing. (Type: Tense, Past Continuous)",
+      "stype": "Tense",
+      "sdetail": "Past Continuous",
+      "difficulty": "medium"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "वह सोमवार से बीमार है।",
+      "options": [
+        "He has been ill since Monday.",
+        "He is ill since Monday.",
+        "He was ill since Monday.",
+        "He had been ill since Monday."
+      ],
+      "answer": "He has been ill since Monday.",
+      "explain": "'Since' + a point in time with a situation continuing now needs the Present Perfect. (Type: Tense, Present Perfect)",
+      "stype": "Tense",
+      "sdetail": "Present Perfect",
+      "difficulty": "medium"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "यह किताब मेरे दोस्त ने लिखी थी।",
+      "options": [
+        "This book was written by my friend.",
+        "This book wrote by my friend.",
+        "This book is written by my friend.",
+        "This book has written by my friend."
+      ],
+      "answer": "This book was written by my friend.",
+      "explain": "Passive: was/were + V3 (written), with 'by' for the doer. (Type: Passive, Simple Past passive)",
+      "stype": "Passive",
+      "sdetail": "Simple Past passive",
+      "difficulty": "medium"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "अंग्रेज़ी पूरी दुनिया में बोली जाती है।",
+      "options": [
+        "English is spoken all over the world.",
+        "English speaks all over the world.",
+        "English is speaking all over the world.",
+        "English spoke all over the world."
+      ],
+      "answer": "English is spoken all over the world.",
+      "explain": "Passive: is/are + V3 (spoken). (Type: Passive, Simple Present passive)",
+      "stype": "Passive",
+      "sdetail": "Simple Present passive",
+      "difficulty": "medium"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "अगर बारिश हुई तो हम घर पर रहेंगे।",
+      "options": [
+        "If it rains, we will stay at home.",
+        "If it will rain, we will stay at home.",
+        "If it rained, we will stay at home.",
+        "If it rains, we would stayed at home."
+      ],
+      "answer": "If it rains, we will stay at home.",
+      "explain": "A real future possibility: If + Present Simple, will + V1. (Type: Conditional, First conditional)",
+      "stype": "Conditional",
+      "sdetail": "First conditional",
+      "difficulty": "medium"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "उसने कहा कि वह थका हुआ है।",
+      "options": [
+        "He said that he was tired.",
+        "He said that I am tired.",
+        "He said that he will be tired.",
+        "He said that he were tired."
+      ],
+      "answer": "He said that he was tired.",
+      "explain": "After a past reporting verb, the present tense shifts back to the past: is tired → was tired. (Type: Narration, Reported statement)",
+      "stype": "Narration",
+      "sdetail": "Reported statement",
+      "difficulty": "medium"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "बचपन में मैं बहुत तेज़ दौड़ सकता था।",
+      "options": [
+        "When I was a child, I could run very fast.",
+        "In my childhood I can run very fast.",
+        "When I was a child, I should run very fast.",
+        "In my childhood I must have run very fast."
+      ],
+      "answer": "When I was a child, I could run very fast.",
+      "explain": "'सकता था' = could: general ability in the past. (Type: Modal, could (past ability))",
+      "stype": "Modal",
+      "sdetail": "could (past ability)",
+      "difficulty": "hard"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "वह अब तक घर पहुँच गया होगा।",
+      "options": [
+        "He must have reached home by now.",
+        "He must reach home by now.",
+        "He will reach home by now.",
+        "He has reached home by now."
+      ],
+      "answer": "He must have reached home by now.",
+      "explain": "'होगा' (a guess about the past) = must have + V3. (Type: Modal, must have + V3 (deduction))",
+      "stype": "Modal",
+      "sdetail": "must have + V3 (deduction)",
+      "difficulty": "hard"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "आपको मेरी मदद करनी चाहिए थी।",
+      "options": [
+        "You should have helped me.",
+        "You should help me.",
+        "You must help me.",
+        "You helped me."
+      ],
+      "answer": "You should have helped me.",
+      "explain": "'चाहिए थी' = should have + V3: something that was not done. (Type: Modal, should have + V3 (regret))",
+      "stype": "Modal",
+      "sdetail": "should have + V3 (regret)",
+      "difficulty": "hard"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "वह पिछले दो घंटे से पढ़ रहा है।",
+      "options": [
+        "He has been studying for the last two hours.",
+        "He is studying since two hours.",
+        "He studied for two hours.",
+        "He had studied for two hours."
+      ],
+      "answer": "He has been studying for the last two hours.",
+      "explain": "An action that started in the past and is still going on: has/have been + V-ing, with 'for'. (Type: Tense, Present Perfect Continuous)",
+      "stype": "Tense",
+      "sdetail": "Present Perfect Continuous",
+      "difficulty": "hard"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "जब मैं पहुँचा, ट्रेन जा चुकी थी।",
+      "options": [
+        "When I arrived, the train had already left.",
+        "When I arrived, the train has already left.",
+        "When I arrive, the train had already left.",
+        "When I arrived, the train would already leave."
+      ],
+      "answer": "When I arrived, the train had already left.",
+      "explain": "The earlier of two past actions takes the Past Perfect: had + V3. (Type: Tense, Past Perfect)",
+      "stype": "Tense",
+      "sdetail": "Past Perfect",
+      "difficulty": "hard"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "अगले साल तक वह अपनी पढ़ाई पूरी कर चुका होगा।",
+      "options": [
+        "By next year, he will have completed his studies.",
+        "By next year, he will complete his studies.",
+        "By next year, he has completed his studies.",
+        "By next year, he would have completed his studies."
+      ],
+      "answer": "By next year, he will have completed his studies.",
+      "explain": "An action finished before a future time: will have + V3. (Type: Tense, Future Perfect)",
+      "stype": "Tense",
+      "sdetail": "Future Perfect",
+      "difficulty": "hard"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "नया पुल बनाया जा रहा है।",
+      "options": [
+        "A new bridge is being built.",
+        "A new bridge is building.",
+        "A new bridge has built.",
+        "A new bridge was building."
+      ],
+      "answer": "A new bridge is being built.",
+      "explain": "Passive of the Present Continuous: is/are being + V3. (Type: Passive, Present Continuous passive)",
+      "stype": "Passive",
+      "sdetail": "Present Continuous passive",
+      "difficulty": "hard"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "अगर मेरे पास पैसे होते तो मैं घूमने जाता।",
+      "options": [
+        "If I had money, I would go on a trip.",
+        "If I have money, I will go on a trip.",
+        "If I had money, I will go on a trip.",
+        "If I would have money, I would go on a trip."
+      ],
+      "answer": "If I had money, I would go on a trip.",
+      "explain": "An unreal present situation: If + Past Simple, would + V1. (Type: Conditional, Second conditional)",
+      "stype": "Conditional",
+      "sdetail": "Second conditional",
+      "difficulty": "hard"
+    },
+    {
+      "q": "Translate this Hindi sentence into English.",
+      "hindi": "उसने मुझसे पूछा कि मैं कहाँ रहता हूँ।",
+      "options": [
+        "He asked me where I lived.",
+        "He asked me where did I live.",
+        "He asked me where I will live.",
+        "He asked me where I had lived."
+      ],
+      "answer": "He asked me where I lived.",
+      "explain": "Reported questions use statement word order (no 'did') and shift the tense back: live → lived. (Type: Narration, Reported question)",
+      "stype": "Narration",
+      "sdetail": "Reported question",
+      "difficulty": "hard"
+    }
+  ]
+}

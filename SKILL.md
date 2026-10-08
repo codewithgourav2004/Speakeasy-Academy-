@@ -355,7 +355,13 @@ Question format in `backend/data/questions.json`: `{ q, options[4], answer, expl
 cd backend
 npm install
 copy .env.example .env     # then fill in the values below
-npm start                  # http://localhost:5000 (or the PORT you set in .env)
+```
+
+Then from the **project root** (or from `backend/`):
+
+```
+npm start          # http://localhost:3000  (or the PORT you set in .env)
+npm run dev        # same but auto-restarts on file changes
 ```
 
 `backend/.env` (never commit it; it is already in `.gitignore`):

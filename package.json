@@ -1,0 +1,8 @@
+{
+  "name": "speakeasy-academy",
+  "private": true,
+  "scripts": {
+    "start": "cd backend && node server.js",
+    "dev": "cd backend && node --watch server.js"
+  }
+}

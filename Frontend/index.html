@@ -79,13 +79,22 @@
 
   <main>
     <section id="speak" class="tab active">
-      <div class="toolbar">
-        <label class="small"><input type="checkbox" id="ttsToggle" checked> Read replies aloud</label>
-        <button id="clearChat" class="ghost" title="Delete all chat messages and start fresh">🗑️ Clear chat</button>
+      <div class="coach-head">
+        <div class="coach-avatar" aria-hidden="true">🎓</div>
+        <div class="coach-info">
+          <h2>Speak with your coach</h2>
+          <p class="small"><span class="live-dot"></span>Online · I'll fix your grammar as we talk</p>
+          <div class="coach-pills"><span class="pill" id="coachLevel"></span><span class="pill" id="fixCount">✏️ 0 corrections</span></div>
+        </div>
+        <div class="coach-tools toolbar">
+          <label class="switch" title="Read the coach's replies aloud"><input type="checkbox" id="ttsToggle" checked><span class="slider"></span><span class="switch-label">Voice replies</span></label>
+          <button id="clearChat" class="ghost" title="Delete all chat messages and start fresh">🗑️ <span class="btn-label">Clear chat</span></button>
+        </div>
       </div>
       <div id="chatLog" class="chatlog"></div>
+      <div id="listenBar" class="listenbar" hidden><span class="wave"><i></i><i></i><i></i><i></i><i></i></span><span id="listenText">Listening… speak now</span></div>
       <div class="row">
-        <button id="micBtn" class="mic" title="Hold to talk / click to toggle">🎤 Speak</button>
+        <button id="micBtn" class="mic" title="Click to talk, click again to stop">🎤 Speak</button>
         <input id="chatInput" placeholder="…or type here and press Enter">
         <button id="sendBtn">Send</button>
       </div>
@@ -253,28 +262,31 @@
   <footer class="site-footer">
     <div class="footer-inner">
       <div class="footer-brand">
-        <span class="logo-mark">🎓</span>
+        <span class="footer-logo">🎓</span>
         <div>
           <div class="footer-title">Speakeasy Academy</div>
-          <div class="footer-owner">Built &amp; owned by <strong>Gourav Kumar</strong></div>
-          <div class="footer-dev">Software Developer</div>
+          <div class="footer-tagline">AI-powered English coach for speaking, grammar &amp; tests</div>
+          <div class="footer-by">By <strong>Gourav Kumar</strong> &middot; Software Developer</div>
         </div>
       </div>
-      <div class="footer-tech">
+      <div class="footer-col">
         <div class="footer-label">Built with</div>
         <div class="footer-tags">
-          <span>Node.js</span><span>Express.js</span><span>Google Gemini AI</span>
+          <span>Node.js</span><span>Express.js</span><span>Gemini AI</span>
           <span>Vanilla JS</span><span>Web Speech API</span><span>HTML / CSS</span>
         </div>
       </div>
-      <div class="footer-contact">
-        <div class="footer-label">Contact Gourav</div>
-        <a href="mailto:gk154139@gmail.com">gk154139@gmail.com</a>
-        <a href="tel:+917042289480">+91 70422 89480</a>
-        <a href="https://wa.me/917042289480" target="_blank" rel="noopener">WhatsApp: +91 70422 89480</a>
-        <div class="footer-cta">Need a website? Get in touch!</div>
+      <div class="footer-col">
+        <div class="footer-label">Get in touch</div>
+        <div class="footer-contacts">
+          <a href="mailto:gk154139@gmail.com" class="footer-link"><span class="ficon">✉️</span>gk154139@gmail.com</a>
+          <a href="tel:+917042289480" class="footer-link"><span class="ficon">📞</span>+91 70422 89480</a>
+          <a href="https://wa.me/917042289480" target="_blank" rel="noopener" class="footer-link"><span class="ficon">💬</span>WhatsApp</a>
+        </div>
+        <div class="footer-cta">Need a website? <a href="mailto:gk154139@gmail.com">Get in touch &rarr;</a></div>
       </div>
     </div>
+    <div class="footer-bottom">&copy; 2025 Gourav Kumar &middot; Speakeasy Academy &middot; All rights reserved</div>
   </footer>
 
   <button id="stopVoice" class="stopvoice" hidden title="Stop the voice (Esc)">⏹ Stop voice</button>

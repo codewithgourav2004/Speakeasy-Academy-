@@ -343,21 +343,26 @@ button.danger { color:var(--bad); border-color:color-mix(in srgb,var(--bad) 50%,
 .stopvoice[hidden] { display:none; }
 
 /* ---- Footer ---- */
-.site-footer { background:var(--surface); border-top:1px solid var(--line); margin-top:40px; padding:28px 20px 20px; }
-.footer-inner { max-width:960px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr 1fr; gap:24px; }
-@media (max-width:640px) { .footer-inner { grid-template-columns:1fr; } }
-.footer-brand { display:flex; align-items:flex-start; gap:10px; }
-.footer-brand .logo-mark { font-size:2rem; line-height:1; }
-.footer-title { font-weight:700; font-size:1rem; color:var(--text); }
-.footer-owner { font-size:.85rem; color:var(--muted); margin-top:2px; }
-.footer-dev { font-size:.8rem; color:var(--brand); font-weight:500; margin-top:1px; }
-.footer-label { font-size:.75rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+.site-footer { background:var(--card); border-top:3px solid var(--brand); margin-top:48px; padding:36px 0 0; }
+.footer-inner { max-width:960px; margin:0 auto; padding:0 24px; display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:32px; }
+.footer-brand { display:flex; align-items:flex-start; gap:12px; }
+.footer-logo { font-size:2.2rem; line-height:1; flex-shrink:0; }
+.footer-title { font-weight:700; font-size:1.05rem; color:var(--ink); }
+.footer-tagline { font-size:.83rem; color:var(--muted); margin-top:3px; line-height:1.45; max-width:200px; }
+.footer-by { font-size:.82rem; color:var(--muted); margin-top:8px; }
+.footer-by strong { color:var(--brand); font-weight:600; }
+.footer-col { display:flex; flex-direction:column; }
+.footer-label { font-size:.71rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
 .footer-tags { display:flex; flex-wrap:wrap; gap:5px; }
-.footer-tags span { background:var(--bg); border:1px solid var(--line); border-radius:99px; padding:2px 10px; font-size:.78rem; }
-.footer-contact { display:flex; flex-direction:column; gap:5px; }
-.footer-contact a { color:var(--brand); font-size:.88rem; text-decoration:none; }
-.footer-contact a:hover { text-decoration:underline; }
-.footer-cta { margin-top:6px; font-size:.82rem; font-weight:600; color:var(--text); }
+.footer-tags span { background:var(--bg); border:1px solid var(--line); border-radius:99px; padding:3px 10px; font-size:.78rem; color:var(--ink); }
+.footer-contacts { display:flex; flex-direction:column; gap:7px; margin-bottom:12px; }
+.footer-link { display:flex; align-items:center; gap:8px; color:var(--ink); font-size:.84rem; text-decoration:none; padding:6px 10px; border-radius:8px; border:1px solid var(--line); background:var(--bg); transition:border-color .15s, color .15s; }
+.footer-link:hover { border-color:var(--brand); color:var(--brand); }
+.ficon { font-size:.95rem; flex-shrink:0; }
+.footer-cta { font-size:.82rem; color:var(--muted); }
+.footer-cta a { color:var(--brand); font-weight:600; text-decoration:none; }
+.footer-cta a:hover { text-decoration:underline; }
+.footer-bottom { max-width:960px; margin:28px auto 0; padding:14px 24px 18px; border-top:1px solid var(--line); font-size:.79rem; color:var(--muted); text-align:center; }
 
 /* difficulty */
 .diffbox { margin-bottom:14px; }
@@ -489,7 +494,9 @@ nav button[hidden] { display:none !important; }
   .opt { padding:12px 10px; }
 
   /* Footer stacks */
-  .footer-inner { grid-template-columns:1fr; gap:18px; }
+  .footer-inner { grid-template-columns:1fr; gap:22px; padding:0 16px; }
+  .footer-bottom { padding:12px 16px 20px; }
+  .site-footer { margin-bottom:calc(72px + env(safe-area-inset-bottom)); }
 }
 
 /* Very small phones (< 390 px) */
@@ -575,4 +582,82 @@ nav button[hidden] { display:none !important; }
   header .user { gap:3px; }
   header .user .chip { max-width:24vw; padding:4px 8px; }
   header .user button { padding:5px 8px; }
+}
+
+
+/* ================= Speak section ================= */
+.coach-head { display:flex; align-items:center; gap:14px; flex-wrap:wrap; background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:14px 16px; margin-bottom:12px; }
+.coach-avatar { flex:none; width:52px; height:52px; border-radius:16px; background:var(--grad); display:grid; place-items:center; font-size:1.6rem; box-shadow:0 6px 18px rgba(79,70,229,.35); }
+.coach-info { flex:1 1 220px; min-width:0; }
+.coach-info h2 { margin:0; font-size:1.15rem; }
+.coach-info p { margin:2px 0 6px; display:flex; align-items:center; gap:7px; }
+.live-dot { flex:none; width:8px; height:8px; border-radius:50%; background:var(--ok); box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent); }
+.coach-pills { display:flex; flex-wrap:wrap; gap:6px; }
+.coach-pills .pill:empty { display:none; }
+.coach-head .coach-tools { display:flex; align-items:center; gap:12px; margin:0; }
+
+/* on/off switch for spoken replies */
+.switch { position:relative; display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-size:.88rem; color:var(--muted); user-select:none; }
+.switch input { position:absolute; opacity:0; width:0; height:0; min-height:0; }
+.slider { position:relative; flex:none; width:42px; height:24px; border-radius:99px; background:var(--line); transition:background .2s; }
+.slider::after { content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.3); transition:transform .2s; }
+.switch input:checked + .slider { background:var(--grad); }
+.switch input:checked + .slider::after { transform:translateX(18px); }
+.switch input:checked ~ .switch-label { color:var(--ink); }
+.switch input:focus-visible + .slider { outline:2px solid var(--brand); outline-offset:2px; }
+
+/* conversation */
+@media (min-width:761px) { #speak .chatlog { height:calc(100vh - 380px); height:calc(100dvh - 380px); min-height:340px; max-height:none; } }
+.msg-text { white-space:pre-wrap; overflow-wrap:anywhere; }
+.msg-foot { display:flex; align-items:center; justify-content:flex-end; gap:6px; margin-top:4px; }
+.msg-foot .time { margin:0; }
+.msg .replay { min-height:0; min-width:0; padding:2px 6px; border:0; border-radius:99px; font-size:.85rem; line-height:1; opacity:.55; cursor:pointer; color:inherit; background:none !important; box-shadow:none !important; }
+.msg .replay:hover { opacity:1; background:var(--brand-soft) !important; transform:none; }
+
+/* corrections: cards directly under the student's message */
+.fixes { align-self:flex-end; max-width:min(88%, 540px); display:flex; flex-direction:column; gap:6px; margin-top:-4px; }
+.fix { margin:0; padding:9px 13px; font-size:.9rem; color:var(--ink); background:var(--card); border:1px solid color-mix(in srgb,var(--bad) 28%,var(--line)); border-left:4px solid var(--bad); border-radius:12px; box-shadow:var(--shadow); }
+.fix-cat { display:inline-block; font-size:.66rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--bad); }
+.fix-line { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:2px; }
+.fix-line s { color:var(--muted); text-decoration-color:var(--bad); }
+.fix-arrow { color:var(--muted); }
+.fix-line b { color:var(--ok); }
+.fix-rule { margin-top:4px; color:var(--muted); font-size:.82rem; line-height:1.4; }
+
+/* coach is typing */
+.msg.typing { animation:none; opacity:1; }
+.msg.typing .msg-foot { display:none; }
+.dots { display:inline-flex; gap:5px; padding:6px 2px; }
+.dots i { width:8px; height:8px; border-radius:50%; background:var(--muted); animation:bounce 1.2s infinite ease-in-out; }
+.dots i:nth-child(2) { animation-delay:.15s; }
+.dots i:nth-child(3) { animation-delay:.3s; }
+@keyframes bounce { 0%,60%,100% { transform:translateY(0); opacity:.4; } 30% { transform:translateY(-5px); opacity:1; } }
+
+/* listening strip: shows what the microphone is hearing */
+.listenbar { display:flex; align-items:center; gap:12px; margin-top:12px; padding:10px 16px; border-radius:14px; background:color-mix(in srgb,var(--bad) 10%,var(--card)); border:1px solid color-mix(in srgb,var(--bad) 35%,var(--line)); font-size:.95rem; }
+.listenbar[hidden] { display:none; }
+.wave { flex:none; display:inline-flex; align-items:center; gap:3px; height:24px; }
+.wave i { width:4px; height:6px; border-radius:2px; background:var(--bad); animation:wave 1s infinite ease-in-out; }
+.wave i:nth-child(2) { animation-delay:.1s; } .wave i:nth-child(3) { animation-delay:.2s; } .wave i:nth-child(4) { animation-delay:.3s; } .wave i:nth-child(5) { animation-delay:.4s; }
+@keyframes wave { 0%,100% { height:6px; } 50% { height:22px; } }
+#listenText { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+@media (max-width:760px) {
+  .coach-head { padding:10px 12px; gap:10px; margin-bottom:8px; }
+  .coach-avatar { width:42px; height:42px; font-size:1.3rem; border-radius:12px; }
+  .coach-info { flex:1 1 140px; }
+  .coach-info h2 { font-size:1rem; }
+  .coach-info p { display:none; }
+  .coach-head .coach-tools { flex:1 1 100%; justify-content:space-between; }
+  #speak .chatlog { height:calc(100vh - 415px); height:calc(100dvh - 415px); min-height:180px; }
+  .listenbar { margin-top:8px; padding:8px 12px; }
+}
+
+/* Speak: use the free space, and make room for the listening strip while the mic is on */
+@media (max-width:760px) {
+  #speak .chatlog { height:calc(100vh - 335px); height:calc(100dvh - 335px); }
+  #speak:has(#listenBar:not([hidden])) .chatlog { height:calc(100vh - 395px); height:calc(100dvh - 395px); }
+}
+@media (min-width:761px) {
+  #speak:has(#listenBar:not([hidden])) .chatlog { height:calc(100vh - 440px); height:calc(100dvh - 440px); }
 }

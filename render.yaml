@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: speakeasy-academy
+    env: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_API_KEY
+        sync: false          # set this in the Render dashboard
+      - key: OPENAI_BASE_URL
+        sync: false          # e.g. https://generativelanguage.googleapis.com/v1beta/openai/
+      - key: OPENAI_MODEL
+        sync: false          # e.g. gemini-flash-lite-latest
+      - key: OPENAI_FALLBACK_MODEL
+        sync: false          # e.g. gemini-flash-latest
+      - key: ADMIN_PASSWORD
+        sync: false          # set this in the Render dashboard

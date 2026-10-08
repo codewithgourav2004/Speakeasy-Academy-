@@ -22,9 +22,10 @@ const hindiBank = JSON.parse(fs.readFileSync(path.join(__dirname, "data", "hindi
 
 // Works with any OpenAI-compatible provider (OpenAI, Groq, Gemini, OpenRouter, Ollama) via OPENAI_BASE_URL.
 // maxRetries 0 + a timeout so an overloaded model fails fast and the fallback model can take over.
-const FALLBACK_MODEL = process.env.OPENAI_FALLBACK_MODEL || "";
+// OPENAI_FALLBACK_MODEL may list several backups separated by commas; they are tried in order.
+const FALLBACK_MODELS = (process.env.OPENAI_FALLBACK_MODEL || "").split(",").map((m) => m.trim()).filter(Boolean);
 const client = process.env.OPENAI_API_KEY
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY, baseURL: process.env.OPENAI_BASE_URL || undefined, maxRetries: 0, timeout: 30000 })
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY, baseURL: process.env.OPENAI_BASE_URL || undefined, maxRetries: 0, timeout: 20000 })
   : null;
 const app = express();
 app.use(express.json({ limit: "100kb" }));
@@ -52,28 +53,51 @@ async function askAI(system, messages, maxTokens = 1024) {
     err.status = 503;
     throw err;
   }
-  const call = (model) => client.chat.completions.create({
-    model,
-    max_tokens: maxTokens,
-    messages: [{ role: "system", content: system }, ...messages],
-  });
-  try {
-    return (await call(MODEL)).choices[0].message.content || "";
-  } catch (e) {
-    // Overloaded (429/5xx), timed out or unreachable: try the backup model once.
-    const transient = !e.status || e.status === 429 || e.status >= 500;
-    if (!FALLBACK_MODEL || FALLBACK_MODEL === MODEL || !transient) throw e;
-    console.warn(`${MODEL} failed (${e.status || e.name}); retrying with ${FALLBACK_MODEL}`);
-    return (await call(FALLBACK_MODEL)).choices[0].message.content || "";
+  let last;
+  // Pass 1 tries every model in order. If they are all busy, wait a moment and make one more pass.
+  for (let pass = 0; pass < 2; pass++) {
+    for (const model of MODEL_CHAIN) {
+      try {
+        const res = await client.chat.completions.create({
+          model,
+          max_tokens: maxTokens,
+          messages: [{ role: "system", content: system }, ...messages],
+        });
+        return res.choices[0].message.content || "";
+      } catch (e) {
+        last = e;
+        console.warn(`AI call failed on ${model}: ${e.status || e.name} ${String(e.message).replace(/\s+/g, " ").slice(0, 140)}`);
+        // Overloaded (429/5xx), timed out or offline, or a retired model (404): try the next one.
+        // Anything else (bad key, bad request) will not get better by retrying.
+        if (e.status && e.status !== 404 && e.status !== 429 && e.status < 500) throw aiError(e);
+      }
+    }
+    if (pass === 0) await new Promise((r) => setTimeout(r, 1200));
   }
+  throw aiError(last);
+}
+
+const MODEL_CHAIN = [MODEL, ...FALLBACK_MODELS.filter((m) => m !== MODEL)];
+
+// Students see a short, useful message; the technical detail stays in the server log.
+function aiError(e) {
+  const s = e?.status;
+  const msg = s === 429 ? "The AI is getting too many requests right now. Please wait a few seconds and try again."
+    : s === 404 ? "The AI model isn't available right now. The admin needs to update the model name."
+    : s === 401 || s === 403 ? "The AI key was rejected. The admin needs to check the API key."
+    : !s || s >= 500 ? "The AI service is busy or unreachable right now. Please try again in a few seconds."
+    : "The AI couldn't answer that. Please try again.";
+  const err = new Error(msg);
+  err.status = 503;
+  return err;
 }
 
 function parseJson(text) {
   const oi = text.indexOf("{"), ai = text.indexOf("[");
   const start = oi < 0 ? ai : ai < 0 ? oi : Math.min(oi, ai);
-  if (start < 0) throw new Error("Model did not return JSON");
+  if (start < 0) throw Object.assign(new Error("The AI gave an unreadable answer. Please try again."), { status: 502 });
   const close = text[start] === "[" ? text.lastIndexOf("]") : text.lastIndexOf("}");
-  if (close < start) throw new Error("Model did not return JSON");
+  if (close < start) throw Object.assign(new Error("The AI gave an unreadable answer. Please try again."), { status: 502 });
   return JSON.parse(text.slice(start, close + 1));
 }
 

@@ -522,3 +522,6 @@ nav button .tl { }
   header nav button .ti { font-size:1rem; }
   body { padding-bottom:0; }
 }
+
+/* retry button inside an AI error message */
+.msg .chipbtn.retry { display:block; margin-top:8px; }

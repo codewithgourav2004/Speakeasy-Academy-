@@ -14,7 +14,7 @@ All grammar topics covered by the Speak coach, Grammar Checker, Translator and T
 | **Speak** | Voice or text chat with a coach that corrects mistakes; chat is saved per student | yes |
 | **Grammar** | Sentence-by-sentence analysis (see "Grammar Checker") | yes |
 | **Test** | Multiple-choice tests on 14 topics, adaptive difficulty, graded on the server | no |
-| **Discuss** | 16 group-discussion topics (points for/against, questions) and 14 presentation topics, with "practise with coach" | no (practice uses AI) |
+| **Discuss** | 16 group-discussion topics (points for/against, questions) and 14 preset presentation topics, plus an **AI custom-topic generator**: user types 2–5 words and gets a title, opening line, key ideas, structure outline and vocabulary; "practise with coach" opens a live speaking session | yes (generator) |
 | **Group Chat** | Shared rooms where students chat with each other; admin moderates | no |
 | **Interview** | Mock interview (job, IELTS, university, general): 6 questions, feedback, 1-5 score, corrections, final summary | yes |
 | **Translate** | Hindi → English with word-by-word table and sentence-type classification; also a Hindi writing test graded 0-2 per sentence | yes |
@@ -375,11 +375,12 @@ Notes:
 
 ### Students and privacy
 - A student signs in with a **name, age and level**. There is no password: anyone who types the same name gets that student's data. Use this only for a classroom or demo.
+- Login is persisted in `localStorage` — the student stays signed in across browser restarts and refreshes until they click **Logout**. The **Speak** tab has a **Clear chat** button that deletes the conversation history (test scores are unaffected).
 - Time on site is counted from a 15-second heartbeat while the tab is visible; the server caps what it credits, so it can't be inflated.
 
 ### Main API routes
 - Students: `POST /api/login`, `GET /api/students/:id/{chat,progress,difficulty,grammar-history}`, `DELETE /api/students/:id/chat`, `POST /api/students/:id/ping`
-- AI: `POST /api/chat`, `POST /api/grammar`, `POST /api/translate`, `POST /api/interview/{start,respond}`
+- AI: `POST /api/chat`, `POST /api/grammar`, `POST /api/translate`, `POST /api/interview/{start,respond}`, `POST /api/presentation/generate`
 - Tests: `GET /api/topics`, `GET /api/test`, `POST /api/test/submit`, `GET /api/results`, `GET /api/translate-test`, `POST /api/translate-test/submit`
 - Content: `GET /api/discussion`
 - Group chat: `GET|POST /api/groupchat/:room`, `DELETE /api/groupchat/:room/:id` (admin)

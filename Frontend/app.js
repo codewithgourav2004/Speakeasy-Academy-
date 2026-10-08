@@ -207,7 +207,14 @@ async function send(text) {
   } catch (e) {
     typing.remove();
     userEl.classList.add("failed");
-    addMsg("assistant", "⚠ " + e.message + " (this message was not saved)");
+    const errEl = addMsg("assistant", "⚠ " + e.message);
+    // One click re-sends the same message, so nothing has to be retyped.
+    const retry = document.createElement("button");
+    retry.type = "button";
+    retry.className = "chipbtn retry";
+    retry.textContent = "↻ Try again";
+    retry.onclick = () => { userEl.remove(); errEl.remove(); send(text); };
+    errEl.append(retry);
   } finally {
     $("#sendBtn").disabled = false;
   }

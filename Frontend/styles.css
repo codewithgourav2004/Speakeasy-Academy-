@@ -367,26 +367,26 @@ button.danger { color:var(--bad); border-color:color-mix(in srgb,var(--bad) 50%,
 .qmeta .pill { margin-left:auto; }
 .advice { margin:8px 0 0; padding:8px 12px; background:var(--brand-soft); border-radius:10px; font-size:.92rem; }
 
-/* responsive */
+/* responsive (shared) */
 @media (max-width:760px) {
-  header { flex-direction:column; align-items:stretch; }
-  header h1 { justify-content:center; }
-  nav { overflow-x:auto; scrollbar-width:none; } nav::-webkit-scrollbar { display:none; }
-  .user { justify-content:center; }
   .testbar { top:0; }
-  .scorehead { flex-direction:column; text-align:center; }
+  .scorehead { flex-direction:column; align-items:center; text-align:center; }
 }
 @media (prefers-reduced-motion:reduce) { *, *::before, *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; } }
 
-
-/* ================= device-friendly layer (phones, tablets, touch screens) ================= */
+/* ================= device-friendly layer ================= */
 html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
-body { overflow-x:hidden; }
-img, svg, video, canvas { max-width:100%; height:auto; }
-textarea, input, select { max-width:100%; }
-header > * { min-width:0; }
+body { overflow-x:hidden; -webkit-tap-highlight-color:transparent; }
+img,svg,video,canvas { max-width:100%; height:auto; }
+textarea,input,select { max-width:100%; }
+header>* { min-width:0; }
 
-/* Tablets and below: the tab bar gets its own full-width row and scrolls sideways */
+/* Nav button: icon + label side-by-side on desktop */
+nav button { display:inline-flex; align-items:center; gap:5px; }
+nav button .ti { font-size:1rem; line-height:1; flex:none; }
+nav button .tl { }
+
+/* Tablets: nav scrolls on its own row */
 @media (max-width:1100px) {
   header nav { order:3; flex:1 1 100%; max-width:100%; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
   header nav::-webkit-scrollbar { display:none; }
@@ -394,67 +394,131 @@ header > * { min-width:0; }
   .user { margin-left:auto; }
 }
 
-/* Phones */
+/* ── Phones ≤ 760 px ── */
 @media (max-width:760px) {
-  html { scroll-padding-bottom:84px; }
-  header { backdrop-filter:none; -webkit-backdrop-filter:none; background:var(--card); flex-direction:row; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px 8px; padding:8px max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left)); }
-  header h1 { font-size:1rem; gap:6px; justify-content:flex-start; flex:0 1 auto; }
-  .logo-mark { width:30px; height:30px; }
+  html { scroll-padding-bottom:88px; }
+
+  /* Header: compact single row — logo left, user controls right */
+  header { backdrop-filter:none; -webkit-backdrop-filter:none; background:var(--card); flex-direction:row; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px 8px; padding:9px max(12px,env(safe-area-inset-right)) 9px max(12px,env(safe-area-inset-left)); }
+  header h1 { font-size:.95rem; gap:5px; flex:0 1 auto; }
+  .logo-mark { width:28px; height:28px; font-size:.82rem; border-radius:8px; }
   .user { justify-content:flex-end; gap:4px; flex-wrap:nowrap; }
-  .user .chip { max-width:32vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:4px 10px; font-size:.82rem; }
-  .user button { padding:6px 9px; }
+  .user .chip { max-width:30vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:4px 10px; font-size:.8rem; }
+  .user button { padding:5px 9px; font-size:.85rem; }
 
-  /* the tabs become a bottom bar that is easy to reach with a thumb */
-  header nav { position:fixed; left:0; right:0; bottom:0; top:auto; z-index:40; order:0; flex:none; border-radius:0; border:0; border-top:1px solid var(--line); background:var(--card); padding:6px max(8px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); gap:2px; box-shadow:0 -4px 18px rgba(0,0,0,.18); }
-  header nav button { padding:8px 14px; font-size:.85rem; }
-  body { padding-bottom:calc(68px + env(safe-area-inset-bottom)); }
+  /* ── Bottom tab bar (iOS-style) ── */
+  header nav {
+    position:fixed; left:0; right:0; bottom:0; z-index:40;
+    order:0; flex:none; max-width:100%;
+    border-radius:0; border:0; border-top:1px solid var(--line);
+    background:var(--card);
+    padding:4px max(6px,env(safe-area-inset-right)) calc(4px + env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));
+    gap:0; box-shadow:0 -2px 18px rgba(0,0,0,.13);
+    justify-content:space-around; overflow-x:auto; overflow-y:hidden;
+    scroll-snap-type:x mandatory; scrollbar-width:none;
+  }
+  header nav::-webkit-scrollbar { display:none; }
+  header nav button {
+    flex:none; scroll-snap-align:center;
+    flex-direction:column; gap:1px; justify-content:center; align-items:center;
+    padding:5px 10px 4px; border-radius:10px; min-width:50px;
+    color:var(--muted); font-size:.62rem; letter-spacing:0; white-space:nowrap;
+    transition:color .15s, background .15s;
+  }
+  header nav button .ti { font-size:1.4rem; line-height:1.1; }
+  header nav button .tl { display:block; margin-top:1px; }
+  header nav button.active { color:var(--brand); background:var(--brand-soft); }
+
+  body { padding-bottom:calc(72px + env(safe-area-inset-bottom)); }
   main { padding:14px 12px 24px; }
-  .stopvoice { bottom:calc(78px + env(safe-area-inset-bottom)); right:12px; }
-  .toast { bottom:calc(84px + env(safe-area-inset-bottom)); max-width:90vw; text-align:center; }
+  .stopvoice { bottom:calc(80px + env(safe-area-inset-bottom)); right:12px; }
+  .toast { bottom:calc(86px + env(safe-area-inset-bottom)); max-width:90vw; text-align:center; }
 
-  /* chat areas fill the screen instead of a fixed height */
-  .chatlog { min-height:260px; max-height:none; height:calc(100vh - 380px); height:calc(100dvh - 380px); padding:12px; }
-  .gclog { height:calc(100vh - 450px); height:calc(100dvh - 450px); }
+  /* ── Chat ── */
+  .chatlog { min-height:200px; max-height:none; height:calc(100dvh - 350px); padding:12px; gap:10px; }
+  .gclog { height:calc(100dvh - 430px); }
   .msg { max-width:90%; }
   .gcmsg { max-width:94%; }
-  #speak .row { flex-wrap:wrap; border-radius:22px; padding:8px; gap:6px; }
-  #speak .row input { order:-1; flex:1 1 100%; }
-  #speak .row button { flex:1 1 0; }
-  #gcRooms { flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; scrollbar-width:none; }
+
+  /* Speak input: input full-width first row, mic + send below */
+  #speak .row { flex-wrap:wrap; border-radius:20px; padding:8px; gap:6px; border-radius:20px; }
+  #speak .row input { order:-1; flex:1 1 100%; border:0; background:transparent; box-shadow:none; border-radius:12px; padding:8px 12px; }
+  #speak .row button { flex:1; border-radius:12px; }
+  #speak .row .mic { flex:1.4; }
+
+  /* Interview input: same layout */
+  #ivRow { flex-wrap:wrap; border-radius:20px; padding:8px; gap:6px; }
+  #ivRow input { order:-1; flex:1 1 100%; border:0; background:transparent; box-shadow:none; border-radius:12px; padding:8px 12px; }
+  #ivRow button { flex:1; border-radius:12px; }
+
+  /* Group chat rooms tabs scroll */
+  #gcRooms { flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
   #gcRooms::-webkit-scrollbar { display:none; }
   #gcRooms .chipbtn { flex:none; }
 
-  .overlay { padding:10px; }
-  .modal { padding:22px 16px; border-radius:18px; }
-  .stats { grid-template-columns:repeat(2, minmax(0, 1fr)); }
-  .opt { padding:12px; }
-  .card { padding:14px; }
-  h2 { font-size:1.2rem; }
+  /* Mode switchers fill the row */
+  .seg { display:flex; width:100%; overflow-x:auto; scrollbar-width:none; }
+  .seg::-webkit-scrollbar { display:none; }
+  .seg button { flex:1 0 auto; padding:8px 10px; font-size:.85rem; }
+
+  /* Gen row, dict search */
+  .gen-row { flex-wrap:wrap; }
+  .gen-row input,.gen-row button { flex:1 1 100%; min-width:0; }
+  .dict-search { flex-wrap:nowrap; }
+
+  /* Modal: slides up from the bottom (feels native) */
+  .overlay { padding:8px; align-items:flex-end; }
+  .modal { padding:24px 18px 28px; border-radius:22px 22px 16px 16px; width:100%; max-width:100%; max-height:90vh; }
+  .modal .feat { justify-content:flex-start; }
+  .modal h2 { font-size:1.15rem; }
+
+  /* Stats / progress */
+  .stats { grid-template-columns:repeat(2,1fr); gap:8px; }
+  .stat { padding:12px 14px; }
+  .stat b { font-size:1.5rem; }
+  .ring { width:80px; height:80px; }
+  .ring span { width:62px; height:62px; font-size:.95rem; }
+
+  /* Cards / typography */
+  .card { padding:12px 14px; border-radius:14px; }
+  h2 { font-size:1.15rem; }
+  .pagehead { margin-bottom:10px; }
+  .cols { grid-template-columns:1fr; gap:8px; }
+  .opt { padding:12px 10px; }
+
+  /* Footer stacks */
+  .footer-inner { grid-template-columns:1fr; gap:18px; }
 }
 
-/* Very small phones */
-@media (max-width:380px) {
-  .user .chip { max-width:26vw; }
+/* Very small phones (< 390 px): labels hidden, icon only */
+@media (max-width:390px) {
+  .user .chip { max-width:25vw; }
   header h1 b { display:none; }
+  header nav button .tl { display:none; }
+  header nav button { min-width:42px; padding:8px 8px 6px; }
+  header nav button .ti { font-size:1.55rem; }
 }
 
-/* iPhones zoom in on inputs smaller than 16px */
-@media (max-width:760px), (pointer:coarse) {
-  input:not([type=checkbox]):not([type=radio]), select, textarea { font-size:16px; }
+/* Prevent iOS zoom on focused inputs */
+@media (max-width:760px),(pointer:coarse) {
+  input:not([type=checkbox]):not([type=radio]),select,textarea { font-size:16px; }
 }
 
-/* Touch screens: bigger tap targets */
+/* Touch screens: generous tap targets */
 @media (pointer:coarse) {
-  button, select, input:not([type=checkbox]):not([type=radio]) { min-height:44px; }
-  .chipbtn, .topics label, .gcchip { min-height:40px; }
-  .gcactions button, .gcpicker button, .gcmsg .gcreact, .gceditbtns button { min-height:36px; min-width:36px; }
+  button,select,input:not([type=checkbox]):not([type=radio]) { min-height:44px; }
+  .chipbtn,.topics label,.gcchip { min-height:40px; }
+  .gcactions button,.gcpicker button,.gcmsg .gcreact,.gceditbtns button { min-height:36px; min-width:36px; }
   .modal-close { width:44px; height:44px; }
   input[type=checkbox] { width:22px; height:22px; }
   .dict-syn { padding:6px 12px; }
 }
 
-/* Short landscape phones: don't let the fixed bar eat the screen */
+/* Landscape phones: put nav back in the header so it doesn't eat the screen */
 @media (max-width:900px) and (max-height:480px) {
-  header nav { position:static; box-shadow:none; border:1px solid var(--line); border-radius:99px; order:3; flex:1 1 100%; }
+  header nav { position:static; box-shadow:none; border:1px solid var(--line); border-radius:99px; order:3; flex:1 1 100%; justify-content:flex-start; }
+  header nav button { flex-direction:row; gap:5px; min-width:auto; padding:6px 12px; font-size:.85rem; }
+  header nav button .tl { display:block; font-size:.85rem; }
+  header nav button .ti { font-size:1rem; }
   body { padding-bottom:0; }
 }

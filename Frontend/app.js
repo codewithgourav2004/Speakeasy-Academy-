@@ -32,13 +32,19 @@ async function api(path, body, method) {
 }
 
 // ---- Student profile (saved by name) ----
+// SESSION_FLAG in sessionStorage marks the tab as active (survives refresh, dies on tab close).
+// Student data lives in localStorage but is only read when the flag is present.
+const SESSION_FLAG = "sa_tab_open";
 let student = null;
-try { student = JSON.parse(sessionStorage.getItem("student")); } catch {}
+if (sessionStorage.getItem(SESSION_FLAG)) {
+  try { student = JSON.parse(localStorage.getItem("student")); } catch {}
+}
 
 // Forced sign-in (nobody is signed in, or the server no longer knows the student): cannot be dismissed.
 function showWelcome(err = "") {
   student = null;
-  sessionStorage.removeItem("student");
+  localStorage.removeItem("student");
+  sessionStorage.removeItem(SESSION_FLAG);
   $("#userChip").hidden = $("#logoutBtn").hidden = true;
   $("#welcomeClose").hidden = true;
   $("#welcomeErr").textContent = err;
@@ -60,7 +66,8 @@ $("#welcome").addEventListener("mousedown", (e) => { if (e.target.id === "welcom
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#welcome").hidden) closeWelcome(); });
 async function enter(s) {
   student = s;
-  sessionStorage.setItem("student", JSON.stringify(s));
+  localStorage.setItem("student", JSON.stringify(s));
+  sessionStorage.setItem(SESSION_FLAG, "1");
   $("#welcome").hidden = true;
   $("#userChip").textContent = `👤 ${s.name}`;
   $("#userChip").hidden = $("#logoutBtn").hidden = false;
@@ -81,7 +88,8 @@ $("#welcomeForm").onsubmit = async (e) => {
 };
 function logout() {
   student = null;
-  sessionStorage.removeItem("student");
+  localStorage.removeItem("student");
+  sessionStorage.removeItem(SESSION_FLAG);
   adminKey = "";
   sessionStorage.removeItem("adminKey");
   $("#adminTab").hidden = true;
@@ -155,7 +163,7 @@ async function loadChat(replace) {
   }
 }
 $("#clearChat").onclick = async () => {
-  if (!student || !confirm("Start a new chat? Your saved conversation will be cleared (test scores are kept).")) return;
+  if (!student || !confirm("Clear all chat messages? This cannot be undone. (Test scores are kept.)")) return;
   stopVoice();
   await api(`/api/students/${student.id}/chat`, undefined, "DELETE");
   loadChat(true);

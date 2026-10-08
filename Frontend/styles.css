@@ -256,6 +256,11 @@ details.phrases { background:var(--brand-soft); border-color:transparent; box-sh
 .gcbody .time { font-size:.68rem; opacity:.65; margin-top:2px; text-align:right; }
 .gcdel { background:none !important; box-shadow:none !important; padding:0 2px; font-size:.75rem; color:inherit; }
 
+/* close button on the sign-in box (shown only when switching user) */
+.modal-close { position:absolute; top:12px; right:12px; width:34px; height:34px; padding:0; border-radius:50%; font-size:1rem; line-height:1; display:grid; place-items:center; color:var(--muted); z-index:2; }
+.modal-close[hidden] { display:none; }
+.modal-close:hover { color:var(--ink); }
+
 /* welcome description */
 .overlay .modal { max-height:94vh; overflow-y:auto; }
 .modal .tagline { font-size:.95rem; line-height:1.55; color:var(--ink); margin:0; }

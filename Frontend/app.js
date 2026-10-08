@@ -35,14 +35,29 @@ async function api(path, body, method) {
 let student = null;
 try { student = JSON.parse(localStorage.getItem("student")); } catch {}
 
+// Forced sign-in (nobody is signed in, or the server no longer knows the student): cannot be dismissed.
 function showWelcome(err = "") {
   student = null;
   localStorage.removeItem("student");
   $("#userChip").hidden = $("#logoutBtn").hidden = true;
+  $("#welcomeClose").hidden = true;
   $("#welcomeErr").textContent = err;
   $("#welcome").hidden = false;
   $("#nameInput").focus();
 }
+// "Switch": the current student stays signed in until someone else signs in, so this can be cancelled.
+function showSwitchUser() {
+  $("#nameInput").value = "";
+  $("#ageInput").value = "";
+  $("#welcomeErr").textContent = "";
+  $("#welcomeClose").hidden = false;
+  $("#welcome").hidden = false;
+  $("#nameInput").focus();
+}
+function closeWelcome() { if (student) $("#welcome").hidden = true; }
+$("#welcomeClose").onclick = closeWelcome;
+$("#welcome").addEventListener("mousedown", (e) => { if (e.target.id === "welcome") closeWelcome(); }); // click outside the box
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#welcome").hidden) closeWelcome(); });
 async function enter(s) {
   student = s;
   localStorage.setItem("student", JSON.stringify(s));
@@ -64,7 +79,7 @@ $("#welcomeForm").onsubmit = async (e) => {
     $("#welcomeErr").textContent = err.message;
   }
 };
-$("#logoutBtn").onclick = () => showWelcome();
+$("#logoutBtn").onclick = showSwitchUser;
 function toast(text) {
   const t = document.createElement("div");
   t.className = "toast";

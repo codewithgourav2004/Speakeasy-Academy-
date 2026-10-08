@@ -104,7 +104,12 @@ document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click
   stopVoice(); // leaving a tab silences the voice
   document.querySelectorAll("nav button, .tab").forEach((e) => e.classList.remove("active"));
   b.classList.add("active");
-  b.scrollIntoView?.({ inline: "center", block: "nearest", behavior: "smooth" });
+  // Keep the active tab visible when the tab bar scrolls sideways (tablets). Only the bar moves, never the page.
+  const bar = b.parentElement;
+  if (bar.scrollWidth > bar.clientWidth + 1) {
+    const nb = bar.getBoundingClientRect(), bb = b.getBoundingClientRect();
+    bar.scrollBy({ left: bb.left - nb.left - (nb.width - bb.width) / 2, behavior: "smooth" });
+  }
   $("#" + b.dataset.tab).classList.add("active");
   closeNav();
   if (!student) return;
@@ -244,6 +249,10 @@ $("#chatInput").addEventListener("keydown", (e) => e.key === "Enter" && send(e.t
 const micText = (listening) => matchMedia("(max-width:760px)").matches ? (listening ? "⏹" : "🎤") : (listening ? "⏹ Listening…" : "🎤 Speak");
 $("#micBtn").textContent = micText(false);
 $("#micBtn").setAttribute("aria-label", "Speak");
+if (matchMedia("(max-width:760px)").matches) { // shorter hints so they are not cut off in the narrow boxes
+  $("#chatInput").placeholder = "Type a message…";
+  $("#gcInput").placeholder = "Message…";
+}
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 if (!SR) {
   $("#micBtn").disabled = true;

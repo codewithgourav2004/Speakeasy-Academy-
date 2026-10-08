@@ -32,19 +32,13 @@ async function api(path, body, method) {
 }
 
 // ---- Student profile (saved by name) ----
-// SESSION_FLAG in sessionStorage marks the tab as active (survives refresh, dies on tab close).
-// Student data lives in localStorage but is only read when the flag is present.
-const SESSION_FLAG = "sa_tab_open";
 let student = null;
-if (sessionStorage.getItem(SESSION_FLAG)) {
-  try { student = JSON.parse(localStorage.getItem("student")); } catch {}
-}
+try { student = JSON.parse(localStorage.getItem("student")); } catch {}
 
 // Forced sign-in (nobody is signed in, or the server no longer knows the student): cannot be dismissed.
 function showWelcome(err = "") {
   student = null;
   localStorage.removeItem("student");
-  sessionStorage.removeItem(SESSION_FLAG);
   $("#userChip").hidden = $("#logoutBtn").hidden = true;
   $("#welcomeClose").hidden = true;
   $("#welcomeErr").textContent = err;
@@ -67,7 +61,6 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#wel
 async function enter(s) {
   student = s;
   localStorage.setItem("student", JSON.stringify(s));
-  sessionStorage.setItem(SESSION_FLAG, "1");
   $("#welcome").hidden = true;
   $("#userChip").textContent = `👤 ${s.name}`;
   $("#userChip").hidden = $("#logoutBtn").hidden = false;
@@ -89,7 +82,6 @@ $("#welcomeForm").onsubmit = async (e) => {
 function logout() {
   student = null;
   localStorage.removeItem("student");
-  sessionStorage.removeItem(SESSION_FLAG);
   adminKey = "";
   sessionStorage.removeItem("adminKey");
   $("#adminTab").hidden = true;

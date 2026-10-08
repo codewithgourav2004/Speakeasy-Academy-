@@ -11,11 +11,11 @@ All grammar topics covered by the Speak coach, Grammar Checker, Translator and T
 
 | Tab | What it does | Needs AI? |
 |---|---|---|
-| **Speak** | Voice or text chat with a coach that corrects mistakes; chat is saved per student | yes |
+| **Speak** | Voice or text chat with an AI coach. Corrections appear as cards under your message (category, wrong → right, rule); every coach reply has a 🔊 replay button; a "Voice replies" switch turns spoken replies on or off; while the mic is on, a strip shows the words being heard. Chat is saved per student, with a running corrections count | yes |
 | **Grammar** | Sentence-by-sentence analysis (see "Grammar Checker") | yes |
 | **Test** | Multiple-choice tests on 14 topics, adaptive difficulty, graded on the server | no |
 | **Discuss** | 16 group-discussion topics (points for/against, questions) and 14 preset presentation topics, plus an **AI custom-topic generator**: user types 2–5 words and gets a title, opening line, key ideas, structure outline and vocabulary; "practise with coach" opens a live speaking session | yes (generator) |
-| **Group Chat** | Shared rooms where students chat with each other; admin moderates | no |
+| **Group Chat** | Shared rooms where students chat; every message shows who wrote it; react with emoji, edit or delete **your own** messages; admin moderates | no |
 | **Interview** | Mock interview (job, IELTS, university, general): 6 questions, feedback, 1-5 score, corrections, final summary | yes |
 | **Translate** | Hindi → English with word-by-word table and sentence-type classification; also a Hindi writing test graded 0-2 per sentence | yes |
 | **Progress** | Messages, corrections, tests, accuracy by topic and by difficulty, most common mistakes | no |
@@ -28,6 +28,7 @@ All grammar topics covered by the Speak coach, Grammar Checker, Translator and T
 - When two forms are acceptable, say so instead of marking one wrong.
 - Match vocabulary to the learner's level (beginner / intermediate / advanced).
 - Never reveal test answers before the learner submits.
+- Errors shown to students are short and friendly ("The AI service is busy… try again in a few seconds"); the technical detail goes to the server log. In Speak, a failed reply has a **↻ Try again** button that re-sends the message.
 
 ---
 
@@ -339,10 +340,11 @@ Question format in `backend/data/questions.json`: `{ q, options[4], answer, expl
 
 ## Group Chat
 
-- Rooms: General, Grammar help, Speaking practice, Group discussion. New messages arrive within about 3 seconds.
-- Members panel lists everyone's **name only** (online first). Age, level and ID are never shared.
-- Rules: no links (`http://`, `https://`, `www.`), 500 characters, one message per second per student.
-- **Admin controls:** switch the chat on/off, delete a message, clear a room, mute or unmute a student, post an announcement (shown with an ADMIN badge). Muted students and a switched-off chat see a banner and cannot send.
+- Rooms: General, Grammar help, Speaking practice, Group discussion. New messages, edits and reactions arrive within about 3 seconds.
+- Every message shows its sender's name (yours says "· You"). The members panel lists everyone's **name only**, online first. Age, level and ID are never shared.
+- **Students can:** react with 👍 ❤️ 😂 😮 🎉 👏 (tap again to remove), **edit their own** messages (shown as "edited"), and **delete their own** messages. Nobody can edit or delete another person's message. On touch screens, tap a message to show its 😊 ✏️ 🗑 buttons.
+- Rules: no links (`http://`, `https://`, `www.`), 500 characters, one new message per second per student. Edits follow the same rules.
+- **Admin controls (Admin tab → Group chat moderation):** switch the chat on/off, delete any message, clear a room, mute or unmute a student, post an announcement (shown with an ADMIN badge). Muted students and a switched-off chat see a banner and cannot send, edit or react.
 - There is no word filter and no private messaging. A teacher should check the rooms regularly, especially with young learners.
 
 ---
@@ -353,7 +355,7 @@ Question format in `backend/data/questions.json`: `{ q, options[4], answer, expl
 cd backend
 npm install
 copy .env.example .env     # then fill in the values below
-npm start                  # http://localhost:3000
+npm start                  # http://localhost:5000 (or the PORT you set in .env)
 ```
 
 `backend/.env` (never commit it; it is already in `.gitignore`):
@@ -363,13 +365,14 @@ npm start                  # http://localhost:3000
 | `OPENAI_API_KEY` | API key for the AI provider. The name says OpenAI, but any **OpenAI-compatible** provider works (Gemini, Groq, Cerebras, OpenRouter, Mistral...). |
 | `OPENAI_BASE_URL` | Provider endpoint. Leave unset for OpenAI. Gemini: `https://generativelanguage.googleapis.com/v1beta/openai/`. Groq: `https://api.groq.com/openai/v1`. Cerebras: `https://api.cerebras.ai/v1`. |
 | `OPENAI_MODEL` | Main model, e.g. `gemini-flash-lite-latest` |
-| `OPENAI_FALLBACK_MODEL` | Used automatically when the main model is overloaded (429/5xx) or times out |
+| `OPENAI_FALLBACK_MODEL` | One or more backup models, comma-separated (e.g. `gemini-flash-latest`), tried in order when the main model is overloaded (429/5xx), retired (404) or times out |
 | `ADMIN_PASSWORD` | Enables the Admin tab. If unset, admin is disabled. |
 | `PORT` | Default 5000 locally. Render sets it automatically. |
 
 Notes:
 - Without an AI key only the Speak, Grammar, Interview and Translate features fail. Tests, Discuss, Group Chat, Dictionary, Progress and Admin still work.
-- Free tiers have request limits and can return 429. The server fails fast (30 s timeout, no retries) and switches to the fallback model.
+- Free tiers have request limits and can return 429 or 503 ("high demand"). Each attempt times out after 20 s. The server tries every model in order, waits about a second, and makes one more pass before giving up. A bad key stops immediately. Students then see a short message, not the provider's raw error.
+- Model names get retired (for example `gemini-2.0-flash`). `gemini-flash-lite-latest` and `gemini-flash-latest` are aliases that follow the current model. If the message says "The AI model isn't available", update `OPENAI_MODEL` / `OPENAI_FALLBACK_MODEL`.
 - On Gemini free tiers, submitted text may be used by the provider to improve its products. Tell students, or use a paid key.
 - The app stores data in JSON files under `backend/data/`: `students.json`, `chats/`, `results.json`, `groupchat.json`, `searches.json`, plus the content files `questions.json`, `discussion.json` and `hindi_sentences.json`. Back these up before moving the app.
 
@@ -377,16 +380,26 @@ Notes:
 - A student signs in with a **name, age and level**. There is no password: anyone who types the same name gets that student's data. Use this only for a classroom or demo.
 - Login is persisted in `localStorage` — the student stays signed in across browser restarts and refreshes until they click **Logout**. The **Speak** tab has a **Clear chat** button that deletes the conversation history (test scores are unaffected).
 - Time on site is counted from a 15-second heartbeat while the tab is visible; the server caps what it credits, so it can't be inflated.
+- Student files (`students.json`, `chats/`, `groupchat.json`, `searches.json`, `results.json`, `tr_results.json`, `grammar_checks.json`) hold real names and ages. They are listed in `backend/.gitignore` so new commits skip them. See "Deploying" for what to do if they were committed earlier.
 
-### Mobile (≤ 760 px)
-- An **always-visible scrollable bottom tab bar** replaces the standard top nav on phones. It is fixed to the bottom of the viewport and scrolls horizontally to reach all 9 tabs.
-- The Admin tab uses the HTML `hidden` attribute; `nav button[hidden] { display:none !important }` in the CSS ensures it stays hidden even though the nav's `display:inline-flex` rule would otherwise override the browser default.
-- Login modals and overlays are at `z-index:300`; toast notifications at `z-index:310` — both safely above the nav bar (`z-index:50`).
+### Phones, tablets and touch screens
+- **Phones (≤ 760 px):** the tabs are a bar fixed to the bottom of the screen (icon + label, scrolls sideways). The header is one slim row (logo, name, Logout, admin, theme). Inputs are 16 px so iPhones don't zoom in, buttons have at least a 44 px touch target, and chat areas fill the screen height. The mic button is just an icon and hints are shorter; both switch back when the window is made wider.
+- **Tablets (≤ 1100 px):** the tab bar gets its own row under the header and scrolls sideways; the chosen tab scrolls into view (only the bar moves, never the page).
+- **Touch only (no hover):** tapping a group-chat message shows its react / edit / delete buttons.
+- **Stacking order:** header 10, tab bar 40, stop-voice button 45, sign-in boxes and overlays 300, toasts 310.
+- The Admin tab uses the HTML `hidden` attribute; `nav button[hidden] { display:none !important }` keeps it hidden.
+- There is no ☰ menu. An earlier drawer-style menu was replaced by the always-visible tab bar.
+
+### Deploying
+- **One Render Web Service (simplest):** `render.yaml` describes it. Root Directory `backend`, build `npm install`, start `node server.js`. The server also serves the `Frontend` folder, so one address serves both the page and the API. Set the variables from the table above in the Render dashboard; they are not in git.
+- **Optional Vercel frontend:** `Frontend/vercel.json` forwards `/api/*` to the Render address, so the page code needs no changes. In Vercel set Root Directory to `Frontend`, Framework Preset *Other*, and leave Install and Build commands empty. Update the address in `vercel.json` if the Render URL changes.
+- **Free Render plan:** the service sleeps when idle (the first request can take a minute) and its disk is wiped on every deploy, so student data is lost. Keeping it needs a paid plan with a Persistent Disk, or a database.
+- **Public repository warning:** files committed before `.gitignore` listed them stay in git history. If student files were committed, run `git rm --cached` on them and make the repository private.
 
 ### Main API routes
 - Students: `POST /api/login`, `GET /api/students/:id/{chat,progress,difficulty,grammar-history}`, `DELETE /api/students/:id/chat`, `POST /api/students/:id/ping`
 - AI: `POST /api/chat`, `POST /api/grammar`, `POST /api/translate`, `POST /api/interview/{start,respond}`, `POST /api/presentation/generate`
-- Tests: `GET /api/topics`, `GET /api/test`, `POST /api/test/submit`, `GET /api/results`, `GET /api/translate-test`, `POST /api/translate-test/submit`
-- Content: `GET /api/discussion`
-- Group chat: `GET|POST /api/groupchat/:room`, `DELETE /api/groupchat/:room/:id` (admin)
-- Admin (header `x-admin-key`): `GET /api/admin/summary`, `GET /api/admin/groupchat`, `POST /api/admin/groupchat/enabled`, `POST /api/admin/groupchat/:room/announce`, `DELETE /api/admin/groupchat/:room`, `POST /api/admin/students/:id/mute`
+- Tests: `GET /api/topics`, `GET /api/test`, `POST /api/test/submit`, `GET /api/results`, `GET /api/translate-test`, `POST /api/translate-test/submit`, `GET /api/tr-results`
+- Content and logging: `GET /api/discussion`, `POST /api/log/search`
+- Group chat: `GET|POST /api/groupchat/:room`, `PATCH /api/groupchat/:room/:msgId` (edit own), `POST /api/groupchat/:room/:msgId/react`, `DELETE /api/groupchat/:room/:msgId` (own message; the admin key also works, used by the Admin tab)
+- Admin (header `x-admin-key`): `GET /api/admin/summary`, `GET /api/admin/groupchat`, `POST /api/admin/groupchat/enabled`, `POST /api/admin/groupchat/:room/announce`, `DELETE /api/admin/groupchat/:room`, `POST /api/admin/students/:id/mute`, `GET /api/admin/users/:id/tests`

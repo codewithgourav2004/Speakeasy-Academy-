@@ -125,31 +125,57 @@ function addMsg(role, text, at, corrections = []) {
   const d = document.createElement("div");
   d.className = "msg " + role;
   const body = document.createElement("div");
+  body.className = "msg-text";
   body.textContent = text;
-  const time = document.createElement("div");
+  const foot = document.createElement("div");
+  foot.className = "msg-foot";
+  const time = document.createElement("span");
   time.className = "time";
   time.textContent = fmtTime(at || new Date().toISOString());
-  d.append(body, time);
-  addFixes(d, corrections);
+  foot.append(time);
+  if (role === "assistant") { // hear a coach reply again (useful for pronunciation)
+    const replay = document.createElement("button");
+    replay.type = "button";
+    replay.className = "replay";
+    replay.title = "Listen again";
+    replay.setAttribute("aria-label", "Listen to this reply again");
+    replay.textContent = "🔊";
+    foot.append(replay);
+  }
+  d.append(body, foot);
   $("#chatLog").append(d);
+  addFixes(d, corrections); // after the message is in the page, so the cards can sit right below it
   $("#chatLog").scrollTop = 1e9;
   return d;
 }
+// Corrections appear as cards directly under the student's message.
 function addFixes(el, corrections) {
-  for (const c of corrections) {
-    const f = document.createElement("div");
-    f.className = "fix";
-    f.innerHTML = `<b>${esc(c.category)}</b>: <s>${esc(c.original)}</s> → <b>${esc(c.corrected)}</b><br>${esc(c.rule)}`;
-    el.append(f);
+  if (corrections?.length) {
+    const box = document.createElement("div");
+    box.className = "fixes";
+    box.innerHTML = corrections.map((c) => `
+      <div class="fix">
+        <span class="fix-cat">${esc(c.category || "grammar")}</span>
+        <div class="fix-line"><s>${esc(c.original)}</s><span class="fix-arrow">→</span><b>${esc(c.corrected)}</b></div>
+        ${c.rule ? `<div class="fix-rule">${esc(c.rule)}</div>` : ""}
+      </div>`).join("");
+    el.after(box);
   }
+  updateFixCount();
+}
+function updateFixCount() {
+  const n = $("#chatLog").querySelectorAll(".fix").length;
+  $("#fixCount").textContent = `✏️ ${n} correction${n === 1 ? "" : "s"}`;
 }
 async function loadChat(replace) {
   const log = $("#chatLog");
+  $("#coachLevel").textContent = student ? `${cap(student.level)} level` : "";
   if (replace) log.innerHTML = "";
   try {
     const saved = await api(`/api/students/${student.id}/chat`);
     saved.forEach((m) => addMsg(m.role, m.content, m.at, m.corrections));
   } catch { return; }
+  updateFixCount();
   if (!log.children.length) {
     addMsg("assistant", `Hi ${student.name}! I'm your English coach. Tell me about your day, and I'll gently correct your grammar.`);
     const chips = document.createElement("div");
@@ -160,6 +186,18 @@ async function loadChat(replace) {
     log.append(chips);
   }
 }
+$("#chatLog").addEventListener("click", (e) => {
+  const b = e.target.closest(".replay");
+  if (b) say(b.closest(".msg").querySelector(".msg-text").textContent, { force: true });
+});
+const cap = (w) => (w ? w[0].toUpperCase() + w.slice(1) : "");
+const mqPhone = matchMedia("(max-width:760px)");
+function applyPhoneText() { // the mic is an icon on phones; hints are shorter. Runs again when the window is resized.
+  if (!$("#micBtn").classList.contains("on")) $("#micBtn").textContent = micText(false);
+  $("#chatInput").placeholder = mqPhone.matches ? "Type a message…" : "…or type here and press Enter";
+  $("#gcInput").placeholder = mqPhone.matches ? "Message…" : "Write a message in English…";
+}
+mqPhone.addEventListener?.("change", applyPhoneText);
 $("#clearChat").onclick = async () => {
   if (!student || !confirm("Clear all chat messages? This cannot be undone. (Test scores are kept.)")) return;
   stopVoice();
@@ -201,8 +239,9 @@ async function send(text) {
   stopVoice();
   $("#chatInput").value = "";
   const userEl = addMsg("user", text);
-  const typing = addMsg("assistant", "…");
+  const typing = addMsg("assistant", "");
   typing.classList.add("typing");
+  typing.querySelector(".msg-text").innerHTML = '<span class="dots"><i></i><i></i><i></i></span>';
   $("#sendBtn").disabled = true;
   try {
     const { reply, corrections } = await api("/api/chat", { studentId: student.id, text });
@@ -248,14 +287,17 @@ if (!SR) {
   rec.onresult = (e) => {
     const t = [...e.results].map((r) => r[0].transcript).join("");
     $("#chatInput").value = t;
+    $("#listenText").textContent = t || "Listening… speak now";
     if (e.results[e.results.length - 1].isFinal) send(t);
   };
-  rec.onend = rec.onerror = () => { listening = false; $("#micBtn").classList.remove("on"); $("#micBtn").textContent = micText(false); };
+  rec.onend = rec.onerror = () => { listening = false; $("#listenBar").hidden = true; $("#micBtn").classList.remove("on"); $("#micBtn").textContent = micText(false); };
   $("#micBtn").onclick = () => {
     if (listening) return rec.stop();
     stopVoice();
     listening = true;
     $("#micBtn").classList.add("on");
+    $("#listenText").textContent = "Listening… speak now";
+    $("#listenBar").hidden = false;
     $("#micBtn").textContent = micText(true);
     rec.start();
   };

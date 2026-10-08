@@ -104,6 +104,7 @@ document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click
   stopVoice(); // leaving a tab silences the voice
   document.querySelectorAll("nav button, .tab").forEach((e) => e.classList.remove("active"));
   b.classList.add("active");
+  b.scrollIntoView?.({ inline: "center", block: "nearest", behavior: "smooth" }); // keep the tab visible in the scrolling bar
   $("#" + b.dataset.tab).classList.add("active");
   if (!student) return;
   if (b.dataset.tab === "test") loadTestSetup();
@@ -854,6 +855,10 @@ function gcApplyState(enabled, muted) {
   $("#gcSend").disabled = blocked;
 }
 function gcStart() {
+  if (!gcStart.seen) { // first visit on a small screen: start with the member list collapsed to leave room for messages
+    gcStart.seen = true;
+    if (matchMedia("(max-width:640px)").matches) $("#gcMembers").open = false;
+  }
   renderGcRooms();
   gcSwitch(gcRoom);
   clearInterval(gcTimer);

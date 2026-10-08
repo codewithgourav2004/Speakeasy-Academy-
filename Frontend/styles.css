@@ -377,3 +377,84 @@ button.danger { color:var(--bad); border-color:color-mix(in srgb,var(--bad) 50%,
   .scorehead { flex-direction:column; text-align:center; }
 }
 @media (prefers-reduced-motion:reduce) { *, *::before, *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; } }
+
+
+/* ================= device-friendly layer (phones, tablets, touch screens) ================= */
+html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+body { overflow-x:hidden; }
+img, svg, video, canvas { max-width:100%; height:auto; }
+textarea, input, select { max-width:100%; }
+header > * { min-width:0; }
+
+/* Tablets and below: the tab bar gets its own full-width row and scrolls sideways */
+@media (max-width:1100px) {
+  header nav { order:3; flex:1 1 100%; max-width:100%; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  header nav::-webkit-scrollbar { display:none; }
+  header nav button { flex:none; scroll-snap-align:center; }
+  .user { margin-left:auto; }
+}
+
+/* Phones */
+@media (max-width:760px) {
+  html { scroll-padding-bottom:84px; }
+  header { backdrop-filter:none; -webkit-backdrop-filter:none; background:var(--card); flex-direction:row; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px 8px; padding:8px max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left)); }
+  header h1 { font-size:1rem; gap:6px; justify-content:flex-start; flex:0 1 auto; }
+  .logo-mark { width:30px; height:30px; }
+  .user { justify-content:flex-end; gap:4px; flex-wrap:nowrap; }
+  .user .chip { max-width:32vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:4px 10px; font-size:.82rem; }
+  .user button { padding:6px 9px; }
+
+  /* the tabs become a bottom bar that is easy to reach with a thumb */
+  header nav { position:fixed; left:0; right:0; bottom:0; top:auto; z-index:40; order:0; flex:none; border-radius:0; border:0; border-top:1px solid var(--line); background:var(--card); padding:6px max(8px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); gap:2px; box-shadow:0 -4px 18px rgba(0,0,0,.18); }
+  header nav button { padding:8px 14px; font-size:.85rem; }
+  body { padding-bottom:calc(68px + env(safe-area-inset-bottom)); }
+  main { padding:14px 12px 24px; }
+  .stopvoice { bottom:calc(78px + env(safe-area-inset-bottom)); right:12px; }
+  .toast { bottom:calc(84px + env(safe-area-inset-bottom)); max-width:90vw; text-align:center; }
+
+  /* chat areas fill the screen instead of a fixed height */
+  .chatlog { min-height:260px; max-height:none; height:calc(100vh - 380px); height:calc(100dvh - 380px); padding:12px; }
+  .gclog { height:calc(100vh - 450px); height:calc(100dvh - 450px); }
+  .msg { max-width:90%; }
+  .gcmsg { max-width:94%; }
+  #speak .row { flex-wrap:wrap; border-radius:22px; padding:8px; gap:6px; }
+  #speak .row input { order:-1; flex:1 1 100%; }
+  #speak .row button { flex:1 1 0; }
+  #gcRooms { flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; scrollbar-width:none; }
+  #gcRooms::-webkit-scrollbar { display:none; }
+  #gcRooms .chipbtn { flex:none; }
+
+  .overlay { padding:10px; }
+  .modal { padding:22px 16px; border-radius:18px; }
+  .stats { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  .opt { padding:12px; }
+  .card { padding:14px; }
+  h2 { font-size:1.2rem; }
+}
+
+/* Very small phones */
+@media (max-width:380px) {
+  .user .chip { max-width:26vw; }
+  header h1 b { display:none; }
+}
+
+/* iPhones zoom in on inputs smaller than 16px */
+@media (max-width:760px), (pointer:coarse) {
+  input:not([type=checkbox]):not([type=radio]), select, textarea { font-size:16px; }
+}
+
+/* Touch screens: bigger tap targets */
+@media (pointer:coarse) {
+  button, select, input:not([type=checkbox]):not([type=radio]) { min-height:44px; }
+  .chipbtn, .topics label, .gcchip { min-height:40px; }
+  .gcactions button, .gcpicker button, .gcmsg .gcreact, .gceditbtns button { min-height:36px; min-width:36px; }
+  .modal-close { width:44px; height:44px; }
+  input[type=checkbox] { width:22px; height:22px; }
+  .dict-syn { padding:6px 12px; }
+}
+
+/* Short landscape phones: don't let the fixed bar eat the screen */
+@media (max-width:900px) and (max-height:480px) {
+  header nav { position:static; box-shadow:none; border:1px solid var(--line); border-radius:99px; order:3; flex:1 1 100%; }
+  body { padding-bottom:0; }
+}

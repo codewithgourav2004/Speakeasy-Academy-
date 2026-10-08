@@ -1,5 +1,5 @@
 {
-  "nextId": 9,
+  "nextId": 18,
   "rooms": {
     "general": [
       {
@@ -9,9 +9,31 @@
         "admin": true,
         "text": "no one is allowed",
         "at": "2026-10-08T05:01:03.034Z"
+      },
+      {
+        "id": 9,
+        "studentId": "gourav-kumar",
+        "name": "Gourav Kumar",
+        "text": "haanji",
+        "at": "2026-10-08T07:19:56.416Z"
+      },
+      {
+        "id": 10,
+        "studentId": "gk",
+        "name": "gk",
+        "text": "fgrg",
+        "at": "2026-10-08T17:33:54.034Z"
+      },
+      {
+        "id": 11,
+        "studentId": "gk",
+        "name": "gk",
+        "text": "hlo",
+        "at": "2026-10-08T17:37:23.127Z"
       }
     ],
-    "grammar": []
+    "grammar": [],
+    "discussion": []
   },
   "enabled": true
 }

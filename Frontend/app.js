@@ -104,14 +104,32 @@ document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click
   stopVoice(); // leaving a tab silences the voice
   document.querySelectorAll("nav button, .tab").forEach((e) => e.classList.remove("active"));
   b.classList.add("active");
-  b.scrollIntoView?.({ inline: "center", block: "nearest", behavior: "smooth" }); // keep the tab visible in the scrolling bar
+  b.scrollIntoView?.({ inline: "center", block: "nearest", behavior: "smooth" });
   $("#" + b.dataset.tab).classList.add("active");
+  closeNav();
   if (!student) return;
   if (b.dataset.tab === "test") loadTestSetup();
   if (b.dataset.tab === "progress") loadProgress();
 }));
 // student-only tabs need a student; admin needs a key
 function openTab(name) { document.querySelector(`nav button[data-tab="${name}"]`).click(); }
+
+// ---- Mobile nav toggle ----
+function closeNav() {
+  document.body.classList.remove("nav-open");
+  $("#menuToggle").setAttribute("aria-expanded", "false");
+  $("#menuToggle").textContent = "☰";
+}
+function openNav() {
+  document.body.classList.add("nav-open");
+  $("#menuToggle").setAttribute("aria-expanded", "true");
+  $("#menuToggle").textContent = "✕";
+}
+$("#menuToggle").addEventListener("click", () => {
+  document.body.classList.contains("nav-open") ? closeNav() : openNav();
+});
+$("#navOverlay").addEventListener("click", closeNav);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeNav(); });
 
 // ---- Speak ----
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "");
@@ -222,6 +240,10 @@ async function send(text) {
 $("#sendBtn").onclick = () => send($("#chatInput").value);
 $("#chatInput").addEventListener("keydown", (e) => e.key === "Enter" && send(e.target.value));
 
+// On phones the mic button is just an icon, so the message box and Send button fit on one line.
+const micText = (listening) => matchMedia("(max-width:760px)").matches ? (listening ? "⏹" : "🎤") : (listening ? "⏹ Listening…" : "🎤 Speak");
+$("#micBtn").textContent = micText(false);
+$("#micBtn").setAttribute("aria-label", "Speak");
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 if (!SR) {
   $("#micBtn").disabled = true;
@@ -236,13 +258,13 @@ if (!SR) {
     $("#chatInput").value = t;
     if (e.results[e.results.length - 1].isFinal) send(t);
   };
-  rec.onend = rec.onerror = () => { listening = false; $("#micBtn").classList.remove("on"); $("#micBtn").textContent = "🎤 Speak"; };
+  rec.onend = rec.onerror = () => { listening = false; $("#micBtn").classList.remove("on"); $("#micBtn").textContent = micText(false); };
   $("#micBtn").onclick = () => {
     if (listening) return rec.stop();
     stopVoice();
     listening = true;
     $("#micBtn").classList.add("on");
-    $("#micBtn").textContent = "⏹ Listening…";
+    $("#micBtn").textContent = micText(true);
     rec.start();
   };
 }
@@ -951,6 +973,13 @@ async function gcDelete(msgEl) {
 }
 $("#gcLog").addEventListener("click", async (e) => {
   if (!e.target.closest(".gcpicker") && !e.target.closest('[data-act="react"]')) closePickers();
+  // Touch screens have no hover, so tapping a message shows or hides its react / edit / delete buttons.
+  const bubble = e.target.closest(".gcbody");
+  if (bubble && matchMedia("(hover:none)").matches && !e.target.closest("button, textarea, .gcpicker")) {
+    const msg = bubble.parentElement, wasOpen = msg.classList.contains("open");
+    document.querySelectorAll("#gcLog .gcmsg.open").forEach((m) => m.classList.remove("open"));
+    if (!wasOpen) msg.classList.add("open");
+  }
   const msgEl = e.target.closest(".gcmsg");
   if (!msgEl || !student) return;
   const t = e.target.closest("[data-act],[data-pick],[data-react],[data-edit]");

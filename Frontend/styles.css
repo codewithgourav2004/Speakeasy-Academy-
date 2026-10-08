@@ -191,6 +191,8 @@ th { font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; } tr:hove
 .seg button:hover { color:var(--ink); transform:none; }
 .seg button.on { background:var(--grad) !important; color:#fff; box-shadow:0 4px 12px rgba(79,70,229,.3) !important; }
 #discCats { margin-bottom:14px; }
+.gen-row { display:flex; gap:10px; margin-bottom:14px; }
+.gen-row input { flex:1; }
 .chipbtn.on { background:var(--brand-soft); border-color:var(--brand); font-weight:600; }
 .chipbtn.random { margin-left:auto; border-style:dashed; }
 details.topic summary, details.phrases summary { cursor:pointer; list-style:none; display:flex; flex-direction:column; gap:8px; position:relative; padding-right:28px; }
@@ -241,6 +243,11 @@ details.phrases { background:var(--brand-soft); border-color:transparent; box-sh
 /* scrollbar polish */
 * { scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
 
+/* online indicator dot (admin table) */
+.online-dot { display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--line); }
+.online-dot.on { background:var(--ok); box-shadow:0 0 0 2px color-mix(in srgb, var(--ok) 30%, transparent); }
+.online-stat b { color:var(--ok); }
+
 /* group chat */
 .online { margin-left:6px; color:var(--ok); font-weight:600; }
 .gclog { min-height:380px; max-height:58vh; gap:10px; }
@@ -255,6 +262,34 @@ details.phrases { background:var(--brand-soft); border-color:transparent; box-sh
 .gctext { white-space:pre-wrap; overflow-wrap:anywhere; }
 .gcbody .time { font-size:.68rem; opacity:.65; margin-top:2px; text-align:right; }
 .gcdel { background:none !important; box-shadow:none !important; padding:0 2px; font-size:.75rem; color:inherit; }
+
+/* group chat: sender names, reactions, edit, delete */
+.gcmsg button { background:none !important; box-shadow:none !important; transform:none; font-weight:400; color:inherit; }
+.gcbody { position:relative; }
+.gcmsg.mine .gcname { color:rgba(255,255,255,.92); }
+.youtag { font-weight:500; opacity:.8; }
+.gcreactions { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+.gcmsg .gcreact { padding:1px 8px; border-radius:99px; font-size:.82rem; border:1px solid var(--line); background:var(--card) !important; cursor:pointer; }
+.gcmsg .gcreact b { font-weight:600; font-size:.75rem; }
+.gcmsg .gcreact.mine { border-color:var(--brand); background:var(--brand-soft) !important; }
+.gcmsg.mine .gcreact { border-color:rgba(255,255,255,.4); background:rgba(255,255,255,.18) !important; color:#fff; }
+.gcmsg.mine .gcreact.mine { background:rgba(255,255,255,.38) !important; border-color:#fff; }
+.gcactions { position:absolute; top:-15px; right:8px; display:none; gap:2px; padding:2px 4px; background:var(--card); border:1px solid var(--line); border-radius:99px; box-shadow:var(--shadow); z-index:3; color:var(--ink); }
+.gcmsg.mine .gcactions { right:auto; left:8px; }
+.gcmsg:hover .gcactions, .gcmsg:focus-within .gcactions { display:flex; }
+.gcactions button { padding:2px 6px; font-size:.9rem; border-radius:99px; cursor:pointer; }
+.gcactions button:hover { background:var(--brand-soft) !important; }
+@media (hover:none) { .gcactions { display:flex; position:static; margin-top:6px; box-shadow:none; background:none; border:0; padding:0; } }
+.gcpicker { position:absolute; top:-52px; right:0; display:flex; gap:2px; padding:5px 8px; background:var(--card); border:1px solid var(--line); border-radius:99px; box-shadow:var(--shadow); z-index:4; }
+.gcmsg.mine .gcpicker { right:auto; left:0; }
+.gcpicker button { font-size:1.25rem; padding:2px 5px; border-radius:50%; cursor:pointer; transition:transform .1s; }
+.gcpicker button:hover { transform:scale(1.25); }
+.gcedit { width:100%; min-width:220px; margin:4px 0 0; padding:8px 10px; border-radius:10px; font:inherit; color:var(--ink); background:var(--card); border:1px solid var(--brand); resize:vertical; min-height:56px; }
+.gceditbtns { display:flex; gap:6px; margin-top:6px; justify-content:flex-end; }
+.gceditbtns button { padding:3px 12px; border-radius:99px; font-size:.82rem; border:1px solid rgba(255,255,255,.5); cursor:pointer; }
+.gcmsg:not(.mine) .gceditbtns button { border-color:var(--line); }
+.gceditbtns button[data-edit="save"] { background:var(--grad) !important; color:#fff; border-color:transparent; }
+.gcmsg.editing .gcactions { display:none; }
 
 /* close button on the sign-in box (shown only when switching user) */
 .modal-close { position:absolute; top:12px; right:12px; width:34px; height:34px; padding:0; border-radius:50%; font-size:1rem; line-height:1; display:grid; place-items:center; color:var(--muted); z-index:2; }

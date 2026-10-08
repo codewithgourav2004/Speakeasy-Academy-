@@ -71,7 +71,7 @@
     </nav>
     <div class="user">
       <span id="userChip" class="chip" hidden></span>
-      <button id="logoutBtn" class="ghost" title="Switch student" hidden>Switch</button>
+      <button id="logoutBtn" class="ghost" title="Log out" hidden>Logout</button>
       <button id="adminBtn" class="ghost" title="Admin login">🔒</button>
       <button id="themeBtn" class="ghost" title="Toggle dark/light mode">🌙</button>
     </div>
@@ -163,6 +163,11 @@
         <button data-mode="gd" class="on">Group Discussion</button>
         <button data-mode="presentation">Presentation</button>
       </div>
+      <div id="discGenRow" class="gen-row" hidden>
+        <input id="discTopicInput" placeholder="Enter your topic, e.g. climate change, team work, AI in education…" maxlength="100" autocomplete="off">
+        <button id="discGenBtn">Generate presentation →</button>
+      </div>
+      <div id="discGenOut"></div>
       <div class="starters" id="discCats"></div>
       <div id="discOut"></div>
     </section>

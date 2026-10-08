@@ -199,6 +199,7 @@ app.get("/api/admin/summary", requireAdmin, (_req, res) => {
     const tr = trByStudent[s.id];
     return {
       id: s.id, name: s.name, age: s.age ?? null, level: s.level, created: s.created, lastSeen: s.lastSeen, visits: s.visits || 1,
+      online: Date.now() - new Date(s.lastSeen).getTime() < 60000,
       timeSpent: Math.round(s.timeSpent || 0),
       messages: chat.filter((m) => m.role === "user").length,
       tests: mine.length,
@@ -222,6 +223,7 @@ app.get("/api/admin/summary", requireAdmin, (_req, res) => {
 
   res.json({
     totalUsers: students.length,
+    onlineNow: users.filter((u) => u.online).length,
     active24h: since(day),
     active7d: since(7 * day),
     totalTests: results.length,
@@ -454,6 +456,38 @@ const GC_ROOMS = { general: "General", grammar: "Grammar help", speaking: "Speak
 const GC_MAX_PER_ROOM = 300;
 const gcLastPost = new Map(); // studentId -> timestamp, for a simple rate limit
 const gcLoad = () => readJson(GC_FILE, { nextId: 1, rooms: {} });
+const GC_EMOJI = ["👍", "❤️", "😂", "😮", "🎉", "👏"];
+
+function adminKeyOk(req) {
+  const pw = process.env.ADMIN_PASSWORD;
+  if (!pw) return false;
+  const given = Buffer.from(String(req.get("x-admin-key") || ""));
+  const want = Buffer.from(pw);
+  return given.length === want.length && timingSafeEqual(given, want);
+}
+// What a viewer is allowed to see of a message: reactions become {emoji, count, mine, names}.
+function gcView(m, viewerId, students = readJson(STUDENTS_FILE, {})) {
+  const { reactions = {}, u, ...rest } = m;
+  return {
+    ...rest,
+    reactions: Object.entries(reactions).map(([emoji, ids]) => ({
+      emoji, count: ids.length, mine: ids.includes(viewerId), names: ids.slice(0, 8).map((id) => students[id]?.name || "Someone"),
+    })),
+  };
+}
+// Shared checks for anything a student writes in the chat. They answer the request themselves when they refuse.
+function gcBlocked(req, res) {
+  if (gcLoad().enabled === false) { res.status(403).json({ error: "Group chat is switched off by the admin." }); return true; }
+  if (req.student.chatMuted) { res.status(403).json({ error: "You have been muted by the admin and cannot do that." }); return true; }
+  return false;
+}
+function gcCleanText(req, res) {
+  const text = String(req.body.text || "").trim().slice(0, 500);
+  if (!text) { res.status(400).json({ error: "Write a message first." }); return null; }
+  if (/(https?:\/\/|www\.)/i.test(text)) { res.status(400).json({ error: "Links are not allowed in the group chat." }); return null; }
+  return text;
+}
+function gcFind(data, room, id) { return (data.rooms[room] || []).find((m) => m.id === parseInt(id, 10)); }
 
 function requireRoom(req, res, next) {
   if (!GC_ROOMS[req.params.room]) return res.status(404).json({ error: "Unknown room" });
@@ -464,15 +498,19 @@ app.get("/api/groupchat/:room", requireRoom, requireStudent, (req, res) => {
   const data = gcLoad();
   const msgs = data.rooms[req.params.room] || [];
   const after = parseInt(req.query.after, 10) || 0;
+  const since = parseInt(req.query.since, 10) || 0; // pages also ask for messages edited or reacted to since their last poll
   const recent = msgs.slice(-100);
   const isOnline = (s) => Date.now() - new Date(s.lastSeen).getTime() < 60000;
+  const allStudents = readJson(STUDENTS_FILE, {});
   // Members: names only (never age, level or id), online people first.
-  const members = Object.values(readJson(STUDENTS_FILE, {}))
+  const members = Object.values(allStudents)
     .map((s) => ({ name: s.name, online: isOnline(s) }))
     .sort((a, b) => b.online - a.online || a.name.localeCompare(b.name));
   res.json({
-    messages: after ? recent.filter((m) => m.id > after) : recent.slice(-50),
-    ids: recent.map((m) => m.id), // lets pages drop messages an admin deleted
+    messages: (after ? recent.filter((m) => m.id > after || (since && (m.u || 0) > since)) : recent.slice(-50))
+      .map((m) => gcView(m, req.student.id, allStudents)),
+    serverTime: Date.now(),
+    ids: recent.map((m) => m.id), // lets pages drop messages that were deleted
     online: members.filter((m) => m.online).length,
     members,
     enabled: data.enabled !== false,
@@ -481,11 +519,9 @@ app.get("/api/groupchat/:room", requireRoom, requireStudent, (req, res) => {
 });
 
 app.post("/api/groupchat/:room", requireRoom, requireStudent, (req, res) => {
-  if (gcLoad().enabled === false) return res.status(403).json({ error: "Group chat is switched off by the admin." });
-  if (req.student.chatMuted) return res.status(403).json({ error: "You have been muted by the admin and cannot send messages." });
-  const text = String(req.body.text || "").trim().slice(0, 500);
-  if (!text) return res.status(400).json({ error: "Write a message first." });
-  if (/(https?:\/\/|www\.)/i.test(text)) return res.status(400).json({ error: "Links are not allowed in the group chat." });
+  if (gcBlocked(req, res)) return;
+  const text = gcCleanText(req, res);
+  if (text === null) return;
   const last = gcLastPost.get(req.student.id) || 0;
   if (Date.now() - last < 1000) return res.status(429).json({ error: "You're sending messages too fast. Wait a second." });
   gcLastPost.set(req.student.id, Date.now());
@@ -493,7 +529,42 @@ app.post("/api/groupchat/:room", requireRoom, requireStudent, (req, res) => {
   const msg = { id: data.nextId++, studentId: req.student.id, name: req.student.name, text, at: new Date().toISOString() };
   data.rooms[req.params.room] = [...(data.rooms[req.params.room] || []), msg].slice(-GC_MAX_PER_ROOM);
   writeJson(GC_FILE, data);
-  res.json(msg);
+  res.json(gcView(msg, req.student.id));
+});
+
+// NOTE: message routes use :msgId on purpose; requireStudent reads req.params.id as a *student* id.
+// Edit your own message.
+app.patch("/api/groupchat/:room/:msgId", requireRoom, requireStudent, (req, res) => {
+  if (gcBlocked(req, res)) return;
+  const text = gcCleanText(req, res);
+  if (text === null) return;
+  const data = gcLoad();
+  const msg = gcFind(data, req.params.room, req.params.msgId);
+  if (!msg) return res.status(404).json({ error: "That message no longer exists." });
+  if (msg.studentId !== req.student.id) return res.status(403).json({ error: "You can only edit your own messages." });
+  msg.text = text;
+  msg.edited = true;
+  msg.u = Date.now();
+  writeJson(GC_FILE, data);
+  res.json(gcView(msg, req.student.id));
+});
+
+// React with an emoji; sending the same emoji again removes your reaction.
+app.post("/api/groupchat/:room/:msgId/react", requireRoom, requireStudent, (req, res) => {
+  if (gcBlocked(req, res)) return;
+  const emoji = String(req.body.emoji || "");
+  if (!GC_EMOJI.includes(emoji)) return res.status(400).json({ error: "That reaction is not available." });
+  const data = gcLoad();
+  const msg = gcFind(data, req.params.room, req.params.msgId);
+  if (!msg) return res.status(404).json({ error: "That message no longer exists." });
+  msg.reactions ??= {};
+  const who = (msg.reactions[emoji] ??= []);
+  const i = who.indexOf(req.student.id);
+  if (i >= 0) who.splice(i, 1); else who.push(req.student.id);
+  if (!who.length) delete msg.reactions[emoji];
+  msg.u = Date.now();
+  writeJson(GC_FILE, data);
+  res.json(gcView(msg, req.student.id));
 });
 
 // ---- Group chat: admin tools ----
@@ -543,9 +614,16 @@ app.post("/api/admin/students/:id/mute", requireAdmin, (req, res) => {
   res.json({ id: s.id, chatMuted: s.chatMuted });
 });
 
-app.delete("/api/groupchat/:room/:id", requireRoom, requireAdmin, (req, res) => {
+// Delete a message: the admin (admin key) can delete any; a student can delete only their own.
+app.delete("/api/groupchat/:room/:msgId", requireRoom, (req, res) => {
   const data = gcLoad();
-  const id = parseInt(req.params.id, 10);
+  const msg = gcFind(data, req.params.room, req.params.msgId);
+  if (msg && !adminKeyOk(req)) {
+    const student = getStudent(String(req.query.studentId || ""));
+    if (!student) return res.status(401).json({ error: "Please sign in again." });
+    if (msg.studentId !== student.id) return res.status(403).json({ error: "You can only delete your own messages." });
+  }
+  const id = parseInt(req.params.msgId, 10);
   data.rooms[req.params.room] = (data.rooms[req.params.room] || []).filter((m) => m.id !== id);
   writeJson(GC_FILE, data);
   res.json({ ok: true });
@@ -701,6 +779,33 @@ app.post("/api/translate-test/submit", requireStudent, wrap(async (req, res) => 
 app.get("/api/tr-results", requireStudent, (req, res) => {
   res.json(readJson(TR_RESULTS_FILE, []).filter((r) => r.studentId === req.student.id).slice(-20).reverse());
 });
+
+// ---- AI presentation generator ----
+const PRESENTATION_GEN_SYSTEM = `You are an English presentation coach. The user gives you a short topic (2-5 words). Generate a clear, structured presentation plan they can use to practise English speaking.
+
+Return ONLY valid JSON (no markdown fences):
+{
+  "title": string,
+  "minutes": number,
+  "ideas": [string],
+  "opener": string,
+  "keyVocab": [string],
+  "structure": {"intro": string, "body": string, "conclusion": string}
+}
+
+Rules:
+- ideas: 4-5 key points, each short and clear (one line)
+- opener: a strong, natural first sentence a student can say aloud
+- keyVocab: 5-6 useful words or phrases specific to this topic
+- minutes: 3-5 depending on how much to cover
+- structure: one short sentence each describing intro, body and conclusion`;
+
+app.post("/api/presentation/generate", requireStudent, wrap(async (req, res) => {
+  const topic = String(req.body.topic || "").trim().slice(0, 100);
+  if (!topic) return res.status(400).json({ error: "topic required" });
+  const result = parseJson(await askAI(PRESENTATION_GEN_SYSTEM, [{ role: "user", content: topic }], 900));
+  res.json(result);
+}));
 
 // ---- Fallbacks (must stay AFTER every API route) ----
 // Unknown /api/... paths get a JSON 404 instead of the web page.

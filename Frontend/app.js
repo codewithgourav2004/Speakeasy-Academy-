@@ -79,7 +79,18 @@ $("#welcomeForm").onsubmit = async (e) => {
     $("#welcomeErr").textContent = err.message;
   }
 };
-$("#logoutBtn").onclick = showSwitchUser;
+function logout() {
+  student = null;
+  localStorage.removeItem("student");
+  adminKey = "";
+  sessionStorage.removeItem("adminKey");
+  $("#adminTab").hidden = true;
+  $("#chatLog").innerHTML = "";
+  showWelcome();
+}
+$("#logoutBtn").onclick = () => {
+  if (confirm("Log out? You can log back in with your name at any time.")) logout();
+};
 function toast(text) {
   const t = document.createElement("div");
   t.className = "toast";
@@ -672,6 +683,9 @@ function discItems() {
 }
 function renderDiscuss() {
   document.querySelectorAll("#discMode button").forEach((b) => b.classList.toggle("on", b.dataset.mode === discMode));
+  const isPresentation = discMode === "presentation";
+  $("#discGenRow").hidden = !isPresentation;
+  if (!isPresentation) $("#discGenOut").innerHTML = "";
   const all = discMode === "gd" ? disc.gd : disc.presentation;
   const cats = ["All", ...new Set(all.map((t) => t.category))];
   if (!cats.includes(discCat)) discCat = "All";
@@ -722,34 +736,91 @@ $("#discOut").onclick = (e) => {
 };
 document.querySelector('nav button[data-tab="discuss"]').addEventListener("click", loadDiscuss);
 
+async function generatePresentation() {
+  const topic = $("#discTopicInput").value.trim();
+  if (!topic) { $("#discTopicInput").focus(); return; }
+  if (!student) { toast("Please sign in first."); return; }
+  const out = $("#discGenOut");
+  out.innerHTML = '<p class="small">Generating…</p>';
+  $("#discGenBtn").disabled = true;
+  try {
+    const p = await api("/api/presentation/generate", { topic, studentId: student.id });
+    const vocabHtml = Array.isArray(p.keyVocab) ? p.keyVocab.map((w) => `<span class="pill">${esc(w)}</span>`).join(" ") : "";
+    const struct = p.structure || {};
+    const practiseMsg = `I want to practise a ${p.minutes || 3}-minute presentation on "${esc(p.title || topic)}". Please ask me to give my opening, then give feedback on my grammar and structure.`;
+    out.innerHTML = `<details class="card topic" open>
+      <summary>
+        <span class="ttitle">${esc(p.title || topic)}</span>
+        <span class="meta"><span class="pill">Custom</span><span class="pill">⏱ ${esc(String(p.minutes || 3))} min</span></span>
+      </summary>
+      <div class="g-section"><span class="g-label">Opening line</span><p class="opener">"${esc(p.opener || "")}"</p></div>
+      <div class="g-section"><span class="g-label">Ideas to cover</span>${list(Array.isArray(p.ideas) ? p.ideas : [])}</div>
+      <div class="g-section"><span class="g-label">Structure</span>
+        <ul>
+          <li><b>Intro:</b> ${esc(struct.intro || "")}</li>
+          <li><b>Body:</b> ${esc(struct.body || "")}</li>
+          <li><b>Conclusion:</b> ${esc(struct.conclusion || "")}</li>
+        </ul>
+      </div>
+      ${vocabHtml ? `<div class="g-section"><span class="g-label">Key vocabulary</span><div style="margin-top:6px">${vocabHtml}</div></div>` : ""}
+      <button data-genpractise="${esc(practiseMsg)}">🎤 Practise with coach</button>
+    </details>`;
+  } catch (e) {
+    out.innerHTML = `<p class="err">${esc(e.message)}</p>`;
+  } finally {
+    $("#discGenBtn").disabled = false;
+  }
+}
+$("#discGenBtn").onclick = generatePresentation;
+$("#discTopicInput").addEventListener("keydown", (e) => { if (e.key === "Enter") generatePresentation(); });
+$("#discGenOut").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-genpractise]");
+  if (!b || !student) return;
+  openTab("speak");
+  send(b.dataset.genpractise);
+});
+
 // ---- Group chat ----
 const GC_ROOMS = [["general", "General"], ["grammar", "Grammar help"], ["speaking", "Speaking practice"], ["discussion", "Group discussion"]];
-let gcRoom = "general", gcLast = 0, gcTimer = null, gcPolling = false;
+let gcRoom = "general", gcLast = 0, gcSince = 0, gcTimer = null, gcPolling = false;
+const GC_EMOJI = ["👍", "❤️", "😂", "😮", "🎉", "👏"];
 
 function renderGcRooms() {
   $("#gcRooms").innerHTML = GC_ROOMS.map(([id, label]) => `<button class="chipbtn ${id === gcRoom ? "on" : ""}" data-room="${id}"># ${esc(label)}</button>`).join("");
 }
+// Draws one message. If it is already on screen (it was edited, or someone reacted) it is redrawn in place.
 function gcAdd(m) {
   const log = $("#gcLog");
-  if (log.querySelector(`[data-id="${m.id}"]`)) return; // already shown
-  const mine = student && m.studentId === student.id;
+  const old = log.querySelector(`[data-id="${m.id}"]`);
+  if (old?.classList.contains("editing")) return; // don't wipe a message that is being edited
+  const mine = !!student && m.studentId === student.id;
   const d = document.createElement("div");
   d.className = "gcmsg " + (mine ? "mine" : "other") + (m.admin ? " admin" : "");
   d.dataset.id = m.id;
+  const reactions = (m.reactions || []).map((r) =>
+    `<button type="button" class="gcreact ${r.mine ? "mine" : ""}" data-react="${esc(r.emoji)}" title="${esc(r.names.join(", "))}">${r.emoji} <b>${r.count}</b></button>`).join("");
   d.innerHTML = `${mine ? "" : `<span class="avatar">${m.admin ? "🛡️" : esc((m.name || "?")[0].toUpperCase())}</span>`}
-    <div class="gcbody">${mine ? "" : `<div class="gcname">${esc(m.name)}${m.admin ? ' <span class="adminbadge">ADMIN</span>' : ""}</div>`}
+    <div class="gcbody">
+      <div class="gcname">${esc(m.name)}${mine ? ' <span class="youtag">· You</span>' : ""}${m.admin ? ' <span class="adminbadge">ADMIN</span>' : ""}</div>
       <div class="gctext">${esc(m.text)}</div>
-      <div class="time">${fmtTime(m.at)}${adminKey ? ` <button class="gcdel" data-del="${m.id}" title="Delete message (admin)">🗑</button>` : ""}</div>
+      ${reactions ? `<div class="gcreactions">${reactions}</div>` : ""}
+      <div class="time">${m.edited ? "edited · " : ""}${fmtTime(m.at)}</div>
+      <div class="gcactions">
+        <button type="button" data-act="react" title="React">😊</button>
+        ${mine && !m.admin ? '<button type="button" data-act="edit" title="Edit your message">✏️</button>' : ""}
+        ${mine || adminKey ? '<button type="button" data-act="delete" title="Delete message">🗑</button>' : ""}
+      </div>
     </div>`;
-  log.append(d);
+  if (old) old.replaceWith(d); else log.append(d);
 }
 async function gcPoll() {
   if (!student || gcPolling) return;
   gcPolling = true;
   const room = gcRoom;
   try {
-    const r = await api(`/api/groupchat/${room}?after=${gcLast}&studentId=${student.id}`);
+    const r = await api(`/api/groupchat/${room}?after=${gcLast}&since=${gcSince}&studentId=${student.id}`);
     if (room !== gcRoom) return; // user switched rooms while waiting
+    gcSince = Math.max(0, r.serverTime - 2000); // next poll also fetches messages edited or reacted to after this moment
     const log = $("#gcLog");
     const nearBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 80;
     r.messages.forEach((m) => { gcAdd(m); gcLast = Math.max(gcLast, m.id); });
@@ -792,7 +863,7 @@ function gcStart() {
   }, 3000);
 }
 function gcSwitch(room) {
-  gcRoom = room; gcLast = 0;
+  gcRoom = room; gcLast = 0; gcSince = 0;
   $("#gcLog").innerHTML = "";
   $("#gcErr").textContent = "";
   renderGcRooms();
@@ -820,11 +891,79 @@ async function gcSend() {
 $("#gcRooms").onclick = (e) => { const b = e.target.closest("[data-room]"); if (b && b.dataset.room !== gcRoom) gcSwitch(b.dataset.room); };
 $("#gcSend").onclick = gcSend;
 $("#gcInput").addEventListener("keydown", (e) => e.key === "Enter" && gcSend());
+// ---- Group chat: react, edit, delete ----
+const closePickers = () => document.querySelectorAll("#gcLog .gcpicker").forEach((p) => p.remove());
+function togglePicker(msgEl) {
+  const had = msgEl.querySelector(".gcpicker");
+  closePickers();
+  if (had) return;
+  const p = document.createElement("div");
+  p.className = "gcpicker";
+  p.innerHTML = GC_EMOJI.map((em) => `<button type="button" data-pick="${em}">${em}</button>`).join("");
+  msgEl.querySelector(".gcbody").append(p);
+}
+async function gcReact(id, emoji) {
+  closePickers();
+  const m = await api(`/api/groupchat/${gcRoom}/${id}/react`, { studentId: student.id, emoji });
+  gcAdd(m);
+}
+function gcEdit(msgEl) {
+  if (msgEl.classList.contains("editing")) return;
+  closePickers();
+  const textEl = msgEl.querySelector(".gctext");
+  msgEl.dataset.old = textEl.textContent;
+  msgEl.classList.add("editing");
+  textEl.innerHTML = '<textarea class="gcedit" maxlength="500" rows="2"></textarea><div class="gceditbtns"><button type="button" data-edit="save">Save</button><button type="button" data-edit="cancel">Cancel</button></div>';
+  const ta = textEl.querySelector("textarea");
+  ta.value = msgEl.dataset.old;
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+}
+function gcEditCancel(msgEl) {
+  msgEl.querySelector(".gctext").textContent = msgEl.dataset.old;
+  msgEl.classList.remove("editing");
+}
+async function gcEditSave(msgEl) {
+  const text = msgEl.querySelector(".gcedit").value.trim();
+  if (!text) return $("#gcErr").textContent = "A message can't be empty. Delete it instead.";
+  if (text === msgEl.dataset.old) return gcEditCancel(msgEl);
+  const m = await api(`/api/groupchat/${gcRoom}/${msgEl.dataset.id}`, { studentId: student.id, text }, "PATCH");
+  msgEl.classList.remove("editing");
+  gcAdd(m);
+}
+async function gcDelete(msgEl) {
+  if (!confirm(adminKey && !msgEl.classList.contains("mine") ? "Delete this message for everyone? (admin)" : "Delete your message for everyone?")) return;
+  const res = await fetch(`/api/groupchat/${gcRoom}/${msgEl.dataset.id}?studentId=${student.id}`, { method: "DELETE", headers: adminKey ? { "x-admin-key": adminKey } : {} });
+  if (res.ok) msgEl.remove();
+  else $("#gcErr").textContent = (await res.json().catch(() => ({}))).error || "Could not delete the message.";
+}
 $("#gcLog").addEventListener("click", async (e) => {
-  const b = e.target.closest("[data-del]");
-  if (!b || !confirm("Delete this message for everyone?")) return;
-  const res = await fetch(`/api/groupchat/${gcRoom}/${b.dataset.del}`, { method: "DELETE", headers: { "x-admin-key": adminKey } });
-  if (res.ok) b.closest(".gcmsg").remove(); else alert("Could not delete. Sign in as admin again.");
+  if (!e.target.closest(".gcpicker") && !e.target.closest('[data-act="react"]')) closePickers();
+  const msgEl = e.target.closest(".gcmsg");
+  if (!msgEl || !student) return;
+  const t = e.target.closest("[data-act],[data-pick],[data-react],[data-edit]");
+  if (!t) return;
+  $("#gcErr").textContent = "";
+  try {
+    if (t.dataset.act === "react") togglePicker(msgEl);
+    else if (t.dataset.pick || t.dataset.react) await gcReact(msgEl.dataset.id, t.dataset.pick || t.dataset.react);
+    else if (t.dataset.act === "edit") gcEdit(msgEl);
+    else if (t.dataset.act === "delete") await gcDelete(msgEl);
+    else if (t.dataset.edit === "save") await gcEditSave(msgEl);
+    else if (t.dataset.edit === "cancel") gcEditCancel(msgEl);
+  } catch (err) {
+    $("#gcErr").textContent = err.message;
+  }
+});
+// Enter saves an edit, Shift+Enter adds a line, Esc cancels.
+$("#gcLog").addEventListener("keydown", async (e) => {
+  if (!e.target.classList.contains("gcedit")) return;
+  const msgEl = e.target.closest(".gcmsg");
+  if (e.key === "Escape") { e.stopPropagation(); gcEditCancel(msgEl); }
+  else if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    try { await gcEditSave(msgEl); } catch (err) { $("#gcErr").textContent = err.message; }
+  }
 });
 document.querySelector('nav button[data-tab="groupchat"]').addEventListener("click", gcStart);
 
@@ -858,6 +997,7 @@ async function loadAdmin() {
       </div>
       <div class="stats">
         <div class="stat"><b>${d.totalUsers}</b><span>Total users</span></div>
+        <div class="stat online-stat"><b>${d.onlineNow ?? 0}</b><span>🟢 Online now</span></div>
         <div class="stat"><b>${d.active24h}</b><span>Active (24h)</span></div>
         <div class="stat"><b>${d.active7d}</b><span>Active (7 days)</span></div>
         <div class="stat"><b>${d.avgAge ?? "—"}</b><span>Average age</span></div>
@@ -889,8 +1029,8 @@ async function loadAdmin() {
       </div>` : ""}
       <div class="card"><h3>Users</h3>
         <div class="tablewrap"><table>
-          <tr><th>Name</th><th>Age</th><th>Level</th><th>Time</th><th>Msgs</th><th>MCQ Tests</th><th>MCQ Avg</th><th>Hindi Tests</th><th>Hindi Avg</th><th>Grammar</th><th>Searches</th><th>Visits</th><th>Last seen</th><th>Chat</th></tr>
-          ${d.users.map((u) => `<tr><td><button class="link-btn" data-uid="${esc(u.id)}" data-uname="${esc(u.name)}">${esc(u.name)}</button></td><td>${u.age ?? "—"}</td><td>${esc(u.level)}</td><td>${fmtDur(u.timeSpent)}</td><td>${u.messages}</td><td>${u.tests}</td><td>${u.avgScore != null ? u.avgScore + "%" : "—"}</td><td>${u.trTests ?? 0}</td><td>${u.trAvgScore != null ? u.trAvgScore + "%" : "—"}</td><td>${u.grammarChecks ?? 0}</td><td>${u.searches ?? 0}</td><td>${u.visits}</td><td>${new Date(u.lastSeen).toLocaleString()}</td><td><button class="ghost mutebtn ${u.chatMuted ? "muted" : ""}" data-mute="${esc(u.id)}" data-muted="${u.chatMuted ? 1 : 0}">${u.chatMuted ? "🔇 Muted" : "Mute"}</button></td></tr>`).join("") || '<tr><td colspan="14" class="small">No users yet.</td></tr>'}
+          <tr><th></th><th>Name</th><th>Age</th><th>Level</th><th>Time</th><th>Msgs</th><th>MCQ Tests</th><th>MCQ Avg</th><th>Hindi Tests</th><th>Hindi Avg</th><th>Grammar</th><th>Searches</th><th>Visits</th><th>Last seen</th><th>Chat</th></tr>
+          ${d.users.map((u) => `<tr><td title="${u.online ? "Online now" : "Offline"}"><span class="online-dot ${u.online ? "on" : ""}"></span></td><td><button class="link-btn" data-uid="${esc(u.id)}" data-uname="${esc(u.name)}">${esc(u.name)}</button></td><td>${u.age ?? "—"}</td><td>${esc(u.level)}</td><td>${fmtDur(u.timeSpent)}</td><td>${u.messages}</td><td>${u.tests}</td><td>${u.avgScore != null ? u.avgScore + "%" : "—"}</td><td>${u.trTests ?? 0}</td><td>${u.trAvgScore != null ? u.trAvgScore + "%" : "—"}</td><td>${u.grammarChecks ?? 0}</td><td>${u.searches ?? 0}</td><td>${u.visits}</td><td>${new Date(u.lastSeen).toLocaleString()}</td><td><button class="ghost mutebtn ${u.chatMuted ? "muted" : ""}" data-mute="${esc(u.id)}" data-muted="${u.chatMuted ? 1 : 0}">${u.chatMuted ? "🔇 Muted" : "Mute"}</button></td></tr>`).join("") || '<tr><td colspan="15" class="small">No users yet.</td></tr>'}
         </table></div>
       </div>
       <div class="card"><h3>👥 Group chat moderation</h3><div id="adminGc"><p class="small">Loading…</p></div></div>`;

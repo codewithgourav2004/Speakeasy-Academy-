@@ -378,6 +378,11 @@ Notes:
 - Login is persisted in `localStorage` — the student stays signed in across browser restarts and refreshes until they click **Logout**. The **Speak** tab has a **Clear chat** button that deletes the conversation history (test scores are unaffected).
 - Time on site is counted from a 15-second heartbeat while the tab is visible; the server caps what it credits, so it can't be inflated.
 
+### Mobile (≤ 760 px)
+- An **always-visible scrollable bottom tab bar** replaces the standard top nav on phones. It is fixed to the bottom of the viewport and scrolls horizontally to reach all 9 tabs.
+- The Admin tab uses the HTML `hidden` attribute; `nav button[hidden] { display:none !important }` in the CSS ensures it stays hidden even though the nav's `display:inline-flex` rule would otherwise override the browser default.
+- Login modals and overlays are at `z-index:300`; toast notifications at `z-index:310` — both safely above the nav bar (`z-index:50`).
+
 ### Main API routes
 - Students: `POST /api/login`, `GET /api/students/:id/{chat,progress,difficulty,grammar-history}`, `DELETE /api/students/:id/chat`, `POST /api/students/:id/ping`
 - AI: `POST /api/chat`, `POST /api/grammar`, `POST /api/translate`, `POST /api/interview/{start,respond}`, `POST /api/presentation/generate`

@@ -111,7 +111,6 @@ document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click
     bar.scrollBy({ left: bb.left - nb.left - (nb.width - bb.width) / 2, behavior: "smooth" });
   }
   $("#" + b.dataset.tab).classList.add("active");
-  closeNav();
   if (!student) return;
   if (b.dataset.tab === "test") loadTestSetup();
   if (b.dataset.tab === "progress") loadProgress();
@@ -119,22 +118,6 @@ document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click
 // student-only tabs need a student; admin needs a key
 function openTab(name) { document.querySelector(`nav button[data-tab="${name}"]`).click(); }
 
-// ---- Mobile nav toggle ----
-function closeNav() {
-  document.body.classList.remove("nav-open");
-  $("#menuToggle").setAttribute("aria-expanded", "false");
-  $("#menuToggle").textContent = "☰";
-}
-function openNav() {
-  document.body.classList.add("nav-open");
-  $("#menuToggle").setAttribute("aria-expanded", "true");
-  $("#menuToggle").textContent = "✕";
-}
-$("#menuToggle").addEventListener("click", () => {
-  document.body.classList.contains("nav-open") ? closeNav() : openNav();
-});
-$("#navOverlay").addEventListener("click", closeNav);
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeNav(); });
 
 // ---- Speak ----
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "");
@@ -847,7 +830,7 @@ function gcAdd(m) {
       <div class="gcactions">
         <button type="button" data-act="react" title="React">😊</button>
         ${mine && !m.admin ? '<button type="button" data-act="edit" title="Edit your message">✏️</button>' : ""}
-        ${mine || adminKey ? '<button type="button" data-act="delete" title="Delete message">🗑</button>' : ""}
+        ${mine ? '<button type="button" data-act="delete" title="Delete your message">🗑</button>' : ""}
       </div>
     </div>`;
   if (old) old.replaceWith(d); else log.append(d);
@@ -975,8 +958,10 @@ async function gcEditSave(msgEl) {
   gcAdd(m);
 }
 async function gcDelete(msgEl) {
-  if (!confirm(adminKey && !msgEl.classList.contains("mine") ? "Delete this message for everyone? (admin)" : "Delete your message for everyone?")) return;
-  const res = await fetch(`/api/groupchat/${gcRoom}/${msgEl.dataset.id}?studentId=${student.id}`, { method: "DELETE", headers: adminKey ? { "x-admin-key": adminKey } : {} });
+  // Students (and the admin, in the chat) can delete only their own messages; the admin moderates from the Admin tab.
+  if (!msgEl.classList.contains("mine")) return;
+  if (!confirm("Delete your message for everyone?")) return;
+  const res = await fetch(`/api/groupchat/${gcRoom}/${msgEl.dataset.id}?studentId=${student.id}`, { method: "DELETE" });
   if (res.ok) msgEl.remove();
   else $("#gcErr").textContent = (await res.json().catch(() => ({}))).error || "Could not delete the message.";
 }

@@ -365,7 +365,7 @@ npm start                  # http://localhost:3000
 | `OPENAI_MODEL` | Main model, e.g. `gemini-flash-lite-latest` |
 | `OPENAI_FALLBACK_MODEL` | Used automatically when the main model is overloaded (429/5xx) or times out |
 | `ADMIN_PASSWORD` | Enables the Admin tab. If unset, admin is disabled. |
-| `PORT` | Default 3000 |
+| `PORT` | Default 5000 locally. Render sets it automatically. |
 
 Notes:
 - Without an AI key only the Speak, Grammar, Interview and Translate features fail. Tests, Discuss, Group Chat, Dictionary, Progress and Admin still work.

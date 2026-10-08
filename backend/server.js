@@ -4,9 +4,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomUUID, timingSafeEqual } from "node:crypto";
+import dotenv from "dotenv";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PORT = process.env.PORT || 3000;
+// Local development: load backend/.env. On Render the variables come from the dashboard
+// (dotenv never overrides variables that are already set, and a missing .env is fine).
+dotenv.config({ path: path.join(__dirname, ".env") });
+const PORT = process.env.PORT || 5000;
 const MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 const RESULTS_FILE = path.join(__dirname, "data", "results.json");
 const SEARCHES_FILE = path.join(__dirname, "data", "searches.json");
@@ -24,8 +28,14 @@ const client = process.env.OPENAI_API_KEY
   : null;
 const app = express();
 app.use(express.json({ limit: "100kb" }));
-app.get("/favicon.ico", (_req, res) => res.type("image/svg+xml").sendFile(path.join(__dirname, "..", "Frontend", "favicon.svg")));
-app.use(express.static(path.join(__dirname, "..", "Frontend")));
+// Frontend lives next to backend/ in the repo (../Frontend). Fall back to other common spellings
+// so a case-sensitive Linux host still finds it.
+const FRONTEND_DIR = [path.join(__dirname, "..", "Frontend"), path.join(__dirname, "..", "frontend"), path.join(__dirname, "Frontend")]
+  .find((dir) => fs.existsSync(path.join(dir, "index.html")));
+if (!FRONTEND_DIR) console.error("WARNING: Frontend/index.html not found. Expected it at ../Frontend (next to the backend folder).");
+const FRONTEND_INDEX = FRONTEND_DIR && path.join(FRONTEND_DIR, "index.html");
+app.get("/favicon.ico", (_req, res) => res.type("image/svg+xml").sendFile(path.join(FRONTEND_DIR || __dirname, "favicon.svg")));
+app.use(express.static(FRONTEND_DIR || __dirname)); // serves "/" as Frontend/index.html; the API routes below are matched separately
 
 const shuffle = (a) => {
   a = [...a];
@@ -692,7 +702,16 @@ app.get("/api/tr-results", requireStudent, (req, res) => {
   res.json(readJson(TR_RESULTS_FILE, []).filter((r) => r.studentId === req.student.id).slice(-20).reverse());
 });
 
-app.listen(PORT, () => {
-  console.log(`English App running at http://localhost:${PORT}`);
+// ---- Fallbacks (must stay AFTER every API route) ----
+// Unknown /api/... paths get a JSON 404 instead of the web page.
+app.use("/api", (_req, res) => res.status(404).json({ error: "Not found" }));
+// Any other GET (a refreshed or bookmarked URL) returns the app's index.html.
+app.use((req, res, next) => {
+  if (req.method !== "GET" || !FRONTEND_INDEX) return next();
+  res.sendFile(FRONTEND_INDEX);
+});
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`English App listening on port ${PORT} (http://localhost:${PORT} when running locally)`);
   if (!client) console.log("Note: OPENAI_API_KEY not set - Speak and Grammar tabs need it; Test works without.");
 });

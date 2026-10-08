@@ -1,0 +1,15 @@
+{
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://speakeasy-academy-8iz7.onrender.com/api/:path*" },
+    { "source": "/favicon.ico", "destination": "/favicon.svg" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    }
+  ]
+}

@@ -1,3 +1,12 @@
 node_modules
 .env
+
+# Student data created while the app runs: never commit (names, ages, chats, scores).
+# The app creates these files itself on first use.
+data/students.json
+data/chats/
 data/results.json
+data/tr_results.json
+data/groupchat.json
+data/searches.json
+data/grammar_checks.json

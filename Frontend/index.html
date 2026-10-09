@@ -283,6 +283,7 @@
           <a href="tel:+917042289480" class="footer-link"><span class="ficon">📞</span>+91 70422 89480</a>
           <a href="https://wa.me/917042289480" target="_blank" rel="noopener" class="footer-link"><span class="ficon">💬</span>WhatsApp</a>
         </div>
+        <button type="button" id="enquiryBtn" class="enquiry-btn">✉️ Send an enquiry</button>
         <div class="footer-cta">Need a website? <a href="mailto:gk154139@gmail.com">Get in touch &rarr;</a></div>
       </div>
     </div>
@@ -290,6 +291,36 @@
   </footer>
 
   <button id="stopVoice" class="stopvoice" hidden title="Stop the voice (Esc)">⏹ Stop voice</button>
+
+  <div id="editStudentModal" class="overlay" hidden>
+    <div class="modal" style="max-width:420px;width:100%">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h2 id="editStudentTitle" style="margin:0;font-size:1.2rem">Edit student</h2>
+        <button id="closeEditStudent" class="ghost">✕ Close</button>
+      </div>
+      <form id="editStudentForm">
+        <input type="hidden" id="editStudentId">
+        <label class="small" style="display:block;margin-bottom:12px">Level
+          <select id="editLevel" style="width:100%;margin-top:4px;padding:8px;border-radius:6px;border:1px solid var(--border)">
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+        </label>
+        <label class="small" style="display:block;margin-bottom:12px">Age
+          <input id="editAge" type="number" min="3" max="100" style="width:100%;margin-top:4px">
+        </label>
+        <label class="small" style="display:block;margin-bottom:12px">Admin notes <span style="opacity:.6">(private, only you see these)</span>
+          <textarea id="editNotes" rows="4" maxlength="500" placeholder="e.g. Struggles with tenses, joined Monday batch…" style="width:100%;margin-top:4px;resize:vertical"></textarea>
+        </label>
+        <p id="editStudentErr" class="err small"></p>
+        <div style="display:flex;gap:8px">
+          <button type="submit">Save changes</button>
+          <button type="button" id="cancelEditStudent" class="ghost">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <div id="userDetailModal" class="overlay" hidden>
     <div class="modal" style="max-width:780px;width:100%;max-height:90vh;overflow-y:auto;text-align:left">
@@ -301,6 +332,21 @@
     </div>
   </div>
 
+  <div id="enquiryModal" class="overlay" hidden>
+    <form id="enquiryForm" class="modal" novalidate>
+      <button type="button" id="enquiryClose" class="ghost modal-close" aria-label="Close" title="Close (Esc)">✕</button>
+      <div class="logo">✉️</div>
+      <h2>Send an enquiry</h2>
+      <p class="small">Ask us anything about Speakeasy Academy. We'll reply by email.</p>
+      <input id="enqName" placeholder="Your name" maxlength="80" autocomplete="name" required>
+      <input id="enqEmail" type="email" placeholder="Your email" maxlength="120" autocomplete="email" required>
+      <input id="enqPhone" type="tel" placeholder="Phone (optional)" maxlength="25" autocomplete="tel">
+      <textarea id="enqMessage" rows="4" placeholder="Your question or message" maxlength="2000" required></textarea>
+      <input id="enqWebsite" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" placeholder="Leave this empty">
+      <p id="enqMsg" class="small" role="status"></p>
+      <button type="submit" id="enqSend">Send enquiry</button>
+    </form>
+  </div>
   <script src="app.js"></script>
 </body>
 </html>

@@ -1044,6 +1044,82 @@ $("#gcLog").addEventListener("keydown", async (e) => {
 });
 document.querySelector('nav button[data-tab="groupchat"]').addEventListener("click", gcStart);
 
+// ---- Enquiry form (footer button) ----
+function openEnquiry() {
+  $("#enqMsg").textContent = "";
+  $("#enqMsg").className = "small";
+  if (student && !$("#enqName").value) $("#enqName").value = student.name;
+  $("#enquiryModal").hidden = false;
+  $("#enqName").focus();
+}
+function closeEnquiry() { $("#enquiryModal").hidden = true; }
+$("#enquiryBtn").onclick = openEnquiry;
+$("#enquiryClose").onclick = closeEnquiry;
+$("#enquiryModal").addEventListener("mousedown", (e) => { if (e.target.id === "enquiryModal") closeEnquiry(); }); // click outside the box
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#enquiryModal").hidden) closeEnquiry(); });
+$("#enquiryForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const msg = $("#enqMsg");
+  $("#enqSend").disabled = true;
+  msg.className = "small";
+  msg.textContent = "Sending…";
+  try {
+    const res = await fetch("/api/enquiry", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+      name: $("#enqName").value, email: $("#enqEmail").value, phone: $("#enqPhone").value, message: $("#enqMessage").value,
+      website: $("#enqWebsite").value, studentId: student?.id,
+    }) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Could not send your enquiry. Please try again.");
+    msg.className = "small ok";
+    msg.textContent = `✅ Thank you! Your enquiry was sent. We'll reply to ${$("#enqEmail").value.trim()}.`;
+    $("#enqMessage").value = "";
+  } catch (err) {
+    msg.className = "small err";
+    msg.textContent = err.message;
+  } finally {
+    $("#enqSend").disabled = false;
+  }
+};
+
+// ---- Admin: enquiries ----
+async function loadAdminEnquiries() {
+  const box = document.getElementById("adminEnq");
+  if (!box) return;
+  try {
+    const d = await adminReq("GET", "/api/admin/enquiries");
+    const when = (iso) => new Date(iso).toLocaleString();
+    box.innerHTML = (d.emailOn
+      ? '<p class="small">✅ Email alerts are on: every enquiry is also emailed to you.</p>'
+      : '<p class="small">ℹ️ Email alerts are off (SMTP is not set up). Enquiries are still saved here.</p>')
+      + (d.enquiries.length ? d.enquiries.map((e) => `
+      <div class="enq ${esc(e.status)}">
+        <div class="enq-top"><b>${esc(e.name)}</b>${e.studentName ? ` <span class="pill">student: ${esc(e.studentName)}</span>` : ""}<span class="small">${when(e.at)}</span></div>
+        <div class="small"><a href="mailto:${esc(e.email)}">${esc(e.email)}</a>${e.phone ? ` · <a href="tel:${esc(e.phone)}">${esc(e.phone)}</a>` : ""}${e.emailed ? " · emailed to you" : ""}</div>
+        <p class="enq-msg">${esc(e.message)}</p>
+        <div class="enq-actions">
+          <a class="chipbtn" href="mailto:${esc(e.email)}?subject=${encodeURIComponent("Re: your enquiry to Speakeasy Academy")}">↩ Reply</a>
+          <button class="ghost" data-enq="${e.status === "done" ? "reopen" : "done"}" data-eid="${e.id}">${e.status === "done" ? "↺ Reopen" : "✓ Mark done"}</button>
+          <button class="ghost danger" data-enq="delete" data-eid="${e.id}">🗑 Delete</button>
+        </div>
+      </div>`).join("") : '<p class="small">No enquiries yet.</p>');
+  } catch (err) {
+    box.innerHTML = `<p class="err">${esc(err.message)}</p>`;
+  }
+}
+document.getElementById("adminOut").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-enq]");
+  if (!b) return;
+  try {
+    if (b.dataset.enq === "delete") {
+      if (!confirm("Delete this enquiry?")) return;
+      await adminReq("DELETE", `/api/admin/enquiries/${b.dataset.eid}`);
+    } else {
+      await adminReq("POST", `/api/admin/enquiries/${b.dataset.eid}/status`, { status: b.dataset.enq === "done" ? "done" : "new" });
+    }
+    loadAdminEnquiries();
+  } catch (err) { alert(err.message); }
+});
+
 // ---- Time on site: heartbeat while the tab is visible ----
 const PING_EVERY = 15;
 setInterval(() => {
@@ -1072,7 +1148,11 @@ async function loadAdmin() {
         <div><h2 style="margin:0">Students</h2><p class="small" style="margin:2px 0 0">Last refreshed ${now}</p></div>
         <button class="ghost" onclick="loadAdmin()">↻ Refresh</button>
       </div>
+      ${d.storage?.persistent
+        ? '<div class="storage ok">💾 Student data is saved in the database, so it survives restarts and redeploys.</div>'
+        : `<div class="storage warn">⚠️ Student data is saved on this server's <b>temporary disk</b> and will be <b>erased</b> when the server restarts or redeploys. ${d.storage?.problem ? esc(d.storage.problem) + ". " : ""}Set <code>DATABASE_URL</code> (see the setup notes) to keep it permanently.</div>`}
       <div class="stats">
+        <div class="stat"><b>${d.newEnquiries ?? 0}</b><span>✉️ New enquiries</span></div>
         <div class="stat"><b>${d.totalUsers}</b><span>Total users</span></div>
         <div class="stat online-stat"><b>${d.onlineNow ?? 0}</b><span>🟢 Online now</span></div>
         <div class="stat"><b>${d.active24h}</b><span>Active (24h)</span></div>
@@ -1106,12 +1186,14 @@ async function loadAdmin() {
       </div>` : ""}
       <div class="card"><h3>Users</h3>
         <div class="tablewrap"><table>
-          <tr><th></th><th>Name</th><th>Age</th><th>Level</th><th>Time</th><th>Msgs</th><th>MCQ Tests</th><th>MCQ Avg</th><th>Hindi Tests</th><th>Hindi Avg</th><th>Grammar</th><th>Searches</th><th>Visits</th><th>Last seen</th><th>Chat</th></tr>
-          ${d.users.map((u) => `<tr><td title="${u.online ? "Online now" : "Offline"}"><span class="online-dot ${u.online ? "on" : ""}"></span></td><td><button class="link-btn" data-uid="${esc(u.id)}" data-uname="${esc(u.name)}">${esc(u.name)}</button></td><td>${u.age ?? "—"}</td><td>${esc(u.level)}</td><td>${fmtDur(u.timeSpent)}</td><td>${u.messages}</td><td>${u.tests}</td><td>${u.avgScore != null ? u.avgScore + "%" : "—"}</td><td>${u.trTests ?? 0}</td><td>${u.trAvgScore != null ? u.trAvgScore + "%" : "—"}</td><td>${u.grammarChecks ?? 0}</td><td>${u.searches ?? 0}</td><td>${u.visits}</td><td>${new Date(u.lastSeen).toLocaleString()}</td><td><button class="ghost mutebtn ${u.chatMuted ? "muted" : ""}" data-mute="${esc(u.id)}" data-muted="${u.chatMuted ? 1 : 0}">${u.chatMuted ? "🔇 Muted" : "Mute"}</button></td></tr>`).join("") || '<tr><td colspan="15" class="small">No users yet.</td></tr>'}
+          <tr><th></th><th>Name</th><th>Age</th><th>Level</th><th>Time</th><th>Msgs</th><th>MCQ Tests</th><th>MCQ Avg</th><th>Hindi Tests</th><th>Hindi Avg</th><th>Grammar</th><th>Searches</th><th>Visits</th><th>Last seen</th><th>Chat</th><th>Edit</th></tr>
+          ${d.users.map((u) => `<tr><td title="${u.online ? "Online now" : "Offline"}"><span class="online-dot ${u.online ? "on" : ""}"></span></td><td><button class="link-btn" data-uid="${esc(u.id)}" data-uname="${esc(u.name)}">${esc(u.name)}</button>${u.adminNotes ? ` <span title="${esc(u.adminNotes)}" style="cursor:help">📝</span>` : ""}</td><td>${u.age ?? "—"}</td><td>${esc(u.level)}</td><td>${fmtDur(u.timeSpent)}</td><td>${u.messages}</td><td>${u.tests}</td><td>${u.avgScore != null ? u.avgScore + "%" : "—"}</td><td>${u.trTests ?? 0}</td><td>${u.trAvgScore != null ? u.trAvgScore + "%" : "—"}</td><td>${u.grammarChecks ?? 0}</td><td>${u.searches ?? 0}</td><td>${u.visits}</td><td>${new Date(u.lastSeen).toLocaleString()}</td><td><button class="ghost mutebtn ${u.chatMuted ? "muted" : ""}" data-mute="${esc(u.id)}" data-muted="${u.chatMuted ? 1 : 0}">${u.chatMuted ? "🔇 Muted" : "Mute"}</button></td><td><button class="ghost" data-edit-uid="${esc(u.id)}" data-edit-name="${esc(u.name)}" data-edit-level="${esc(u.level)}" data-edit-age="${u.age ?? ""}" data-edit-notes="${esc(u.adminNotes || "")}">✏️ Edit</button></td></tr>`).join("") || '<tr><td colspan="16" class="small">No users yet.</td></tr>'}
         </table></div>
       </div>
-      <div class="card"><h3>👥 Group chat moderation</h3><div id="adminGc"><p class="small">Loading…</p></div></div>`;
+      <div class="card"><h3>👥 Group chat moderation</h3><div id="adminGc"><p class="small">Loading…</p></div></div>
+      <div class="card"><h3>✉️ Enquiries</h3><div id="adminEnq"><p class="small">Loading…</p></div></div>`;
     loadAdminChat();
+    loadAdminEnquiries();
   } catch (e) {
     if (e.status === 403) { adminKey = ""; sessionStorage.removeItem("adminKey"); $("#adminTab").hidden = true; }
     out.innerHTML = `<p class="err">${esc(e.message)}</p>`;
@@ -1159,6 +1241,11 @@ async function loadAdminChat() {
   }
 }
 document.getElementById("adminOut").addEventListener("click", async (e) => {
+  const editBtn = e.target.closest("[data-edit-uid]");
+  if (editBtn) {
+    openEditStudent(editBtn.dataset.editUid, editBtn.dataset.editName, editBtn.dataset.editLevel, editBtn.dataset.editAge, editBtn.dataset.editNotes);
+    return;
+  }
   const t = e.target.closest("[data-aroom],[data-agc],[data-adel],[data-amute],[data-aunmute],[data-mute]");
   if (!t) return;
   try {
@@ -1281,6 +1368,38 @@ $("#adminOut").addEventListener("click", (e) => {
 });
 $("#closeUserDetail").addEventListener("click", () => { $("#userDetailModal").hidden = true; });
 $("#userDetailModal").addEventListener("click", (e) => { if (e.target === $("#userDetailModal")) $("#userDetailModal").hidden = true; });
+
+// ---- Admin: edit student (level, age, notes) ----
+function openEditStudent(uid, name, level, age, notes) {
+  $("#editStudentTitle").textContent = `Edit — ${name}`;
+  $("#editStudentId").value = uid;
+  $("#editLevel").value = level || "intermediate";
+  $("#editAge").value = age || "";
+  $("#editNotes").value = notes || "";
+  $("#editStudentErr").textContent = "";
+  $("#editStudentModal").hidden = false;
+  $("#editLevel").focus();
+}
+function closeEditStudent() { $("#editStudentModal").hidden = true; }
+$("#closeEditStudent").addEventListener("click", closeEditStudent);
+$("#cancelEditStudent").addEventListener("click", closeEditStudent);
+$("#editStudentModal").addEventListener("click", (e) => { if (e.target === $("#editStudentModal")) closeEditStudent(); });
+$("#editStudentForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const id = $("#editStudentId").value;
+  const level = $("#editLevel").value;
+  const age = $("#editAge").value;
+  const adminNotes = $("#editNotes").value;
+  $("#editStudentErr").textContent = "";
+  try {
+    await adminReq("PATCH", `/api/admin/students/${encodeURIComponent(id)}`, { level, age: age ? Number(age) : undefined, adminNotes });
+    closeEditStudent();
+    toast("Student updated.");
+    loadAdmin();
+  } catch (err) {
+    $("#editStudentErr").textContent = err.message;
+  }
+});
 
 // ---- Hindi → English Translator ----
 document.getElementById("trExamples").onclick = (e) => {

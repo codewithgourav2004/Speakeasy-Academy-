@@ -661,3 +661,20 @@ nav button[hidden] { display:none !important; }
 @media (min-width:761px) {
   #speak:has(#listenBar:not([hidden])) .chatlog { height:calc(100vh - 440px); height:calc(100dvh - 440px); }
 }
+
+
+/* enquiry form + admin enquiries + storage banner */
+.enquiry-btn { display:inline-flex; align-items:center; gap:8px; margin:10px 0 4px; padding:9px 16px; border-radius:99px; font-weight:600; cursor:pointer; }
+.hp { position:absolute !important; left:-9999px; width:1px; height:1px; opacity:0; pointer-events:none; }
+#enquiryForm textarea { width:100%; min-height:100px; margin:0; }
+#enqMsg:empty { display:none; }
+#enqMsg.ok { color:var(--ok); } #enqMsg.err { color:var(--bad); }
+.storage { margin:0 0 14px; padding:10px 14px; border-radius:12px; font-size:.9rem; line-height:1.45; }
+.storage.ok { background:color-mix(in srgb,var(--ok) 12%,var(--card)); border:1px solid color-mix(in srgb,var(--ok) 40%,var(--line)); }
+.storage.warn { background:color-mix(in srgb,var(--bad) 12%,var(--card)); border:1px solid color-mix(in srgb,var(--bad) 45%,var(--line)); }
+.enq { border:1px solid var(--line); border-left:4px solid var(--brand); border-radius:12px; padding:10px 14px; margin:10px 0; background:var(--bg); }
+.enq.done { border-left-color:var(--ok); opacity:.72; }
+.enq-top { display:flex; flex-wrap:wrap; align-items:center; gap:8px; justify-content:space-between; }
+.enq-msg { white-space:pre-wrap; overflow-wrap:anywhere; margin:8px 0; }
+.enq-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.enq-actions .chipbtn { text-decoration:none; }

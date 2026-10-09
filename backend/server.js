@@ -5,6 +5,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import dotenv from "dotenv";
+import nodemailer from "nodemailer";
+import { initStore, readJson, writeJson, removeJson, flushStore, storeInfo } from "./store.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Local development: load backend/.env. On Render the variables come from the dashboard
@@ -12,10 +14,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, ".env") });
 const PORT = process.env.PORT || 5000;
 const MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
-const RESULTS_FILE = path.join(__dirname, "data", "results.json");
-const SEARCHES_FILE = path.join(__dirname, "data", "searches.json");
-const TR_RESULTS_FILE = path.join(__dirname, "data", "tr_results.json");
-const GRAMMAR_CHECKS_FILE = path.join(__dirname, "data", "grammar_checks.json");
+// Saved data (students, chats, scores...) goes in DATA_DIR. Set the DATA_DIR variable to use another folder,
+// for example a Render Persistent Disk. The question bank and other content files always stay in backend/data.
+const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(__dirname, "data");
+const RESULTS_FILE = path.join(DATA_DIR, "results.json");
+const SEARCHES_FILE = path.join(DATA_DIR, "searches.json");
+const TR_RESULTS_FILE = path.join(DATA_DIR, "tr_results.json");
+const GRAMMAR_CHECKS_FILE = path.join(DATA_DIR, "grammar_checks.json");
 const bank = JSON.parse(fs.readFileSync(path.join(__dirname, "data", "questions.json"), "utf8"));
 const TOPICS = Object.keys(bank);
 const hindiBank = JSON.parse(fs.readFileSync(path.join(__dirname, "data", "hindi_sentences.json"), "utf8"));
@@ -28,6 +33,7 @@ const client = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY, baseURL: process.env.OPENAI_BASE_URL || undefined, maxRetries: 0, timeout: 20000 })
   : null;
 const app = express();
+app.set("trust proxy", 1); // Render puts one proxy in front; this makes req.ip the visitor's real address
 app.use(express.json({ limit: "100kb" }));
 // Frontend lives next to backend/ in the repo (../Frontend). Fall back to other common spellings
 // so a case-sensitive Linux host still finds it.
@@ -115,13 +121,10 @@ Return ONLY JSON: {"reply": string, "corrections": [{"original": string, "correc
 Use an empty corrections array if the message is correct.`;
 
 // ---- Students: name-based profiles (no password) ----
-const DATA_DIR = path.join(__dirname, "data");
 const CHAT_DIR = path.join(DATA_DIR, "chats");
 const STUDENTS_FILE = path.join(DATA_DIR, "students.json");
 fs.mkdirSync(CHAT_DIR, { recursive: true });
 
-const readJson = (file, fallback) => (fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : fallback);
-const writeJson = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2));
 const slug = (name) => name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
 const LEVELS = ["beginner", "intermediate", "advanced"];
 
@@ -233,6 +236,7 @@ app.get("/api/admin/summary", requireAdmin, (_req, res) => {
       trAvgScore: tr ? Math.round(tr.totalPct / tr.count) : null,
       grammarChecks: grammarByStudent[s.id] || 0,
       chatMuted: !!s.chatMuted,
+      adminNotes: s.adminNotes || "",
     };
   }).sort((a, b) => new Date(b.lastSeen) - new Date(a.lastSeen));
 
@@ -246,6 +250,8 @@ app.get("/api/admin/summary", requireAdmin, (_req, res) => {
   const recentSearches = searches.slice(-50).reverse().map(({ name, word, at }) => ({ name, word, at }));
 
   res.json({
+    storage: storeInfo(),
+    newEnquiries: readJson(ENQUIRIES_FILE, []).filter((e) => e.status === "new").length,
     totalUsers: students.length,
     onlineNow: users.filter((u) => u.online).length,
     active24h: since(day),
@@ -280,7 +286,7 @@ app.get("/api/students/:id/grammar-history", requireStudent, (req, res) => {
 app.get("/api/students/:id/chat", requireStudent, (req, res) => res.json(readJson(chatFile(req.student.id), [])));
 
 app.delete("/api/students/:id/chat", requireStudent, (req, res) => {
-  fs.rmSync(chatFile(req.student.id), { force: true });
+  removeJson(chatFile(req.student.id));
   res.json({ ok: true });
 });
 
@@ -638,6 +644,20 @@ app.post("/api/admin/students/:id/mute", requireAdmin, (req, res) => {
   res.json({ id: s.id, chatMuted: s.chatMuted });
 });
 
+app.patch("/api/admin/students/:id", requireAdmin, (req, res) => {
+  const id = req.params.id;
+  if (!/^[a-z0-9-]{1,40}$/.test(id)) return res.status(400).json({ error: "Invalid student id" });
+  const students = readJson(STUDENTS_FILE, {});
+  const s = students[id];
+  if (!s) return res.status(404).json({ error: "Unknown student" });
+  if (LEVELS.includes(req.body.level)) s.level = req.body.level;
+  const age = Number.parseInt(req.body.age, 10);
+  if (Number.isInteger(age) && age >= 3 && age <= 100) s.age = age;
+  if (typeof req.body.adminNotes === "string") s.adminNotes = req.body.adminNotes.trim().slice(0, 500);
+  writeJson(STUDENTS_FILE, students);
+  res.json({ ok: true, student: s });
+});
+
 // Delete a message: the admin (admin key) can delete any; a student can delete only their own.
 app.delete("/api/groupchat/:room/:msgId", requireRoom, (req, res) => {
   const data = gcLoad();
@@ -740,9 +760,9 @@ app.post("/api/test/submit", requireStudent, (req, res) => {
     studentId: req.student.id, name: req.student.name, date: new Date().toISOString(),
     score, total: review.length, difficulty: s.difficulty, mode: s.mode, byTopic, byDifficulty,
   };
-  const all = fs.existsSync(RESULTS_FILE) ? JSON.parse(fs.readFileSync(RESULTS_FILE, "utf8")) : [];
+  const all = readJson(RESULTS_FILE, []);
   all.push(result);
-  fs.writeFileSync(RESULTS_FILE, JSON.stringify(all, null, 2));
+  writeJson(RESULTS_FILE, all);
   res.json({ ...result, review });
 });
 
@@ -831,6 +851,70 @@ app.post("/api/presentation/generate", requireStudent, wrap(async (req, res) => 
   res.json(result);
 }));
 
+// ---- Enquiries: a visitor asks a question; it is saved for the admin and emailed if SMTP is set up ----
+const ENQUIRIES_FILE = path.join(DATA_DIR, "enquiries.json");
+const enquiryTimes = new Map(); // ip -> times of recent enquiries (simple spam limit)
+const EMAIL_RE = /^[^\s@<>"',;:]+@[^\s@<>"',;:]+\.[^\s@<>"',;:]{2,}$/;
+const smtpReady = () => !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+
+async function emailEnquiry(e) {
+  if (!smtpReady()) return false;
+  const to = (process.env.ENQUIRY_TO || process.env.SMTP_USER).split(",").map((x) => x.trim()).filter(Boolean);
+  const port = Number(process.env.SMTP_PORT) || 587;
+  const transport = nodemailer.createTransport({
+    host: process.env.SMTP_HOST, port, secure: port === 465,
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    connectionTimeout: 10000, greetingTimeout: 10000, socketTimeout: 15000,
+    tls: { rejectUnauthorized: process.env.SMTP_ALLOW_SELF_SIGNED !== "true" },
+  });
+  await transport.sendMail({
+    from: process.env.ENQUIRY_FROM || `Speakeasy Academy <${process.env.SMTP_USER}>`,
+    to, replyTo: `${e.name.replace(/[<>"\r\n]/g, "")} <${e.email}>`,
+    subject: `New enquiry from ${e.name.replace(/[\r\n]/g, " ").slice(0, 60)}`,
+    text: `Name: ${e.name}\nEmail: ${e.email}\nPhone: ${e.phone || "-"}\nSigned-in student: ${e.studentName || "-"}\nReceived: ${e.at}\n\n${e.message}\n`,
+  });
+  return true;
+}
+
+app.post("/api/enquiry", wrap(async (req, res) => {
+  if (String(req.body.website || "").trim()) return res.json({ ok: true }); // hidden field: only bots fill it in
+  const clean = (v, n) => String(v ?? "").replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "").trim().slice(0, n);
+  const name = clean(req.body.name, 80), email = clean(req.body.email, 120), phone = clean(req.body.phone, 25), message = clean(req.body.message, 2000);
+  if (!name) return res.status(400).json({ error: "Please enter your name." });
+  if (!EMAIL_RE.test(email)) return res.status(400).json({ error: "Please enter a valid email address so we can reply." });
+  if (message.length < 5) return res.status(400).json({ error: "Please write your question (at least a few words)." });
+  const now = Date.now(), recent = (enquiryTimes.get(req.ip) || []).filter((t) => now - t < 3600e3);
+  if (recent.length >= 5 || (recent.length && now - recent[recent.length - 1] < 15000)) return res.status(429).json({ error: "Please wait a little before sending another enquiry." });
+  enquiryTimes.set(req.ip, [...recent, now]);
+  const student = getStudent(String(req.body.studentId || ""));
+  const all = readJson(ENQUIRIES_FILE, []);
+  const record = { id: all.reduce((m, x) => Math.max(m, x.id), 0) + 1, name, email, phone, message, studentName: student?.name || "", at: new Date().toISOString(), status: "new", emailed: false };
+  all.push(record);
+  writeJson(ENQUIRIES_FILE, all.slice(-1000));
+  // Saved first, so nothing is lost if email fails; the email is sent in the background.
+  emailEnquiry(record).then((sent) => {
+    if (!sent) return;
+    const list = readJson(ENQUIRIES_FILE, []); const r = list.find((x) => x.id === record.id);
+    if (r) { r.emailed = true; writeJson(ENQUIRIES_FILE, list); }
+  }).catch((e) => console.error("Could not email the enquiry:", e.message));
+  res.json({ ok: true });
+}));
+
+app.get("/api/admin/enquiries", requireAdmin, (_req, res) => {
+  res.json({ emailOn: smtpReady(), enquiries: readJson(ENQUIRIES_FILE, []).slice().reverse().slice(0, 200) });
+});
+app.post("/api/admin/enquiries/:eid/status", requireAdmin, (req, res) => {
+  const all = readJson(ENQUIRIES_FILE, []); const e = all.find((x) => x.id === parseInt(req.params.eid, 10));
+  if (!e) return res.status(404).json({ error: "Enquiry not found" });
+  e.status = req.body.status === "done" ? "done" : "new";
+  writeJson(ENQUIRIES_FILE, all);
+  res.json({ ok: true, status: e.status });
+});
+app.delete("/api/admin/enquiries/:eid", requireAdmin, (req, res) => {
+  writeJson(ENQUIRIES_FILE, readJson(ENQUIRIES_FILE, []).filter((x) => x.id !== parseInt(req.params.eid, 10)));
+  res.json({ ok: true });
+});
+
 // ---- Fallbacks (must stay AFTER every API route) ----
 // Unknown /api/... paths get a JSON 404 instead of the web page.
 app.use("/api", (_req, res) => res.status(404).json({ error: "Not found" }));
@@ -839,6 +923,9 @@ app.use((req, res, next) => {
   if (req.method !== "GET" || !FRONTEND_INDEX) return next();
   res.sendFile(FRONTEND_INDEX);
 });
+
+await initStore({ dataDir: DATA_DIR, databaseUrl: process.env.DATABASE_URL });
+for (const sig of ["SIGTERM", "SIGINT"]) process.on(sig, async () => { await flushStore().catch(() => {}); process.exit(0); }); // save pending changes before Render restarts us
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`English App listening on port ${PORT} (http://localhost:${PORT} when running locally)`);

@@ -23,9 +23,22 @@ const LABELS = { tense: "Tenses", modals: "Modals", passive: "Passive voice", na
   relatives: "Relative clauses", comparison: "Comparison", conjunctions: "Conjunctions", tags: "Question tags",
   translation: "Hindi → English" };
 
-async function api(path, body, method) {
+// If the server no longer knows this student (e.g. its data was moved or reset), sign them in again quietly
+// with the details saved in this browser instead of throwing them back to the sign-in box.
+let reLogin = null;
+function quietReLogin() {
+  if (!student?.name) return Promise.resolve(false);
+  reLogin ||= fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: student.name, age: student.age, level: student.level, phone: student.phone, email: student.email, city: student.city }) })
+    .then(async (r) => { const d = await r.json().catch(() => ({})); if (!r.ok || !d.student) return false; student = d.student; localStorage.setItem("student", JSON.stringify(d.student)); return true; })
+    .catch(() => false)
+    .finally(() => setTimeout(() => (reLogin = null), 1000));
+  return reLogin;
+}
+
+async function api(path, body, method, retried) {
   const res = await fetch(path, body ? { method: method || "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : { method });
   const data = await res.json().catch(() => ({}));
+  if (res.status === 401 && !retried && path.startsWith("/api/") && !path.startsWith("/api/login") && await quietReLogin()) return api(path.replace(/studentId=[^&]*/, `studentId=${student.id}`), body && body.studentId ? { ...body, studentId: student.id } : body, method, true);
   if (res.status === 401) showWelcome(data.error);
   if (res.status === 403 && (data.code === "blocked" || data.code === "limit") && student) showLock(data.access || { code: data.code, message: data.error });
   if (!res.ok) throw new Error(data.error || res.statusText);

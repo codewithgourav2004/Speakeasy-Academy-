@@ -678,3 +678,5 @@ nav button[hidden] { display:none !important; }
 .enq-msg { white-space:pre-wrap; overflow-wrap:anywhere; margin:8px 0; }
 .enq-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
 .enq-actions .chipbtn { text-decoration:none; }
+
+.enq a:not(.chipbtn) { color:var(--brand); }

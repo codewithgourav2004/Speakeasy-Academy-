@@ -72,7 +72,7 @@ async function enter(s) {
 $("#welcomeForm").onsubmit = async (e) => {
   e.preventDefault();
   try {
-    const { student: s, isNew } = await api("/api/login", { name: $("#nameInput").value, age: $("#ageInput").value, level: $("#levelInput").value });
+    const { student: s, isNew } = await api("/api/login", { name: $("#nameInput").value, age: $("#ageInput").value, level: $("#levelInput").value, phone: $("#phoneInput").value, email: $("#emailInput").value, city: $("#cityInput").value });
     await enter(s);
     if (!isNew) toast(`Welcome back, ${s.name}!`);
   } catch (err) {
@@ -1186,8 +1186,8 @@ async function loadAdmin() {
       </div>` : ""}
       <div class="card"><h3>Users</h3>
         <div class="tablewrap"><table>
-          <tr><th></th><th>Name</th><th>Age</th><th>Level</th><th>Time</th><th>Msgs</th><th>MCQ Tests</th><th>MCQ Avg</th><th>Hindi Tests</th><th>Hindi Avg</th><th>Grammar</th><th>Searches</th><th>Visits</th><th>Last seen</th><th>Chat</th><th>Edit</th></tr>
-          ${d.users.map((u) => `<tr><td title="${u.online ? "Online now" : "Offline"}"><span class="online-dot ${u.online ? "on" : ""}"></span></td><td><button class="link-btn" data-uid="${esc(u.id)}" data-uname="${esc(u.name)}">${esc(u.name)}</button>${u.adminNotes ? ` <span title="${esc(u.adminNotes)}" style="cursor:help">📝</span>` : ""}</td><td>${u.age ?? "—"}</td><td>${esc(u.level)}</td><td>${fmtDur(u.timeSpent)}</td><td>${u.messages}</td><td>${u.tests}</td><td>${u.avgScore != null ? u.avgScore + "%" : "—"}</td><td>${u.trTests ?? 0}</td><td>${u.trAvgScore != null ? u.trAvgScore + "%" : "—"}</td><td>${u.grammarChecks ?? 0}</td><td>${u.searches ?? 0}</td><td>${u.visits}</td><td>${new Date(u.lastSeen).toLocaleString()}</td><td><button class="ghost mutebtn ${u.chatMuted ? "muted" : ""}" data-mute="${esc(u.id)}" data-muted="${u.chatMuted ? 1 : 0}">${u.chatMuted ? "🔇 Muted" : "Mute"}</button></td><td><button class="ghost" data-edit-uid="${esc(u.id)}" data-edit-name="${esc(u.name)}" data-edit-level="${esc(u.level)}" data-edit-age="${u.age ?? ""}" data-edit-notes="${esc(u.adminNotes || "")}">✏️ Edit</button></td></tr>`).join("") || '<tr><td colspan="16" class="small">No users yet.</td></tr>'}
+          <tr><th></th><th>Name</th><th>Age</th><th>Level</th><th>City</th><th>Phone</th><th>Email</th><th>Time</th><th>Msgs</th><th>MCQ Tests</th><th>MCQ Avg</th><th>Hindi Tests</th><th>Hindi Avg</th><th>Grammar</th><th>Searches</th><th>Visits</th><th>Joined</th><th>Last seen</th><th>Chat</th><th>Edit</th></tr>
+          ${d.users.map((u) => `<tr><td title="${u.online ? "Online now" : "Offline"}"><span class="online-dot ${u.online ? "on" : ""}"></span></td><td><button class="link-btn" data-uid="${esc(u.id)}" data-uname="${esc(u.name)}">${esc(u.name)}</button>${u.adminNotes ? ` <span title="${esc(u.adminNotes)}" style="cursor:help">📝</span>` : ""}</td><td>${u.age ?? "—"}</td><td>${esc(u.level)}</td><td>${esc(u.city || "—")}</td><td>${u.phone ? `<a href="tel:${esc(u.phone)}">${esc(u.phone)}</a>` : "—"}</td><td>${u.email ? `<a href="mailto:${esc(u.email)}">${esc(u.email)}</a>` : "—"}</td><td>${fmtDur(u.timeSpent)}</td><td>${u.messages}</td><td>${u.tests}</td><td>${u.avgScore != null ? u.avgScore + "%" : "—"}</td><td>${u.trTests ?? 0}</td><td>${u.trAvgScore != null ? u.trAvgScore + "%" : "—"}</td><td>${u.grammarChecks ?? 0}</td><td>${u.searches ?? 0}</td><td>${u.visits}</td><td>${new Date(u.created).toLocaleDateString()}</td><td>${new Date(u.lastSeen).toLocaleString()}</td><td><button class="ghost mutebtn ${u.chatMuted ? "muted" : ""}" data-mute="${esc(u.id)}" data-muted="${u.chatMuted ? 1 : 0}">${u.chatMuted ? "🔇 Muted" : "Mute"}</button></td><td><button class="ghost" data-edit-uid="${esc(u.id)}" data-edit-name="${esc(u.name)}" data-edit-level="${esc(u.level)}" data-edit-age="${u.age ?? ""}" data-edit-notes="${esc(u.adminNotes || "")}">✏️ Edit</button></td></tr>`).join("") || '<tr><td colspan="20" class="small">No users yet.</td></tr>'}
         </table></div>
       </div>
       <div class="card"><h3>👥 Group chat moderation</h3><div id="adminGc"><p class="small">Loading…</p></div></div>
@@ -1326,6 +1326,26 @@ async function openUserDetail(uid, uname) {
     const d = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(d.error || res.statusText);
     let html = "";
+
+    if (d.profile) {
+      const p = d.profile;
+      const row = (label, val) => val ? `<div class="statrow"><span class="small" style="opacity:.65">${label}</span><span>${val}</span></div>` : "";
+      html += `<div class="card" style="margin-bottom:16px">
+        <h3 style="margin:0 0 10px">Profile</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px">
+          ${row("Level", `<b>${esc(p.level)}</b>`)}
+          ${row("Age", p.age ?? null)}
+          ${row("City", esc(p.city))}
+          ${row("Phone", p.phone ? `<a href="tel:${esc(p.phone)}">${esc(p.phone)}</a>` : "")}
+          ${row("Email", p.email ? `<a href="mailto:${esc(p.email)}">${esc(p.email)}</a>` : "")}
+          ${row("Joined", new Date(p.created).toLocaleDateString())}
+          ${row("Visits", p.visits)}
+          ${row("Time on site", fmtDur(p.timeSpent))}
+          ${row("Last seen", new Date(p.lastSeen).toLocaleString())}
+        </div>
+        ${p.adminNotes ? `<div style="margin-top:10px"><span class="small" style="opacity:.65">Admin notes</span><p style="margin:4px 0 0">${esc(p.adminNotes)}</p></div>` : ""}
+      </div>`;
+    }
 
     html += `<h3>Grammar MCQ Tests (${d.mcq.length})</h3>`;
     if (d.mcq.length) {

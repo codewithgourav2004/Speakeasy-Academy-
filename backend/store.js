@@ -21,7 +21,7 @@ const dirty = new Set(); // keys waiting to be written to the database
 let timer = null;
 
 // Files that hold data created while the app runs. Everything else (questions, topics...) stays on disk.
-const RUNTIME = [/^(students|results|tr_results|searches|grammar_checks|groupchat|enquiries)\.json$/, /^chats\/[a-z0-9-]+\.json$/];
+const RUNTIME = [/^(students|results|tr_results|searches|grammar_checks|groupchat|enquiries)\.json$/, /^chats\/[a-z0-9-]+\.json$/, /^usage\/(\d{4}-\d{2}-\d{2}|backfill)\.json$/];
 const keyOf = (file) => path.relative(DATA_DIR, file).split(path.sep).join("/");
 const isRuntime = (key) => RUNTIME.some((re) => re.test(key));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -35,8 +35,8 @@ export async function initStore({ dataDir, databaseUrl, poolFactory } = {}) {
       pool = poolFactory ? poolFactory() : new pg.Pool({ connectionString: databaseUrl, ssl: local ? false : { rejectUnauthorized: false }, max: 4, connectionTimeoutMillis: 8000 });
       pool.on?.("error", (e) => console.error("Database connection problem:", e.message));
       // Create the table only if it is missing (IF NOT EXISTS keeps two servers starting together safe).
-      try { await pool.query("SELECT 1 FROM app_files LIMIT 1"); }
-      catch { await pool.query("CREATE TABLE IF NOT EXISTS app_files (key text PRIMARY KEY, value text NOT NULL, updated_at timestamptz NOT NULL DEFAULT now())"); }
+      const exists = await pool.query("SELECT 1 FROM information_schema.tables WHERE table_name = 'app_files'");
+      if (!exists.rows.length) await pool.query("CREATE TABLE IF NOT EXISTS app_files (key text PRIMARY KEY, value text NOT NULL, updated_at timestamptz NOT NULL DEFAULT now())");
       const { rows } = await pool.query("SELECT key, value FROM app_files");
       mem.clear();
       for (const r of rows) mem.set(r.key, r.value);

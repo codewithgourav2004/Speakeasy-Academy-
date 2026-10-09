@@ -20,7 +20,8 @@ All grammar topics covered by the Speak coach, Grammar Checker, Translator and T
 | **Translate** | Hindi → English with word-by-word table and sentence-type classification; also a Hindi writing test graded 0-2 per sentence | yes |
 | **Progress** | Messages, corrections, tests, accuracy by topic and by difficulty, most common mistakes | no |
 | **Dictionary** | Definitions and synonyms (dictionaryapi.dev, with Datamuse as a fallback); searches are logged for the admin | no |
-| **Admin** | Password-protected: users, ages, time on site, tests, searches, group-chat moderation | no |
+| **Admin** | Password-protected: every student who has logged in (age, level, time on site, tests, searches), enquiries, group-chat moderation, and a banner showing whether data is stored permanently | no |
+| **Enquiry form** | "✉️ Send an enquiry" button in the footer. Saved for the admin and optionally emailed (SMTP) | no |
 
 ## Coaching rules (all AI modules)
 - Be encouraging and brief. Explain the rule, not just the answer.
@@ -374,13 +375,18 @@ npm run dev        # same but auto-restarts on file changes
 | `OPENAI_FALLBACK_MODEL` | One or more backup models, comma-separated (e.g. `gemini-flash-latest`), tried in order when the main model is overloaded (429/5xx), retired (404) or times out |
 | `ADMIN_PASSWORD` | Enables the Admin tab. If unset, admin is disabled. |
 | `PORT` | Default 5000 locally. Render sets it automatically. |
+| `DATABASE_URL` | Postgres connection string (free at neon.tech or Supabase). **Set this on Render**; it keeps students, chats, scores, group chat and enquiries across restarts and redeploys. Without it they are saved as files, which a temporary disk loses. |
+| `DATA_DIR` | Optional folder for saved data (for example a Render Persistent Disk at `/var/data`). Question and topic files always stay in `backend/data`. |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `ENQUIRY_TO` | Optional. When set, every enquiry is also emailed to `ENQUIRY_TO`. Gmail: `smtp.gmail.com`, 587, your address, and a 16-character App password. `ENQUIRY_FROM` sets the sender name. |
 
 Notes:
 - Without an AI key only the Speak, Grammar, Interview and Translate features fail. Tests, Discuss, Group Chat, Dictionary, Progress and Admin still work.
 - Free tiers have request limits and can return 429 or 503 ("high demand"). Each attempt times out after 20 s. The server tries every model in order, waits about a second, and makes one more pass before giving up. A bad key stops immediately. Students then see a short message, not the provider's raw error.
 - Model names get retired (for example `gemini-2.0-flash`). `gemini-flash-lite-latest` and `gemini-flash-latest` are aliases that follow the current model. If the message says "The AI model isn't available", update `OPENAI_MODEL` / `OPENAI_FALLBACK_MODEL`.
 - On Gemini free tiers, submitted text may be used by the provider to improve its products. Tell students, or use a paid key.
-- The app stores data in JSON files under `backend/data/`: `students.json`, `chats/`, `results.json`, `groupchat.json`, `searches.json`, plus the content files `questions.json`, `discussion.json` and `hindi_sentences.json`. Back these up before moving the app.
+- **Where data lives:** with `DATABASE_URL` set, saved data (students, chats, scores, searches, group chat, enquiries) is kept in a Postgres table `app_files`, one row per former file, and loaded into memory at start. Changes are written within a fraction of a second and again on shutdown. Without it, the same data is saved as JSON files in `DATA_DIR` (default `backend/data/`): `students.json`, `chats/`, `results.json`, `tr_results.json`, `groupchat.json`, `searches.json`, `grammar_checks.json`, `enquiries.json`. The content files `questions.json`, `discussion.json` and `hindi_sentences.json` always come from the repository.
+- If the database cannot be reached at start, the site still starts, falls back to files, and the Admin tab shows a red warning that data is not permanent.
+- `IMPORT_LOCAL_DATA=true` (one time, with an empty database) copies existing local JSON files into the database.
 
 ### Students and privacy
 - A student signs in with a **name, age and level**. There is no password: anyone who types the same name gets that student's data. Use this only for a classroom or demo.
@@ -399,7 +405,7 @@ Notes:
 ### Deploying
 - **One Render Web Service (simplest):** `render.yaml` describes it. Root Directory `backend`, build `npm install`, start `node server.js`. The server also serves the `Frontend` folder, so one address serves both the page and the API. Set the variables from the table above in the Render dashboard; they are not in git.
 - **Optional Vercel frontend:** `Frontend/vercel.json` forwards `/api/*` to the Render address, so the page code needs no changes. In Vercel set Root Directory to `Frontend`, Framework Preset *Other*, and leave Install and Build commands empty. Update the address in `vercel.json` if the Render URL changes.
-- **Free Render plan:** the service sleeps when idle (the first request can take a minute) and its disk is wiped on every deploy, so student data is lost. Keeping it needs a paid plan with a Persistent Disk, or a database.
+- **Free Render plan:** the service sleeps when idle (the first request can take a minute) and its disk is wiped on every restart and deploy. **Student data is lost unless `DATABASE_URL` is set.** Setup: create a free project at neon.tech, copy the connection string (it ends in `?sslmode=require`), add it to the Render service as `DATABASE_URL`, redeploy. The Admin tab then shows "💾 Student data is saved in the database".
 - **Public repository warning:** files committed before `.gitignore` listed them stay in git history. If student files were committed, run `git rm --cached` on them and make the repository private.
 
 ### Main API routes
@@ -407,5 +413,6 @@ Notes:
 - AI: `POST /api/chat`, `POST /api/grammar`, `POST /api/translate`, `POST /api/interview/{start,respond}`, `POST /api/presentation/generate`
 - Tests: `GET /api/topics`, `GET /api/test`, `POST /api/test/submit`, `GET /api/results`, `GET /api/translate-test`, `POST /api/translate-test/submit`, `GET /api/tr-results`
 - Content and logging: `GET /api/discussion`, `POST /api/log/search`
+- Enquiries: `POST /api/enquiry` (public; hidden spam field, 5 per hour per visitor); admin: `GET /api/admin/enquiries`, `POST /api/admin/enquiries/:eid/status`, `DELETE /api/admin/enquiries/:eid`
 - Group chat: `GET|POST /api/groupchat/:room`, `PATCH /api/groupchat/:room/:msgId` (edit own), `POST /api/groupchat/:room/:msgId/react`, `DELETE /api/groupchat/:room/:msgId` (own message; the admin key also works, used by the Admin tab)
 - Admin (header `x-admin-key`): `GET /api/admin/summary`, `GET /api/admin/groupchat`, `POST /api/admin/groupchat/enabled`, `POST /api/admin/groupchat/:room/announce`, `DELETE /api/admin/groupchat/:room`, `POST /api/admin/students/:id/mute`, `GET /api/admin/users/:id/tests`

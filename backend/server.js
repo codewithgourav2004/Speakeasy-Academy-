@@ -155,8 +155,15 @@ app.post("/api/login", (req, res) => {
   students[id].age = age;
   students[id].visits = (students[id].visits || 0) + 1;
   if (LEVELS.includes(req.body.level)) students[id].level = req.body.level;
+  const phone = String(req.body.phone || "").trim().slice(0, 20);
+  const email = String(req.body.email || "").trim().toLowerCase().slice(0, 100);
+  const city = String(req.body.city || "").trim().slice(0, 40);
+  if (phone) students[id].phone = phone;
+  if (email) students[id].email = email;
+  if (city) students[id].city = city;
   students[id].lastSeen = now;
   writeJson(STUDENTS_FILE, students);
+  track(id, "l");
   res.json({ student: students[id], isNew });
 });
 
@@ -173,6 +180,7 @@ app.post("/api/students/:id/ping", requireStudent, (req, res) => {
   s.lastPing = now;
   s.lastSeen = new Date(now).toISOString();
   writeJson(STUDENTS_FILE, students);
+  track(req.student.id, "s", credit);
   res.json({ ok: true });
 });
 
@@ -194,6 +202,7 @@ app.post("/api/log/search", requireStudent, (req, res) => {
   searches.push({ studentId: req.student.id, name: req.student.name, word, at: new Date().toISOString() });
   if (searches.length > 5000) searches.splice(0, searches.length - 5000);
   writeJson(SEARCHES_FILE, searches);
+  track(req.student.id, "d");
   res.json({ ok: true });
 });
 
@@ -225,7 +234,7 @@ app.get("/api/admin/summary", requireAdmin, (_req, res) => {
     const chat = readJson(chatFile(s.id), []);
     const tr = trByStudent[s.id];
     return {
-      id: s.id, name: s.name, age: s.age ?? null, level: s.level, created: s.created, lastSeen: s.lastSeen, visits: s.visits || 1,
+      id: s.id, name: s.name, age: s.age ?? null, level: s.level, phone: s.phone || "", email: s.email || "", city: s.city || "", created: s.created, lastSeen: s.lastSeen, visits: s.visits || 1,
       online: Date.now() - new Date(s.lastSeen).getTime() < 60000,
       timeSpent: Math.round(s.timeSpent || 0),
       messages: chat.filter((m) => m.role === "user").length,
@@ -251,6 +260,7 @@ app.get("/api/admin/summary", requireAdmin, (_req, res) => {
 
   res.json({
     storage: storeInfo(),
+    activeToday: Object.keys(readJson(usageFile(dayKey()), {})).length,
     newEnquiries: readJson(ENQUIRIES_FILE, []).filter((e) => e.status === "new").length,
     totalUsers: students.length,
     onlineNow: users.filter((u) => u.online).length,
@@ -273,10 +283,12 @@ app.get("/api/admin/summary", requireAdmin, (_req, res) => {
 
 app.get("/api/admin/users/:id/tests", requireAdmin, (req, res) => {
   const id = req.params.id;
+  const s = getStudent(id);
   const mcq = readJson(RESULTS_FILE, []).filter((r) => r.studentId === id);
   const tr = readJson(TR_RESULTS_FILE, []).filter((r) => r.studentId === id);
   const grammar = readJson(GRAMMAR_CHECKS_FILE, []).filter((r) => r.studentId === id);
-  res.json({ mcq, tr, grammar });
+  const profile = s ? { name: s.name, age: s.age ?? null, level: s.level, phone: s.phone || "", email: s.email || "", city: s.city || "", created: s.created, lastSeen: s.lastSeen, visits: s.visits || 1, timeSpent: Math.round(s.timeSpent || 0), adminNotes: s.adminNotes || "" } : null;
+  res.json({ profile, mcq, tr, grammar });
 });
 
 app.get("/api/students/:id/grammar-history", requireStudent, (req, res) => {
@@ -337,6 +349,7 @@ app.post("/api/chat", requireStudent, wrap(async (req, res) => {
   const at = new Date().toISOString();
   saved.push({ role: "user", content: text, corrections, at }, { role: "assistant", content: reply, at });
   writeJson(chatFile(req.student.id), saved.slice(-500));
+  track(req.student.id, "m");
   res.json({ reply, corrections });
 }));
 
@@ -373,6 +386,7 @@ app.post("/api/grammar", wrap(async (req, res) => {
     checks.push({ studentId: student.id, name: student.name, text: text.slice(0, 200), errorCount, errorTypes, at: new Date().toISOString() });
     if (checks.length > 10000) checks.splice(0, checks.length - 10000);
     writeJson(GRAMMAR_CHECKS_FILE, checks);
+    track(student.id, "g");
   }
   res.json(result);
 }));
@@ -557,6 +571,7 @@ app.post("/api/groupchat/:room", requireRoom, requireStudent, (req, res) => {
   gcLastPost.set(req.student.id, Date.now());
   const data = gcLoad();
   const msg = { id: data.nextId++, studentId: req.student.id, name: req.student.name, text, at: new Date().toISOString() };
+  track(req.student.id, "c");
   data.rooms[req.params.room] = [...(data.rooms[req.params.room] || []), msg].slice(-GC_MAX_PER_ROOM);
   writeJson(GC_FILE, data);
   res.json(gcView(msg, req.student.id));
@@ -763,6 +778,7 @@ app.post("/api/test/submit", requireStudent, (req, res) => {
   const all = readJson(RESULTS_FILE, []);
   all.push(result);
   writeJson(RESULTS_FILE, all);
+  track(req.student.id, "t");
   res.json({ ...result, review });
 });
 
@@ -817,6 +833,7 @@ app.post("/api/translate-test/submit", requireStudent, wrap(async (req, res) => 
   const all = readJson(TR_RESULTS_FILE, []);
   all.push(result);
   writeJson(TR_RESULTS_FILE, all);
+  track(req.student.id, "h");
   res.json({ ...result, percentage: Math.round((score / maxScore) * 100), review });
 }));
 
@@ -850,6 +867,88 @@ app.post("/api/presentation/generate", requireStudent, wrap(async (req, res) => 
   const result = parseJson(await askAI(PRESENTATION_GEN_SYSTEM, [{ role: "user", content: topic }], 900));
   res.json(result);
 }));
+
+// ---- Daily usage: what each student did on each day (one small file per day) ----
+// Short field names keep the files tiny: s seconds on site, l sign-ins, m Speak messages, t grammar tests,
+// h Hindi writing tests, g grammar checks, d dictionary searches, c group-chat messages.
+let USAGE_TZ = process.env.ADMIN_TZ || "Asia/Kolkata"; // the time zone that decides where a "day" starts
+let dayFormat;
+try { dayFormat = new Intl.DateTimeFormat("en-CA", { timeZone: USAGE_TZ, year: "numeric", month: "2-digit", day: "2-digit" }); }
+catch { USAGE_TZ = "UTC"; dayFormat = new Intl.DateTimeFormat("en-CA", { timeZone: "UTC", year: "numeric", month: "2-digit", day: "2-digit" }); }
+const dayKey = (d = new Date()) => dayFormat.format(d); // "2026-10-09"
+const usageFile = (day) => path.join(DATA_DIR, "usage", `${day}.json`);
+
+function track(studentId, field, amount = 1) {
+  if (!studentId || !(amount > 0)) return;
+  try {
+    const file = usageFile(dayKey());
+    const rows = readJson(file, {});
+    const row = (rows[studentId] ??= {});
+    row[field] = Math.round(((row[field] || 0) + amount) * 10) / 10;
+    writeJson(file, rows);
+  } catch (e) { console.error("Could not record usage:", e.message); } // never break the student's request
+}
+
+// The first time this runs, rebuild past days from data that already has dates (tests, chats, searches...).
+// Time on site was never recorded per day before, so it only counts from now on.
+function backfillUsage() {
+  const marker = path.join(DATA_DIR, "usage", "backfill.json");
+  if (readJson(marker, null)) return;
+  const acc = {};
+  const bump = (iso, id, field) => {
+    const t = new Date(iso);
+    if (!id || isNaN(t)) return;
+    const row = ((acc[dayKey(t)] ??= {})[id] ??= {});
+    row[field] = (row[field] || 0) + 1;
+  };
+  const students = readJson(STUDENTS_FILE, {});
+  for (const s of Object.values(students)) bump(s.created, s.id, "l");
+  for (const r of readJson(RESULTS_FILE, [])) bump(r.date, r.studentId, "t");
+  for (const r of readJson(TR_RESULTS_FILE, [])) bump(r.date, r.studentId, "h");
+  for (const g of readJson(GRAMMAR_CHECKS_FILE, [])) bump(g.at, g.studentId, "g");
+  for (const x of readJson(SEARCHES_FILE, [])) bump(x.at, x.studentId, "d");
+  for (const id of Object.keys(students)) for (const m of readJson(chatFile(id), [])) if (m.role === "user") bump(m.at, id, "m");
+  for (const room of Object.values(readJson(GC_FILE, { rooms: {} }).rooms || {})) for (const m of room) if (!m.admin) bump(m.at, m.studentId, "c");
+  for (const [day, rows] of Object.entries(acc)) writeJson(usageFile(day), { ...rows, ...readJson(usageFile(day), {}) });
+  writeJson(marker, { done: true, at: new Date().toISOString(), days: Object.keys(acc).length });
+  console.log(`Rebuilt daily usage for ${Object.keys(acc).length} past day(s) from saved data.`);
+}
+
+function lastDays(n) { // today and the n-1 days before it, oldest first
+  const seen = new Set(), out = [];
+  for (let i = n - 1; i >= 0; i--) { const k = dayKey(new Date(Date.now() - i * 86400e3)); if (!seen.has(k)) { seen.add(k); out.push(k); } }
+  return out;
+}
+const usageTotals = (r) => ({ seconds: Math.round(r.s || 0), logins: r.l || 0, messages: r.m || 0, tests: r.t || 0, trTests: r.h || 0, grammar: r.g || 0, searches: r.d || 0, chat: r.c || 0 });
+
+// Day-by-day totals for the last N days, for everyone or for one student (?student=<id>).
+app.get("/api/admin/usage", requireAdmin, (req, res) => {
+  const days = Math.min(Math.max(parseInt(req.query.days, 10) || 30, 1), 365);
+  const only = String(req.query.student || "");
+  const out = lastDays(days).map((date) => {
+    const rows = readJson(usageFile(date), {});
+    const sum = { date, activeUsers: 0, seconds: 0, logins: 0, messages: 0, tests: 0, trTests: 0, grammar: 0, searches: 0, chat: 0 };
+    for (const [id, r] of Object.entries(rows)) {
+      if (only && id !== only) continue;
+      const t = usageTotals(r);
+      sum.activeUsers++;
+      for (const k of Object.keys(t)) sum[k] += t[k];
+    }
+    return sum;
+  });
+  const students = Object.values(readJson(STUDENTS_FILE, {})).map((s) => ({ id: s.id, name: s.name })).sort((a, b) => a.name.localeCompare(b.name));
+  res.json({ tz: USAGE_TZ, today: dayKey(), days: out, students });
+});
+
+// Who was active on one day, and what each of them did.
+app.get("/api/admin/usage/:date", requireAdmin, (req, res) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(req.params.date)) return res.status(400).json({ error: "Use a date like 2026-10-09." });
+  const students = readJson(STUDENTS_FILE, {});
+  const list = Object.entries(readJson(usageFile(req.params.date), {}))
+    .map(([id, r]) => ({ id, name: students[id]?.name || id, ...usageTotals(r) }))
+    .sort((a, b) => b.seconds - a.seconds || a.name.localeCompare(b.name));
+  res.json({ date: req.params.date, students: list });
+});
 
 // ---- Enquiries: a visitor asks a question; it is saved for the admin and emailed if SMTP is set up ----
 const ENQUIRIES_FILE = path.join(DATA_DIR, "enquiries.json");
@@ -925,6 +1024,7 @@ app.use((req, res, next) => {
 });
 
 await initStore({ dataDir: DATA_DIR, databaseUrl: process.env.DATABASE_URL });
+backfillUsage();
 for (const sig of ["SIGTERM", "SIGINT"]) process.on(sig, async () => { await flushStore().catch(() => {}); process.exit(0); }); // save pending changes before Render restarts us
 
 app.listen(PORT, "0.0.0.0", () => {

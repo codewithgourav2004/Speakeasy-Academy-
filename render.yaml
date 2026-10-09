@@ -19,3 +19,15 @@ services:
         sync: false          # e.g. gemini-flash-latest
       - key: ADMIN_PASSWORD
         sync: false          # set this in the Render dashboard
+      - key: DATABASE_URL
+        sync: false          # Postgres connection string (free: neon.tech). Keeps students, chats and scores across restarts.
+      - key: SMTP_HOST
+        sync: false          # optional, for enquiry emails (Gmail: smtp.gmail.com)
+      - key: SMTP_PORT
+        sync: false          # 587
+      - key: SMTP_USER
+        sync: false          # your Gmail address
+      - key: SMTP_PASS
+        sync: false          # a Gmail "App password"
+      - key: ENQUIRY_TO
+        sync: false          # where enquiry emails are sent

@@ -20,8 +20,8 @@ All grammar topics covered by the Speak coach, Grammar Checker, Translator and T
 | **Translate** | Hindi → English with word-by-word table and sentence-type classification; also a Hindi writing test graded 0-2 per sentence | yes |
 | **Progress** | Messages, corrections, tests, accuracy by topic and by difficulty, most common mistakes | no |
 | **Dictionary** | Definitions and synonyms (dictionaryapi.dev, with Datamuse as a fallback); searches are logged for the admin | no |
-| **Admin** | Password-protected: every student who has logged in (age, level, time on site, tests, searches), enquiries, group-chat moderation, and a banner showing whether data is stored permanently | no |
-| **Enquiry form** | "✉️ Send an enquiry" button in the footer. Saved for the admin and optionally emailed (SMTP) | no |
+| **Admin** | Password-protected dashboard in five tabs: **Overview** (grouped numbers, age groups, levels, searches), **Students** (search, sort, filter; age, level, city, contact, time, tests; edit, notes, mute), **Daily usage** (day-by-day chart and table, drill into any day or one student), **Enquiries**, **Group chat** moderation. A banner shows whether data is stored permanently | no |
+| **Enquiry form** | "✉️ Send an enquiry" button in the footer. Pre-fills name, email and phone from the signed-in student's profile. On success shows a confirmation and auto-closes after 3 s. Saved for the admin and optionally emailed (SMTP) | no |
 
 ## Coaching rules (all AI modules)
 - Be encouraging and brief. Explain the rule, not just the answer.
@@ -376,6 +376,7 @@ npm run dev        # same but auto-restarts on file changes
 | `ADMIN_PASSWORD` | Enables the Admin tab. If unset, admin is disabled. |
 | `PORT` | Default 5000 locally. Render sets it automatically. |
 | `DATABASE_URL` | Postgres connection string (free at neon.tech or Supabase). **Set this on Render**; it keeps students, chats, scores, group chat and enquiries across restarts and redeploys. Without it they are saved as files, which a temporary disk loses. |
+| `ADMIN_TZ` | Time zone that decides where each day starts in Daily usage (default `Asia/Kolkata`) |
 | `DATA_DIR` | Optional folder for saved data (for example a Render Persistent Disk at `/var/data`). Question and topic files always stay in `backend/data`. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `ENQUIRY_TO` | Optional. When set, every enquiry is also emailed to `ENQUIRY_TO`. Gmail: `smtp.gmail.com`, 587, your address, and a 16-character App password. `ENQUIRY_FROM` sets the sender name. |
 
@@ -387,6 +388,13 @@ Notes:
 - **Where data lives:** with `DATABASE_URL` set, saved data (students, chats, scores, searches, group chat, enquiries) is kept in a Postgres table `app_files`, one row per former file, and loaded into memory at start. Changes are written within a fraction of a second and again on shutdown. Without it, the same data is saved as JSON files in `DATA_DIR` (default `backend/data/`): `students.json`, `chats/`, `results.json`, `tr_results.json`, `groupchat.json`, `searches.json`, `grammar_checks.json`, `enquiries.json`. The content files `questions.json`, `discussion.json` and `hindi_sentences.json` always come from the repository.
 - If the database cannot be reached at start, the site still starts, falls back to files, and the Admin tab shows a red warning that data is not permanent.
 - `IMPORT_LOCAL_DATA=true` (one time, with an empty database) copies existing local JSON files into the database.
+
+### Admin: Daily usage
+- Each day the server records, per student: seconds on site (from the 15-second heartbeat), sign-ins, Speak messages, grammar tests, Hindi writing tests, grammar checks, dictionary searches and group-chat messages. One small file per day: `usage/YYYY-MM-DD.json` (a database row each when `DATABASE_URL` is set). A "day" runs midnight to midnight in `ADMIN_TZ`.
+- The tab shows a bar chart (minutes, or number of active students) for 7, 14, 30 or 90 days, summary tiles (today, yesterday, average, busiest day), and a day-by-day table. Click a day to see who was active and what each person did. Pick one student in the drop-down to see only their days.
+- The first time the server starts with this feature it rebuilds past days from dated data it already has (sign-ups, tests, messages, searches, group chat). **Time on site was never recorded per day before, so it only counts from then on.**
+- **History needs permanent storage.** Without `DATABASE_URL` on a host with a temporary disk (Render's free plan), the daily files are erased on every restart like the rest of the student data.
+- Admin API: `GET /api/admin/usage?days=30&student=<id>`, `GET /api/admin/usage/:date`.
 
 ### Students and privacy
 - A student signs in with a **name, age and level**. There is no password: anyone who types the same name gets that student's data. Use this only for a classroom or demo.

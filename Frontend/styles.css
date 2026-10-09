@@ -680,3 +680,116 @@ nav button[hidden] { display:none !important; }
 .enq-actions .chipbtn { text-decoration:none; }
 
 .enq a:not(.chipbtn) { color:var(--brand); }
+
+
+/* ================= Admin panel v2: tabs, search, daily usage ================= */
+.adm-tabs { margin:0 0 16px; max-width:100%; overflow-x:auto; scrollbar-width:none; }
+.adm-tabs::-webkit-scrollbar { display:none; }
+.adm-tabs button { flex:none; white-space:nowrap; }
+.badge-n { display:inline-grid; place-items:center; min-width:18px; height:18px; padding:0 5px; margin-left:4px; border-radius:99px; background:var(--bad); color:#fff; font-size:.7rem; font-weight:700; }
+.adm-panel[hidden] { display:none; }
+.adm-group { margin:18px 0 8px; font-size:.78rem; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); }
+.adm-group:first-child { margin-top:4px; }
+
+.adm-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:12px; }
+.adm-toolbar input[type=search] { flex:1 1 240px; min-width:0; }
+.adm-toolbar .seg { margin:0; }
+#admUsersTable thead th { position:sticky; top:0; z-index:2; background:var(--card); }
+#admUsersTable th:nth-child(2), #admUsersTable td:nth-child(2) { position:sticky; left:0; z-index:1; background:var(--card); box-shadow:2px 0 0 var(--line); }
+#admUsersTable thead th:nth-child(2) { z-index:3; }
+.tablewrap.tall { max-height:68vh; overflow:auto; }
+
+.us-controls { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:14px; }
+.us-controls .seg { margin:0; }
+.us-controls select { min-width:150px; }
+.us-sum { margin-bottom:6px; }
+.us-sum .stat span { font-size:.78rem; }
+.us-bars { display:flex; align-items:flex-end; gap:3px; height:170px; padding:8px 2px 0; border-bottom:1px solid var(--line); }
+.us-col { position:relative; flex:1 1 0; min-width:0; height:100%; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:3px; }
+.us-fill { width:100%; max-width:36px; min-height:2px; border-radius:6px 6px 0 0; background:var(--grad); transition:height .3s ease; }
+.us-col:hover .us-fill { filter:brightness(1.15); }
+.us-col.zero .us-fill { background:var(--line); }
+.us-col.today .us-fill { outline:2px solid var(--brand); outline-offset:1px; }
+.us-val { font-size:.68rem; color:var(--muted); }
+.us-lbls { display:flex; gap:3px; padding:5px 2px 0; }
+.us-lbls span { flex:1 1 0; min-width:0; text-align:center; font-size:.68rem; line-height:1.15; color:var(--muted); white-space:nowrap; }
+.us-note { margin:12px 0 0; }
+.us-table th, .us-table td { white-space:nowrap; }
+.us-table thead th { position:sticky; top:0; z-index:2; background:var(--card); }
+tr.us-row { cursor:pointer; }
+tr.us-row.empty { cursor:default; opacity:.55; }
+tr.us-row:not(.empty):hover td { background:var(--brand-soft); }
+tr.us-detail > td { padding:10px 14px 14px; background:var(--bg); white-space:normal; }
+.us-inner { width:100%; font-size:.85rem; }
+.us-inner th { font-size:.7rem; }
+
+@media (max-width:760px) {
+  .adm-toolbar select, .adm-toolbar .seg { flex:1 1 auto; }
+  .us-bars { height:140px; }
+  .us-controls select { flex:1 1 100%; }
+  .us-sum { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+}
+
+/* Admin tables: names and contact links must be readable */
+button.link-btn { background:none !important; box-shadow:none !important; min-height:0; transform:none; color:var(--ink); font-weight:600; text-decoration:underline dotted var(--muted); text-underline-offset:3px; }
+button.link-btn:hover { color:var(--brand); }
+.tablewrap a:not(.chipbtn) { color:var(--brand); }
+
+
+/* ================= Access control: lock screen, badges, edit dialog ================= */
+.lock .modal { text-align:center; max-width:430px; }
+.lock .modal p { margin:0; }
+.lock-count { font-weight:700; color:var(--brand); font-size:1.05rem; }
+.lock-actions { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:6px; }
+.pill.bad { background:color-mix(in srgb,var(--bad) 14%,transparent); color:var(--bad); border-color:transparent; }
+.pill.warn { background:rgba(234,179,8,.18); color:#b7791f; border-color:transparent; }
+button.mini { padding:2px 9px; min-height:0 !important; font-size:.72rem; border-radius:99px; vertical-align:middle; }
+.adm-limit { flex:1 1 100%; display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:8px 12px; border:1px dashed var(--line); border-radius:12px; }
+.adm-limit label { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+.adm-limit input { width:84px; }
+.edit-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.access-box { border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin:0 0 12px; }
+.access-box legend { padding:0 6px; font-size:.8rem; color:var(--muted); }
+.access-box .check { display:flex; align-items:center; gap:8px; margin-bottom:8px; cursor:pointer; }
+#editBlockReason { width:100%; }
+.access-extra { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; margin-top:10px; }
+@media (max-width:520px) { .edit-grid { grid-template-columns:1fr; } }
+
+
+/* ================= Test setup: cleaner topics, difficulty and start bar ================= */
+#testSetup { max-width:920px; margin-inline:auto; }
+.topic-tools { display:flex; align-items:center; gap:10px; margin:6px 0 2px; }
+.topic-tools .spacer { flex:1; }
+#testSetup .topics { display:grid; grid-template-columns:repeat(auto-fill,minmax(168px,1fr)); gap:10px; margin:8px 0 18px; }
+#testSetup .topics label { position:relative; display:flex; align-items:center; gap:10px; justify-content:flex-start; border-radius:14px; padding:11px 14px 11px 12px; min-height:48px; font-size:.93rem; line-height:1.25; box-shadow:var(--shadow); }
+#testSetup .topics label:hover { transform:translateY(-1px); }
+#testSetup .topics input { appearance:none; -webkit-appearance:none; flex:none; width:20px; height:20px; margin:0; border:2px solid var(--line); border-radius:6px; background:var(--card); display:grid; place-content:center; transition:.15s; cursor:pointer; }
+#testSetup .topics input::after { content:""; width:10px; height:6px; border-left:2.5px solid #fff; border-bottom:2.5px solid #fff; transform:rotate(-45deg) scale(0); margin-top:-2px; transition:transform .12s; }
+#testSetup .topics input:checked { background:var(--brand); border-color:var(--brand); }
+#testSetup .topics input:checked::after { transform:rotate(-45deg) scale(1); }
+#testSetup .topics label:has(input:focus-visible) { outline:2px solid var(--brand); outline-offset:2px; }
+.diffbox { border-radius:16px; }
+.diffbox select { min-width:210px; }
+.stepper { display:inline-flex; align-items:center; gap:6px; background:var(--card); border:1px solid var(--line); border-radius:99px; padding:4px 6px 4px 14px; box-shadow:var(--shadow); }
+.stepper input { width:54px !important; margin:0 !important; text-align:center; border:0 !important; background:none !important; box-shadow:none !important; padding:6px 0; font-weight:600; -moz-appearance:textfield; }
+.stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+.stepper button[data-step] { width:34px; height:34px; min-height:0 !important; padding:0 !important; border-radius:50%; font-size:1.2rem; line-height:1; background:var(--brand-soft) !important; color:var(--brand) !important; box-shadow:none !important; }
+.stepper button[data-step]:hover { background:var(--brand) !important; color:#fff !important; }
+#tStart, #trStart { padding:12px 28px; font-size:1rem; border-radius:99px; }
+#tStart:disabled { opacity:.5; cursor:not-allowed; transform:none; box-shadow:none; }
+#testSetup h3 { margin:26px 0 8px; }
+
+@media (max-width:760px) {
+  #testSetup .seg { width:100%; }
+  #testSetup .seg button { flex:1; padding:10px 8px; }
+  #testSetup .topics { grid-template-columns:1fr 1fr; gap:8px; }
+  #testSetup .topics label { padding:10px 10px; font-size:.86rem; min-height:46px; }
+  .diffhead { flex-direction:column; align-items:stretch; gap:8px; }
+  .diffbox select { width:100%; min-width:0; }
+  /* Start button stays in reach, just above the bottom tab bar */
+  #testSetup .startrow { position:sticky; bottom:calc(76px + env(safe-area-inset-bottom)); z-index:20; justify-content:space-between; gap:10px; padding:10px 12px; margin:0 -4px; border:1px solid var(--line); border-radius:18px; background:var(--card); box-shadow:0 8px 24px rgba(0,0,0,.18); }
+  #testSetup .startrow .stepper { border:0; box-shadow:none; padding-left:4px; }
+  #testSetup .startrow .stepper .small { display:none; }
+  #testSetup .startrow > button { flex:1; padding:13px 16px; }
+}
+@media (max-width:360px) { #testSetup .topics { grid-template-columns:1fr; } }

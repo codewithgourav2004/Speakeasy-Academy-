@@ -87,7 +87,7 @@
         <div class="coach-info">
           <h2>Speak with your coach</h2>
           <p class="small"><span class="live-dot"></span>Online · I'll fix your grammar as we talk</p>
-          <div class="coach-pills"><span class="pill" id="coachLevel"></span><span class="pill" id="fixCount">✏️ 0 corrections</span></div>
+          <div class="coach-pills"><span class="pill" id="coachLevel"></span><span class="pill" id="fixCount">✏️ 0 corrections</span><span class="pill" id="timeLeftPill" hidden></span></div>
         </div>
         <div class="coach-tools toolbar">
           <label class="switch" title="Read the coach's replies aloud"><input type="checkbox" id="ttsToggle" checked><span class="slider"></span><span class="switch-label">Voice replies</span></label>
@@ -126,6 +126,7 @@
 
         <div id="grammarSetup">
           <div class="pagehead"><h2>Grammar Test</h2><p class="small">Pick the topics you want to practise, then start.</p></div>
+          <div class="topic-tools"><span id="topicCount" class="small"></span><span class="spacer"></span><button type="button" class="link-btn" id="topicAll">Select all</button><button type="button" class="link-btn" id="topicNone">Clear</button></div>
           <div id="topicBoxes" class="topics"></div>
           <div class="card diffbox">
             <div class="diffhead">
@@ -140,7 +141,7 @@
             <p id="diffHint" class="small"></p>
           </div>
           <div class="startrow">
-            <label class="small">Questions <input id="tCount" type="number" min="1" max="100" value="10"></label>
+            <div class="stepper"><span class="small">Questions</span><button type="button" data-step="-5" data-for="tCount" aria-label="Fewer questions">−</button><input id="tCount" type="number" min="1" max="100" value="10" inputmode="numeric"><button type="button" data-step="5" data-for="tCount" aria-label="More questions">+</button></div>
             <button id="tStart">Start test →</button>
           </div>
           <h3>Recent results</h3>
@@ -156,7 +157,7 @@
             <button data-trdiff="hard">Hard</button>
           </div>
           <div class="startrow">
-            <label class="small">Questions <input id="trCount" type="number" min="1" max="15" value="5"></label>
+            <div class="stepper"><span class="small">Questions</span><button type="button" data-step="-1" data-for="trCount" aria-label="Fewer questions">−</button><input id="trCount" type="number" min="1" max="15" value="5" inputmode="numeric"><button type="button" data-step="1" data-for="trCount" aria-label="More questions">+</button></div>
             <button id="trStart">Start test →</button>
           </div>
           <h3>Recent results</h3>
@@ -296,13 +297,16 @@
   <button id="stopVoice" class="stopvoice" hidden title="Stop the voice (Esc)">⏹ Stop voice</button>
 
   <div id="editStudentModal" class="overlay" hidden>
-    <div class="modal" style="max-width:420px;width:100%">
+    <div class="modal" style="max-width:480px;width:100%;text-align:left">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <h2 id="editStudentTitle" style="margin:0;font-size:1.2rem">Edit student</h2>
         <button id="closeEditStudent" class="ghost">✕ Close</button>
       </div>
       <form id="editStudentForm">
         <input type="hidden" id="editStudentId">
+        <label class="small" style="display:block;margin-bottom:12px">Name
+          <input id="editName" maxlength="40" style="width:100%;margin-top:4px">
+        </label>
         <label class="small" style="display:block;margin-bottom:12px">Level
           <select id="editLevel" style="width:100%;margin-top:4px;padding:8px;border-radius:6px;border:1px solid var(--border)">
             <option value="beginner">Beginner</option>
@@ -313,9 +317,29 @@
         <label class="small" style="display:block;margin-bottom:12px">Age
           <input id="editAge" type="number" min="3" max="100" style="width:100%;margin-top:4px">
         </label>
+        <div class="edit-grid">
+          <label class="small">City <input id="editCity" maxlength="40" style="width:100%;margin-top:4px"></label>
+          <label class="small">Phone <input id="editPhone" type="tel" maxlength="20" style="width:100%;margin-top:4px"></label>
+        </div>
+        <label class="small" style="display:block;margin:12px 0">Email
+          <input id="editEmail" type="email" maxlength="100" style="width:100%;margin-top:4px">
+        </label>
         <label class="small" style="display:block;margin-bottom:12px">Admin notes <span style="opacity:.6">(private, only you see these)</span>
           <textarea id="editNotes" rows="4" maxlength="500" placeholder="e.g. Struggles with tenses, joined Monday batch…" style="width:100%;margin-top:4px;resize:vertical"></textarea>
         </label>
+        <fieldset class="access-box">
+          <legend>Access</legend>
+          <label class="check"><input type="checkbox" id="editBlocked"> 🚫 Block this student from the app</label>
+          <input id="editBlockReason" maxlength="200" placeholder="Message the student will see (optional)" disabled>
+          <label class="small" style="display:block;margin-top:12px">Daily time limit (minutes)
+            <input id="editLimit" type="number" min="0" max="1440" placeholder="blank = use the default" style="width:100%;margin-top:4px">
+          </label>
+          <p class="small" id="editLimitHint" style="margin:6px 0 0"></p>
+          <div class="access-extra">
+            <span class="small" id="editUsed"></span>
+            <div><button type="button" class="chipbtn" data-extra="15">+15 min today</button> <button type="button" class="chipbtn" data-extra="30">+30 min today</button> <button type="button" class="chipbtn" id="editClearExtra">Remove extra</button></div>
+          </div>
+        </fieldset>
         <p id="editStudentErr" class="err small"></p>
         <div style="display:flex;gap:8px">
           <button type="submit">Save changes</button>
@@ -335,6 +359,18 @@
     </div>
   </div>
 
+  <div id="lockModal" class="overlay lock" hidden role="alertdialog" aria-labelledby="lockTitle" aria-describedby="lockMsg">
+    <div class="modal">
+      <div class="logo" id="lockIcon">🔒</div>
+      <h2 id="lockTitle"></h2>
+      <p id="lockMsg"></p>
+      <p id="lockCount" class="lock-count" hidden></p>
+      <div class="lock-actions">
+        <button type="button" id="lockEnquiry" class="ghost">✉️ Contact us</button>
+        <button type="button" id="lockSwitch" class="ghost">Sign in as someone else</button>
+      </div>
+    </div>
+  </div>
   <div id="enquiryModal" class="overlay" hidden>
     <form id="enquiryForm" class="modal" novalidate>
       <button type="button" id="enquiryClose" class="ghost modal-close" aria-label="Close" title="Close (Esc)">✕</button>

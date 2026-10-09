@@ -138,9 +138,16 @@ function requireStudent(req, res, next) {
   const id = req.params.id ?? req.body?.studentId ?? req.query.studentId;
   const student = getStudent(id);
   if (!student) return res.status(401).json({ error: "Unknown student. Please enter your name again." });
+  const access = accessState(student);
+  // A blocked student, or one who used up today's time, can do nothing except ask for their status.
+  if (access.code !== "ok" && !req.allowLocked) return res.status(403).json({ error: access.message, code: access.code, access: publicAccess(access) });
   req.student = student;
+  req.access = access;
   next();
 }
+const allowLocked = (req, _res, next) => { req.allowLocked = true; next(); };
+// What a student may see about themselves: never the admin's private notes or block details.
+const publicStudent = ({ adminNotes, blocked, blockReason, extra, dailyLimitMin, lastPing, ...rest }) => rest;
 
 app.post("/api/login", (req, res) => {
   const name = String(req.body.name || "").trim().slice(0, 40);
@@ -149,6 +156,7 @@ app.post("/api/login", (req, res) => {
   const age = Number.parseInt(req.body.age, 10);
   if (!Number.isInteger(age) || age < 3 || age > 100) return res.status(400).json({ error: "Please enter a valid age (3-100)." });
   const students = readJson(STUDENTS_FILE, {});
+  if (students[id]?.blocked) { const a = accessState(students[id]); return res.status(403).json({ error: a.message, code: "blocked", access: publicAccess(a) }); }
   const now = new Date().toISOString();
   const isNew = !students[id];
   students[id] ??= { id, name, level: "intermediate", created: now };
@@ -164,7 +172,7 @@ app.post("/api/login", (req, res) => {
   students[id].lastSeen = now;
   writeJson(STUDENTS_FILE, students);
   track(id, "l");
-  res.json({ student: students[id], isNew });
+  res.json({ student: publicStudent(students[id]), isNew, access: publicAccess(accessState(students[id])) });
 });
 
 // Heartbeat: credits active time. Credit is capped by real elapsed time since the last ping.
@@ -175,13 +183,14 @@ app.post("/api/students/:id/ping", requireStudent, (req, res) => {
   const elapsed = s.lastPing ? (now - s.lastPing) / 1000 : Infinity;
   const asked = Math.max(0, Math.min(Number(req.body.seconds) || 0, 60));
   // First ping, or one after a long gap (tab closed): credit at most one heartbeat interval.
-  const credit = elapsed < 120 ? Math.min(asked, elapsed) : Math.min(asked, 15);
+  let credit = elapsed < 120 ? Math.min(asked, elapsed) : Math.min(asked, 15);
+  if (req.access.remaining != null) credit = Math.min(credit, req.access.remaining); // stop exactly at the limit
   s.timeSpent = Math.round(((s.timeSpent || 0) + credit) * 10) / 10;
   s.lastPing = now;
   s.lastSeen = new Date(now).toISOString();
   writeJson(STUDENTS_FILE, students);
   track(req.student.id, "s", credit);
-  res.json({ ok: true });
+  res.json({ ok: true, access: publicAccess(accessState(s)) });
 });
 
 // ---- Admin: protected by ADMIN_PASSWORD ----
@@ -228,11 +237,13 @@ app.get("/api/admin/summary", requireAdmin, (_req, res) => {
   const grammarByStudent = {};
   for (const g of grammarChecks) grammarByStudent[g.studentId] = (grammarByStudent[g.studentId] || 0) + 1;
 
+  const todayUsage = readJson(usageFile(dayKey()), {});
   const users = students.map((s) => {
     const mine = results.filter((r) => r.studentId === s.id);
     const q = mine.reduce((n, r) => n + r.total, 0);
     const chat = readJson(chatFile(s.id), []);
     const tr = trByStudent[s.id];
+    const acc = accessState(s, todayUsage);
     return {
       id: s.id, name: s.name, age: s.age ?? null, level: s.level, phone: s.phone || "", email: s.email || "", city: s.city || "", created: s.created, lastSeen: s.lastSeen, visits: s.visits || 1,
       online: Date.now() - new Date(s.lastSeen).getTime() < 60000,
@@ -246,6 +257,8 @@ app.get("/api/admin/summary", requireAdmin, (_req, res) => {
       grammarChecks: grammarByStudent[s.id] || 0,
       chatMuted: !!s.chatMuted,
       adminNotes: s.adminNotes || "",
+      blocked: !!s.blocked, blockReason: s.blockReason || "", dailyLimitMin: s.dailyLimitMin ?? null,
+      access: acc.code, usedTodaySec: acc.used, limitSec: acc.limit ?? null, extraMin: s.extra?.day === dayKey() ? Math.round(s.extra.seconds / 60) : 0,
     };
   }).sort((a, b) => new Date(b.lastSeen) - new Date(a.lastSeen));
 
@@ -260,6 +273,8 @@ app.get("/api/admin/summary", requireAdmin, (_req, res) => {
 
   res.json({
     storage: storeInfo(),
+    settings: getSettings(),
+    blockedCount: students.filter((x) => x.blocked).length,
     activeToday: Object.keys(readJson(usageFile(dayKey()), {})).length,
     newEnquiries: readJson(ENQUIRIES_FILE, []).filter((e) => e.status === "new").length,
     totalUsers: students.length,
@@ -325,7 +340,7 @@ app.get("/api/students/:id/progress", requireStudent, (req, res) => {
   }
   const totalQ = tests.reduce((s, t) => s + t.total, 0);
   res.json({
-    student: req.student,
+    student: publicStudent(req.student),
     messages: userMsgs.length,
     corrections: Object.values(byCategory).reduce((a, b) => a + b, 0),
     byCategory,
@@ -374,7 +389,7 @@ For each sentence return ALL of the following fields:
 Return ONLY valid JSON (no markdown, no commentary):
 {"correctedText": string, "sentences": [{ "text": string, "tense": string, "aspect": string, "voice": string, "mood": string, "speech": string, "conditional": string, "modals": [], "nonFinites": [], "connectors": [], "clauses": [], "articles": [], "errors": [] }]}`;
 
-app.post("/api/grammar", wrap(async (req, res) => {
+app.post("/api/grammar", requireStudent, wrap(async (req, res) => {
   const text = String(req.body.text || "").trim().slice(0, 4000);
   if (!text) return res.status(400).json({ error: "text required" });
   const result = parseJson(await askAI(GRAMMAR_SYSTEM, [{ role: "user", content: text }], 4096));
@@ -427,7 +442,7 @@ Return ONLY valid JSON, no markdown fences:
   "note": string (one useful grammar or usage difference between Hindi and English, or "")
 }`;
 
-app.post("/api/translate", wrap(async (req, res) => {
+app.post("/api/translate", requireStudent, wrap(async (req, res) => {
   const text = String(req.body.text || "").trim().slice(0, 2000);
   if (!text) return res.status(400).json({ error: "text required" });
   res.json(parseJson(await askAI(TRANSLATE_SYSTEM, [{ role: "user", content: text }], 2500)));
@@ -669,6 +684,13 @@ app.patch("/api/admin/students/:id", requireAdmin, (req, res) => {
   const age = Number.parseInt(req.body.age, 10);
   if (Number.isInteger(age) && age >= 3 && age <= 100) s.age = age;
   if (typeof req.body.adminNotes === "string") s.adminNotes = req.body.adminNotes.trim().slice(0, 500);
+  if (typeof req.body.name === "string" && req.body.name.trim()) s.name = req.body.name.trim().slice(0, 40);
+  for (const [key, max] of [["city", 40], ["phone", 20], ["email", 100]]) {
+    if (typeof req.body[key] !== "string") continue;
+    const v = req.body[key].trim().slice(0, max);
+    if (key === "email" && v && !EMAIL_RE.test(v)) return res.status(400).json({ error: "That email address does not look right." });
+    if (v) s[key] = key === "email" ? v.toLowerCase() : v; else delete s[key];
+  }
   writeJson(STUDENTS_FILE, students);
   res.json({ ok: true, student: s });
 });
@@ -950,6 +972,72 @@ app.get("/api/admin/usage/:date", requireAdmin, (req, res) => {
   res.json({ date: req.params.date, students: list });
 });
 
+// ---- Access control: block a student, or limit their time each day ----
+// student.blocked / blockReason: locked out completely.
+// student.dailyLimitMin: minutes allowed per day. Not set = follow the default; 0 = no limit for this student.
+// student.extra: { day, seconds } extra time granted by the admin for one day.
+// settings.defaultDailyLimitMin: the limit for students who have none of their own (0 = no limit).
+const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
+const getSettings = () => ({ defaultDailyLimitMin: 0, ...readJson(SETTINGS_FILE, {}) });
+const minutesText = (sec) => { const m = Math.round(sec / 60); return m >= 60 && m % 60 === 0 ? `${m / 60} hour${m === 60 ? "" : "s"}` : `${m} minute${m === 1 ? "" : "s"}`; };
+
+function secondsUntilTomorrow() { // until midnight in the admin's time zone, when the day's time starts again
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: USAGE_TZ, hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).formatToParts(new Date());
+  const n = (type) => Number(parts.find((p) => p.type === type)?.value || 0);
+  return Math.max(60, 86400 - (n("hour") * 3600 + n("minute") * 60 + n("second")));
+}
+function accessState(student, usageToday = readJson(usageFile(dayKey()), {})) {
+  const used = Math.round(usageToday[student.id]?.s || 0);
+  if (student.blocked) return { code: "blocked", used, limit: null, remaining: null, message: student.blockReason || "Your access to Speakeasy Academy has been paused. Please contact your teacher." };
+  const minutes = student.dailyLimitMin ?? getSettings().defaultDailyLimitMin;
+  if (!(minutes > 0)) return { code: "ok", used, limit: null, remaining: null };
+  const limit = minutes * 60 + (student.extra?.day === dayKey() ? student.extra.seconds : 0);
+  const remaining = Math.max(0, limit - used);
+  if (remaining > 0) return { code: "ok", used, limit, remaining };
+  return { code: "limit", used, limit, remaining: 0, resumeInSeconds: secondsUntilTomorrow(), message: `You have used your ${minutesText(limit)} for today. Well done! Your time starts again tomorrow.` };
+}
+const publicAccess = ({ code, message, used, limit, remaining, resumeInSeconds }) => ({ code, message, used, limit, remaining, resumeInSeconds });
+
+// A student asks "can I use the app right now?" (works even when locked, so the page can show why).
+app.get("/api/students/:id/status", allowLocked, requireStudent, (req, res) => {
+  res.json({ access: publicAccess(req.access), student: publicStudent(req.student) });
+});
+
+// Admin: block / unblock, set the student's own daily limit, or grant extra minutes for today.
+app.post("/api/admin/students/:id/access", requireAdmin, (req, res) => {
+  const students = readJson(STUDENTS_FILE, {});
+  const s = students[req.params.id];
+  if (!s) return res.status(404).json({ error: "Unknown student" });
+  const b = req.body || {};
+  if (typeof b.blocked === "boolean") { s.blocked = b.blocked; if (!b.blocked) delete s.blockReason; }
+  if (typeof b.blockReason === "string" && s.blocked) { const r = b.blockReason.trim().slice(0, 200); if (r) s.blockReason = r; else delete s.blockReason; }
+  if ("dailyLimitMin" in b) {
+    if (b.dailyLimitMin === null || b.dailyLimitMin === "") delete s.dailyLimitMin;
+    else {
+      const n = Math.round(Number(b.dailyLimitMin));
+      if (!Number.isFinite(n) || n < 0 || n > 1440) return res.status(400).json({ error: "The daily limit must be between 0 and 1440 minutes (0 means no limit)." });
+      s.dailyLimitMin = n;
+    }
+  }
+  if (b.clearExtra === true) delete s.extra;
+  const add = Number(b.addMinutesToday);
+  if (add > 0) {
+    if (add > 240) return res.status(400).json({ error: "You can add up to 240 minutes at a time." });
+    const day = dayKey();
+    s.extra = { day, seconds: (s.extra?.day === day ? s.extra.seconds : 0) + Math.round(add * 60) };
+  }
+  writeJson(STUDENTS_FILE, students);
+  res.json({ ok: true, access: publicAccess(accessState(s)) });
+});
+
+// Admin: the daily limit for everyone who has none of their own (0 = no limit).
+app.post("/api/admin/settings", requireAdmin, (req, res) => {
+  const n = Math.round(Number(req.body?.defaultDailyLimitMin));
+  if (!Number.isFinite(n) || n < 0 || n > 1440) return res.status(400).json({ error: "The default limit must be between 0 and 1440 minutes (0 means no limit)." });
+  writeJson(SETTINGS_FILE, { ...getSettings(), defaultDailyLimitMin: n });
+  res.json(getSettings());
+});
+
 // ---- Enquiries: a visitor asks a question; it is saved for the admin and emailed if SMTP is set up ----
 const ENQUIRIES_FILE = path.join(DATA_DIR, "enquiries.json");
 const enquiryTimes = new Map(); // ip -> times of recent enquiries (simple spam limit)
@@ -1023,7 +1111,7 @@ app.use((req, res, next) => {
   res.sendFile(FRONTEND_INDEX);
 });
 
-await initStore({ dataDir: DATA_DIR, databaseUrl: process.env.DATABASE_URL });
+await initStore({ dataDir: DATA_DIR, databaseUrl: process.env.DATABASE_URL, mongoUrl: process.env.MONGODB_URL });
 backfillUsage();
 for (const sig of ["SIGTERM", "SIGINT"]) process.on(sig, async () => { await flushStore().catch(() => {}); process.exit(0); }); // save pending changes before Render restarts us
 

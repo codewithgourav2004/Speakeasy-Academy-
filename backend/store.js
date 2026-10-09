@@ -11,9 +11,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import pg from "pg";
+import { MongoClient } from "mongodb";
 
 let DATA_DIR = "";
 let pool = null;
+let mongo = null; // { client, col } when MONGODB_URL is used
 let mode = "files"; // "files" | "database"
 let problem = ""; // set when a database was requested but could not be used
 const mem = new Map(); // key -> JSON text (runtime files, database mode only)
@@ -21,13 +23,14 @@ const dirty = new Set(); // keys waiting to be written to the database
 let timer = null;
 
 // Files that hold data created while the app runs. Everything else (questions, topics...) stays on disk.
-const RUNTIME = [/^(students|results|tr_results|searches|grammar_checks|groupchat|enquiries)\.json$/, /^chats\/[a-z0-9-]+\.json$/, /^usage\/(\d{4}-\d{2}-\d{2}|backfill)\.json$/];
+const RUNTIME = [/^(students|results|tr_results|searches|grammar_checks|groupchat|enquiries|settings)\.json$/, /^chats\/[a-z0-9-]+\.json$/, /^usage\/(\d{4}-\d{2}-\d{2}|backfill)\.json$/];
 const keyOf = (file) => path.relative(DATA_DIR, file).split(path.sep).join("/");
 const isRuntime = (key) => RUNTIME.some((re) => re.test(key));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-export async function initStore({ dataDir, databaseUrl, poolFactory } = {}) {
+export async function initStore({ dataDir, databaseUrl, mongoUrl, poolFactory } = {}) {
   DATA_DIR = dataDir;
+  if (mongoUrl) return initMongo(mongoUrl);
   if (!databaseUrl && !poolFactory) return storeInfo();
   for (let attempt = 1; attempt <= 4; attempt++) {
     try {
@@ -55,6 +58,36 @@ export async function initStore({ dataDir, databaseUrl, poolFactory } = {}) {
   }
   mode = "files";
   console.error("WARNING: running WITHOUT the database. Student data is written to this server's disk and may be lost on restart.");
+  return storeInfo();
+}
+
+// MongoDB: the same key/value records, one document per file ({ _id: key, value, updated_at }).
+async function initMongo(url) {
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    let client = null;
+    try {
+      client = new MongoClient(url, { serverSelectionTimeoutMS: 6000 });
+      await client.connect();
+      const col = client.db(process.env.MONGODB_DB || "speakeasy").collection("app_files");
+      const rows = await col.find({}).toArray();
+      mem.clear();
+      for (const r of rows) mem.set(r._id, r.value);
+      mongo = { client, col };
+      mode = "database";
+      problem = "";
+      if (!rows.length && process.env.IMPORT_LOCAL_DATA === "true") importLocalFiles();
+      console.log(`Student data is stored in MongoDB (${rows.length} saved record${rows.length === 1 ? "" : "s"} loaded).`);
+      return storeInfo();
+    } catch (e) {
+      problem = `Could not reach MongoDB (${String(e.message).slice(0, 120)})`;
+      console.error(`${problem}; attempt ${attempt} of 4`);
+      try { await client?.close(); } catch {}
+      mongo = null;
+      if (attempt < 4) await sleep(1500 * attempt);
+    }
+  }
+  mode = "files";
+  console.error("WARNING: running WITHOUT MongoDB. Student data is written to this server's disk and may be lost on restart.");
   return storeInfo();
 }
 
@@ -105,17 +138,20 @@ export function removeJson(file) {
 }
 
 function schedule(ms = 200) {
-  if (timer || !pool) return;
+  if (timer || !(pool || mongo)) return;
   timer = setTimeout(() => { timer = null; flush(); }, ms);
 }
 
 async function flush() {
-  if (!pool) return;
+  if (!pool && !mongo) return;
   const keys = [...dirty];
   dirty.clear();
   for (const key of keys) {
     try {
-      if (mem.has(key)) await pool.query("INSERT INTO app_files (key, value, updated_at) VALUES ($1, $2, now()) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()", [key, mem.get(key)]);
+      if (mongo) {
+        if (mem.has(key)) await mongo.col.replaceOne({ _id: key }, { _id: key, value: mem.get(key), updated_at: new Date() }, { upsert: true });
+        else await mongo.col.deleteOne({ _id: key });
+      } else if (mem.has(key)) await pool.query("INSERT INTO app_files (key, value, updated_at) VALUES ($1, $2, now()) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()", [key, mem.get(key)]);
       else await pool.query("DELETE FROM app_files WHERE key = $1", [key]);
     } catch (e) {
       console.error(`Could not save "${key}" to the database: ${e.message}. Will retry.`);
@@ -129,8 +165,9 @@ async function flush() {
 export async function flushStore() {
   if (timer) { clearTimeout(timer); timer = null; }
   await flush();
+  try { await mongo?.client.close(); } catch {}
 }
 
 export function storeInfo() {
-  return { mode, persistent: mode === "database", problem, pending: dirty.size };
+  return { mode, kind: mongo ? "mongodb" : pool ? "postgres" : "files", persistent: mode === "database", problem, pending: dirty.size };
 }

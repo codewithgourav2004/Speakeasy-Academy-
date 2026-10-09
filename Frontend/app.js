@@ -27,6 +27,7 @@ async function api(path, body, method) {
   const res = await fetch(path, body ? { method: method || "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : { method });
   const data = await res.json().catch(() => ({}));
   if (res.status === 401) showWelcome(data.error);
+  if (res.status === 403 && (data.code === "blocked" || data.code === "limit") && student) showLock(data.access || { code: data.code, message: data.error });
   if (!res.ok) throw new Error(data.error || res.statusText);
   return data;
 }
@@ -62,6 +63,7 @@ async function enter(s) {
   student = s;
   localStorage.setItem("student", JSON.stringify(s));
   $("#welcome").hidden = true;
+  refreshAccess();
   $("#userChip").textContent = `👤 ${s.name}`;
   $("#userChip").hidden = $("#logoutBtn").hidden = false;
   await loadChat(true);
@@ -72,8 +74,9 @@ async function enter(s) {
 $("#welcomeForm").onsubmit = async (e) => {
   e.preventDefault();
   try {
-    const { student: s, isNew } = await api("/api/login", { name: $("#nameInput").value, age: $("#ageInput").value, level: $("#levelInput").value, phone: $("#phoneInput").value, email: $("#emailInput").value, city: $("#cityInput").value });
+    const { student: s, isNew, access } = await api("/api/login", { name: $("#nameInput").value, age: $("#ageInput").value, level: $("#levelInput").value, phone: $("#phoneInput").value, email: $("#emailInput").value, city: $("#cityInput").value });
     await enter(s);
+    applyAccess(access);
     if (!isNew) toast(`Welcome back, ${s.name}!`);
   } catch (err) {
     $("#welcomeErr").textContent = err.message;
@@ -381,6 +384,7 @@ async function loadTestSetup() {
   $("#trTestRun").hidden = $("#trTestResult").hidden = true;
   const topics = await api("/api/topics");
   $("#topicBoxes").innerHTML = topics.map((t) => `<label><input type="checkbox" value="${t.id}" checked> ${LABELS[t.id] || t.id}</label>`).join("");
+  updateTopicCount();
   const rec = await api(`/api/students/${student.id}/difficulty`);
   const recName = rec.recommended[0].toUpperCase() + rec.recommended.slice(1);
   $("#tDiff").options[0].textContent = `Auto: ${recName} (recommended)`;
@@ -545,6 +549,21 @@ async function loadProgress() {
     out.innerHTML = `<p class="err">${esc(e.message)}</p>`;
   }
 }
+
+// Test setup helpers: select all / clear topics, live count, question-count stepper
+function updateTopicCount() {
+  const all = document.querySelectorAll("#topicBoxes input"), on = document.querySelectorAll("#topicBoxes input:checked");
+  const el = $("#topicCount"); if (el) el.textContent = `${on.length} of ${all.length} topics selected`;
+  $("#tStart").disabled = !on.length;
+}
+$("#topicBoxes").addEventListener("change", updateTopicCount);
+$("#topicAll").onclick = () => { document.querySelectorAll("#topicBoxes input").forEach((i) => (i.checked = true)); updateTopicCount(); };
+$("#topicNone").onclick = () => { document.querySelectorAll("#topicBoxes input").forEach((i) => (i.checked = false)); updateTopicCount(); };
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-step]"); if (!b) return;
+  const inp = document.getElementById(b.dataset.for), min = Number(inp.min) || 1, max = Number(inp.max) || 100;
+  inp.value = Math.min(max, Math.max(min, (Number(inp.value) || min) + Number(b.dataset.step)));
+});
 
 let current;
 $("#tStart").onclick = async () => {
@@ -1048,11 +1067,20 @@ document.querySelector('nav button[data-tab="groupchat"]').addEventListener("cli
 function openEnquiry() {
   $("#enqMsg").textContent = "";
   $("#enqMsg").className = "small";
-  if (student && !$("#enqName").value) $("#enqName").value = student.name;
+  if (student) {
+    if (!$("#enqName").value) $("#enqName").value = student.name || "";
+    if (!$("#enqEmail").value && student.email) $("#enqEmail").value = student.email;
+    if (!$("#enqPhone").value && student.phone) $("#enqPhone").value = student.phone;
+  }
   $("#enquiryModal").hidden = false;
-  $("#enqName").focus();
+  ($("#enqEmail").value ? $("#enqMessage") : $("#enqName")).focus();
 }
-function closeEnquiry() { $("#enquiryModal").hidden = true; }
+function closeEnquiry() {
+  $("#enquiryModal").hidden = true;
+  $("#enquiryForm").reset();
+  $("#enqMsg").textContent = "";
+  $("#enqMsg").className = "small";
+}
 $("#enquiryBtn").onclick = openEnquiry;
 $("#enquiryClose").onclick = closeEnquiry;
 $("#enquiryModal").addEventListener("mousedown", (e) => { if (e.target.id === "enquiryModal") closeEnquiry(); }); // click outside the box
@@ -1060,6 +1088,7 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#enq
 $("#enquiryForm").onsubmit = async (e) => {
   e.preventDefault();
   const msg = $("#enqMsg");
+  const sentEmail = $("#enqEmail").value.trim();
   $("#enqSend").disabled = true;
   msg.className = "small";
   msg.textContent = "Sending…";
@@ -1071,12 +1100,11 @@ $("#enquiryForm").onsubmit = async (e) => {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || "Could not send your enquiry. Please try again.");
     msg.className = "small ok";
-    msg.textContent = `✅ Thank you! Your enquiry was sent. We'll reply to ${$("#enqEmail").value.trim()}.`;
-    $("#enqMessage").value = "";
+    msg.textContent = `✅ Thank you! Your enquiry was sent. We'll reply to ${sentEmail}.`;
+    setTimeout(closeEnquiry, 3000);
   } catch (err) {
     msg.className = "small err";
     msg.textContent = err.message;
-  } finally {
     $("#enqSend").disabled = false;
   }
 };
@@ -1120,11 +1148,60 @@ document.getElementById("adminOut").addEventListener("click", async (e) => {
   } catch (err) { alert(err.message); }
 });
 
+// ---- Access: lock screen (blocked, or today's time is used up) and the "time left" badge ----
+let lockTimer = null;
+const warned = {};
+const fmtHM = (s) => { const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h ? `${h}h ${m}m` : m ? `${m}m ${s % 60}s` : `${s}s`; };
+function showLock(a) {
+  const blocked = a.code === "blocked";
+  stopVoice();
+  $("#lockIcon").textContent = blocked ? "🚫" : "⏱️";
+  $("#lockTitle").textContent = blocked ? "Access paused" : "Daily time limit reached";
+  $("#lockMsg").textContent = a.message || "";
+  $("#lockModal").hidden = false;
+  clearInterval(lockTimer);
+  const count = $("#lockCount");
+  if (!blocked && a.resumeInSeconds) {
+    let left = a.resumeInSeconds;
+    count.hidden = false;
+    const tick = () => { count.textContent = `Your time starts again in ${fmtHM(left)}.`; if (left-- <= 0) { clearInterval(lockTimer); refreshAccess(); } };
+    tick();
+    lockTimer = setInterval(tick, 1000);
+  } else count.hidden = true;
+}
+function hideLock() { $("#lockModal").hidden = true; clearInterval(lockTimer); }
+function updateTimeLeft(a) {
+  const pill = $("#timeLeftPill");
+  if (!a || a.limit == null) { pill.hidden = true; return; }
+  pill.hidden = false;
+  pill.textContent = `⏱ ${a.remaining >= 60 ? Math.ceil(a.remaining / 60) + " min" : a.remaining + " s"} left today`;
+  pill.classList.toggle("warn", a.remaining <= 300);
+  for (const [mark, text] of [[300, "⏱ 5 minutes left today."], [60, "⏱ 1 minute left today."]]) {
+    const key = mark + new Date().toDateString() + (student?.id || "");
+    if (a.remaining <= mark && a.remaining > 0 && !warned[key]) { warned[key] = true; toast(text); }
+  }
+}
+function applyAccess(a) {
+  if (!a) return;
+  if (a.code === "ok") { hideLock(); updateTimeLeft(a); } else showLock(a);
+}
+async function refreshAccess() {
+  if (!student) return;
+  try { const r = await fetch(`/api/students/${student.id}/status`); if (r.ok) applyAccess((await r.json()).access); } catch {}
+}
+$("#lockSwitch").onclick = () => { hideLock(); showWelcome(); };
+$("#lockEnquiry").onclick = () => openEnquiry();
+
 // ---- Time on site: heartbeat while the tab is visible ----
 const PING_EVERY = 15;
 setInterval(() => {
   if (!student || document.visibilityState !== "visible") return;
-  fetch(`/api/students/${student.id}/ping`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ seconds: PING_EVERY }) }).catch(() => {});
+  fetch(`/api/students/${student.id}/ping`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ seconds: PING_EVERY }) })
+    .then(async (r) => {
+      const d = await r.json().catch(() => ({}));
+      if (r.ok) applyAccess(d.access);
+      else if (r.status === 403 && d.code) showLock(d.access || { code: d.code, message: d.error });
+    }).catch(() => {});
 }, PING_EVERY * 1000);
 const fmtDur = (s) => (s < 60 ? `${s}s` : s < 3600 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`);
 
@@ -1145,26 +1222,15 @@ async function loadAdmin() {
     const maxAge = Math.max(1, ...Object.values(d.ageGroups));
     out.innerHTML = `
       <div class="admin-head">
-        <div><h2 style="margin:0">Students</h2><p class="small" style="margin:2px 0 0">Last refreshed ${now}</p></div>
+        <div><h2 style="margin:0">Admin dashboard</h2><p class="small" style="margin:2px 0 0">Last refreshed ${now}</p></div>
         <button class="ghost" onclick="loadAdmin()">↻ Refresh</button>
       </div>
       ${d.storage?.persistent
         ? '<div class="storage ok">💾 Student data is saved in the database, so it survives restarts and redeploys.</div>'
-        : `<div class="storage warn">⚠️ Student data is saved on this server's <b>temporary disk</b> and will be <b>erased</b> when the server restarts or redeploys. ${d.storage?.problem ? esc(d.storage.problem) + ". " : ""}Set <code>DATABASE_URL</code> (see the setup notes) to keep it permanently.</div>`}
-      <div class="stats">
-        <div class="stat"><b>${d.newEnquiries ?? 0}</b><span>✉️ New enquiries</span></div>
-        <div class="stat"><b>${d.totalUsers}</b><span>Total users</span></div>
-        <div class="stat online-stat"><b>${d.onlineNow ?? 0}</b><span>🟢 Online now</span></div>
-        <div class="stat"><b>${d.active24h}</b><span>Active (24h)</span></div>
-        <div class="stat"><b>${d.active7d}</b><span>Active (7 days)</span></div>
-        <div class="stat"><b>${d.avgAge ?? "—"}</b><span>Average age</span></div>
-        <div class="stat"><b>${d.totalTests}</b><span>Grammar tests</span></div>
-        <div class="stat"><b>${d.totalTrTests ?? 0}</b><span>Hindi writing tests</span></div>
-        <div class="stat"><b>${d.totalGrammarChecks ?? 0}</b><span>Grammar checks</span></div>
-        <div class="stat"><b>${d.totalSearches ?? 0}</b><span>Dictionary searches</span></div>
-        <div class="stat"><b>${fmtDur(d.totalTime)}</b><span>Total time on site</span></div>
-        <div class="stat"><b>${fmtDur(d.avgTime)}</b><span>Avg. time per user</span></div>
-      </div>
+        : `<div class="storage warn">⚠️ Student data is saved on this server's <b>temporary disk</b> and will be <b>erased</b> when the server restarts or redeploys. ${d.storage?.problem ? esc(d.storage.problem) + ". " : ""}Set <code>DATABASE_URL</code> or <code>MONGODB_URL</code> (see the setup notes) to keep it permanently.</div>`}
+      ${admTabsHTML(d.newEnquiries)}
+      <div class="adm-panel" data-p="overview">
+      ${admTilesHTML(d)}
       <div class="card"><h3>Age groups</h3>
         ${Object.entries(d.ageGroups).map(([g, n]) => `<div class="statrow"><span>${g}</span><span class="small">${n}</span></div><div class="bar"><div style="width:${(n / maxAge) * 100}%"></div></div>`).join("")}
       </div>
@@ -1184,16 +1250,23 @@ async function loadAdmin() {
           ${d.recentSearches.map((s) => `<tr><td>${esc(s.name)}</td><td><b>${esc(s.word)}</b></td><td>${new Date(s.at).toLocaleString()}</td></tr>`).join("")}
         </table></div>
       </div>` : ""}
+      </div>
+      <div class="adm-panel" data-p="students" hidden>
+      ${admStudentToolbarHTML()}
       <div class="card"><h3>Users</h3>
-        <div class="tablewrap"><table>
-          <tr><th></th><th>Name</th><th>Age</th><th>Level</th><th>City</th><th>Phone</th><th>Email</th><th>Time</th><th>Msgs</th><th>MCQ Tests</th><th>MCQ Avg</th><th>Hindi Tests</th><th>Hindi Avg</th><th>Grammar</th><th>Searches</th><th>Visits</th><th>Joined</th><th>Last seen</th><th>Chat</th><th>Edit</th></tr>
-          ${d.users.map((u) => `<tr><td title="${u.online ? "Online now" : "Offline"}"><span class="online-dot ${u.online ? "on" : ""}"></span></td><td><button class="link-btn" data-uid="${esc(u.id)}" data-uname="${esc(u.name)}">${esc(u.name)}</button>${u.adminNotes ? ` <span title="${esc(u.adminNotes)}" style="cursor:help">📝</span>` : ""}</td><td>${u.age ?? "—"}</td><td>${esc(u.level)}</td><td>${esc(u.city || "—")}</td><td>${u.phone ? `<a href="tel:${esc(u.phone)}">${esc(u.phone)}</a>` : "—"}</td><td>${u.email ? `<a href="mailto:${esc(u.email)}">${esc(u.email)}</a>` : "—"}</td><td>${fmtDur(u.timeSpent)}</td><td>${u.messages}</td><td>${u.tests}</td><td>${u.avgScore != null ? u.avgScore + "%" : "—"}</td><td>${u.trTests ?? 0}</td><td>${u.trAvgScore != null ? u.trAvgScore + "%" : "—"}</td><td>${u.grammarChecks ?? 0}</td><td>${u.searches ?? 0}</td><td>${u.visits}</td><td>${new Date(u.created).toLocaleDateString()}</td><td>${new Date(u.lastSeen).toLocaleString()}</td><td><button class="ghost mutebtn ${u.chatMuted ? "muted" : ""}" data-mute="${esc(u.id)}" data-muted="${u.chatMuted ? 1 : 0}">${u.chatMuted ? "🔇 Muted" : "Mute"}</button></td><td><button class="ghost" data-edit-uid="${esc(u.id)}" data-edit-name="${esc(u.name)}" data-edit-level="${esc(u.level)}" data-edit-age="${u.age ?? ""}" data-edit-notes="${esc(u.adminNotes || "")}">✏️ Edit</button></td></tr>`).join("") || '<tr><td colspan="20" class="small">No users yet.</td></tr>'}
+        <div class="tablewrap tall"><table id="admUsersTable">
+          <thead><tr><th></th><th>Name</th><th>Age</th><th>Level</th><th>City</th><th>Phone</th><th>Email</th><th>Time</th><th>Msgs</th><th>MCQ Tests</th><th>MCQ Avg</th><th>Hindi Tests</th><th>Hindi Avg</th><th>Grammar</th><th>Searches</th><th>Visits</th><th>Joined</th><th>Last seen</th><th>Chat</th><th>Edit</th></tr></thead>
+          <tbody id="admUsersBody">${d.users.map((u) => `<tr><td title="${u.online ? "Online now" : "Offline"}"><span class="online-dot ${u.online ? "on" : ""}"></span></td><td><button class="link-btn" data-uid="${esc(u.id)}" data-uname="${esc(u.name)}">${esc(u.name)}</button>${u.adminNotes ? ` <span title="${esc(u.adminNotes)}" style="cursor:help">📝</span>` : ""}</td><td>${u.age ?? "—"}</td><td>${esc(u.level)}</td><td>${esc(u.city || "—")}</td><td>${u.phone ? `<a href="tel:${esc(u.phone)}">${esc(u.phone)}</a>` : "—"}</td><td>${u.email ? `<a href="mailto:${esc(u.email)}">${esc(u.email)}</a>` : "—"}</td><td>${fmtDur(u.timeSpent)}</td><td>${u.messages}</td><td>${u.tests}</td><td>${u.avgScore != null ? u.avgScore + "%" : "—"}</td><td>${u.trTests ?? 0}</td><td>${u.trAvgScore != null ? u.trAvgScore + "%" : "—"}</td><td>${u.grammarChecks ?? 0}</td><td>${u.searches ?? 0}</td><td>${u.visits}</td><td>${new Date(u.created).toLocaleDateString()}</td><td>${new Date(u.lastSeen).toLocaleString()}</td><td><button class="ghost mutebtn ${u.chatMuted ? "muted" : ""}" data-mute="${esc(u.id)}" data-muted="${u.chatMuted ? 1 : 0}">${u.chatMuted ? "🔇 Muted" : "Mute"}</button></td><td><button class="ghost" data-edit-uid="${esc(u.id)}" data-edit-name="${esc(u.name)}" data-edit-level="${esc(u.level)}" data-edit-age="${u.age ?? ""}" data-edit-notes="${esc(u.adminNotes || "")}">✏️ Edit</button></td></tr>`).join("") || '<tr><td colspan="20" class="small">No users yet.</td></tr>'}</tbody>
         </table></div>
       </div>
-      <div class="card"><h3>👥 Group chat moderation</h3><div id="adminGc"><p class="small">Loading…</p></div></div>
-      <div class="card"><h3>✉️ Enquiries</h3><div id="adminEnq"><p class="small">Loading…</p></div></div>`;
+      </div>
+      <div class="adm-panel" data-p="usage" hidden><div id="adminUsage"><p class="small">Loading…</p></div></div>
+      <div class="adm-panel" data-p="enquiries" hidden><div class="card"><h3>✉️ Enquiries</h3><div id="adminEnq"><p class="small">Loading…</p></div></div></div>
+      <div class="adm-panel" data-p="chat" hidden><div class="card"><h3>👥 Group chat moderation</h3><div id="adminGc"><p class="small">Loading…</p></div></div></div>`;
     loadAdminChat();
     loadAdminEnquiries();
+    initStudentTools(d.users, d.settings);
+    showAdmTab((() => { try { return sessionStorage.getItem("admTab"); } catch { return null; } })() || "overview");
   } catch (e) {
     if (e.status === 403) { adminKey = ""; sessionStorage.removeItem("adminKey"); $("#adminTab").hidden = true; }
     out.innerHTML = `<p class="err">${esc(e.message)}</p>`;
@@ -1285,6 +1358,213 @@ document.getElementById("adminOut").addEventListener("change", async (e) => {
   try { await adminReq("POST", "/api/admin/groupchat/enabled", { enabled: e.target.checked }); } catch (err) { alert(err.message); }
   loadAdminChat();
 });
+
+// ---- Admin: tabs, overview tiles, student search, daily usage ----
+const ADM_TABS = [["overview", "📊 Overview"], ["students", "👥 Students"], ["usage", "📅 Daily usage"], ["enquiries", "✉️ Enquiries"], ["chat", "💬 Group chat"]];
+function admTabsHTML(newEnq) {
+  return `<div class="seg adm-tabs" id="admTabs">${ADM_TABS.map(([id, label]) =>
+    `<button type="button" data-adm="${id}">${label}${id === "enquiries" && newEnq ? ` <span class="badge-n">${newEnq}</span>` : ""}</button>`).join("")}</div>`;
+}
+function showAdmTab(id) {
+  if (!ADM_TABS.some(([t]) => t === id)) id = "overview";
+  try { sessionStorage.setItem("admTab", id); } catch {}
+  document.querySelectorAll("#admTabs button").forEach((b) => b.classList.toggle("on", b.dataset.adm === id));
+  document.querySelectorAll(".adm-panel").forEach((p) => { p.hidden = p.dataset.p !== id; });
+  if (id === "usage") loadAdminUsage();
+}
+
+// Overview numbers, grouped so they are easy to scan.
+function admTilesHTML(d) {
+  const tile = (value, label, cls = "") => `<div class="stat ${cls}"><b>${value}</b><span>${label}</span></div>`;
+  const group = (title, tiles) => `<h4 class="adm-group">${title}</h4><div class="stats">${tiles.join("")}</div>`;
+  return group("People", [
+    tile(d.totalUsers, "Total students"),
+    tile(d.onlineNow ?? 0, "🟢 Online now", "online-stat"),
+    tile(d.activeToday ?? 0, "Active today"),
+    tile(d.active24h, "Active (24 h)"),
+    tile(d.active7d, "Active (7 days)"),
+    tile(d.avgAge ?? "—", "Average age"),
+    tile(d.blockedCount ?? 0, "🚫 Blocked"),
+  ]) + group("Learning", [
+    tile(d.totalTests, "Grammar tests"),
+    tile(d.totalTrTests ?? 0, "Hindi writing tests"),
+    tile(d.totalGrammarChecks ?? 0, "Grammar checks"),
+    tile(d.totalSearches ?? 0, "Dictionary searches"),
+  ]) + group("Time on site", [
+    tile(fmtDur(d.totalTime), "Total time"),
+    tile(fmtDur(d.avgTime), "Average per student"),
+    tile(d.newEnquiries ?? 0, "✉️ New enquiries"),
+  ]);
+}
+
+// ---- Students tab: search, sort and filter the table ----
+let admUsers = [], admFilter = "all";
+function admStudentToolbarHTML() {
+  return `<div class="adm-toolbar">
+    <input id="admSearch" type="search" placeholder="Search name, city, phone or email…" autocomplete="off">
+    <select id="admSort" aria-label="Sort students">
+      <option value="seen">Last seen</option><option value="time">Most time on site</option><option value="name">Name A–Z</option><option value="joined">Newest first</option>
+    </select>
+    <div class="seg" id="admFilter">${[["all", "All"], ["online", "Online"], ["today", "Today"], ["idle", "Away 7+ days"], ["blocked", "Blocked"]].map(([id, l]) => `<button type="button" data-adf="${id}" class="${id === "all" ? "on" : ""}">${l}</button>`).join("")}</div>
+    <span id="admCount" class="small"></span>
+    <div class="adm-limit"><label class="small">⏱ Default daily limit for everyone <input id="admDefaultLimit" type="number" min="0" max="1440" value="0"> minutes <span style="opacity:.7">(0 = no limit; a student's own limit overrides this)</span></label><button type="button" id="admDefaultLimitSave" class="ghost">Save</button></div>
+  </div>`;
+}
+let admSettings = {};
+function initStudentTools(users, settings) {
+  admUsers = users;
+  admSettings = settings || {};
+  admFilter = "all";
+  const lim = document.getElementById("admDefaultLimit");
+  if (lim) lim.value = admSettings.defaultDailyLimitMin || 0;
+  // a status badge and a one-click Block / Unblock next to each name
+  for (const row of document.querySelectorAll("#admUsersBody tr")) {
+    const link = row.querySelector("[data-uid]");
+    const u = users.find((x) => x.id === link?.dataset.uid);
+    if (!u) continue;
+    const mins = (s) => Math.round(s / 60);
+    const badge = u.blocked ? `<span class="pill bad" title="${esc(u.blockReason || "Blocked")}">🚫 Blocked</span>`
+      : u.limitSec != null ? `<span class="pill ${u.access === "limit" ? "bad" : ""}" title="Used today / daily limit">⏱ ${mins(u.usedTodaySec)}/${mins(u.limitSec)} min${u.access === "limit" ? " · locked" : ""}</span>` : "";
+    link.parentElement.insertAdjacentHTML("beforeend", ` ${badge} <button type="button" class="ghost mini" data-qblock="${esc(u.id)}" data-blocked="${u.blocked ? 1 : 0}">${u.blocked ? "Unblock" : "Block"}</button>`);
+  }
+  applyStudentView();
+}
+function applyStudentView() {
+  const body = document.getElementById("admUsersBody");
+  if (!body) return;
+  const q = (document.getElementById("admSearch")?.value || "").trim().toLowerCase();
+  const sort = document.getElementById("admSort")?.value || "seen";
+  const byId = new Map(admUsers.map((u) => [u.id, u]));
+  const idOf = (r) => r.querySelector("[data-uid]")?.dataset.uid;
+  const rows = [...body.querySelectorAll("tr")].filter((r) => byId.has(idOf(r)));
+  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
+  const keepUser = (u) => admFilter === "all" || (admFilter === "online" && u.online) || (admFilter === "today" && new Date(u.lastSeen) >= startOfToday) || (admFilter === "idle" && Date.now() - new Date(u.lastSeen) > 7 * 864e5) || (admFilter === "blocked" && u.blocked);
+  const key = { seen: (u) => -new Date(u.lastSeen), time: (u) => -u.timeSpent, name: (u) => u.name.toLowerCase(), joined: (u) => -new Date(u.created) }[sort];
+  rows.sort((a, b) => { const x = key(byId.get(idOf(a))), y = key(byId.get(idOf(b))); return x < y ? -1 : x > y ? 1 : 0; });
+  let shown = 0;
+  for (const r of rows) {
+    const ok = keepUser(byId.get(idOf(r))) && (!q || r.textContent.toLowerCase().includes(q));
+    r.hidden = !ok;
+    if (ok) shown++;
+    body.append(r);
+  }
+  const c = document.getElementById("admCount");
+  if (c) c.textContent = `Showing ${shown} of ${rows.length}`;
+  document.querySelectorAll("#admFilter button").forEach((b) => b.classList.toggle("on", b.dataset.adf === admFilter));
+}
+
+// ---- Daily usage tab ----
+let usRange = 30, usStudent = "", usMetric = "min", usData = null;
+async function loadAdminUsage() {
+  const box = document.getElementById("adminUsage");
+  if (!box) return;
+  if (!usData) box.innerHTML = '<p class="small">Loading…</p>';
+  try {
+    usData = await adminReq("GET", `/api/admin/usage?days=${usRange}${usStudent ? "&student=" + encodeURIComponent(usStudent) : ""}`);
+    renderUsage();
+  } catch (e) { box.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+}
+function renderUsage() {
+  const box = document.getElementById("adminUsage");
+  if (!box || !usData) return;
+  const days = usData.days;
+  const val = (x) => (usMetric === "min" ? x.seconds / 60 : x.activeUsers);
+  const max = Math.max(1, ...days.map(val));
+  const dt = (iso) => new Date(iso + "T12:00:00");
+  const label = (iso) => dt(iso).toLocaleDateString([], { weekday: "short", day: "numeric", month: "short" });
+  const mins = (s) => (s >= 3600 ? fmtDur(Math.round(s)) : `${Math.round(s / 60)} min`);
+  const today = days.at(-1), yesterday = days.at(-2);
+  const avg = Math.round((days.reduce((s, x) => s + x.activeUsers, 0) / days.length) * 10) / 10;
+  const busiest = days.reduce((m, x) => (x.activeUsers > m.activeUsers ? x : m), days[0]);
+  const firstTime = days.find((x) => x.seconds > 0)?.date;
+  const hasEarlier = days.some((x) => (!firstTime || x.date < firstTime) && x.activeUsers > 0);
+  const every = days.length > 60 ? 7 : days.length > 20 ? 3 : 1;
+  const bars = days.map((x, i) => {
+    const v = val(x), h = Math.max(v > 0 ? 4 : 2, Math.round((v / max) * 100));
+    const tip = `${label(x.date)}: ${x.activeUsers} student${x.activeUsers === 1 ? "" : "s"} · ${mins(x.seconds)}`;
+    return `<div class="us-col ${v === 0 ? "zero" : ""} ${x.date === usData.today ? "today" : ""}" title="${esc(tip)}">
+      ${days.length <= 14 && v > 0 ? `<span class="us-val">${usMetric === "min" ? Math.round(v) : v}</span>` : ""}<div class="us-fill" style="height:${h}%"></div></div>`;
+  }).join("");
+  const labels = days.map((x, i) => `<span>${(days.length - 1 - i) % every === 0 || dt(x.date).getDate() === 1 ? dt(x.date).getDate() + (dt(x.date).getDate() === 1 || i === 0 ? `<br>${dt(x.date).toLocaleDateString([], { month: "short" })}` : "") : ""}</span>`).join("");
+  const rows = days.slice().reverse().map((x) => `<tr class="us-row ${x.activeUsers ? "" : "empty"}" data-day="${x.date}" title="${x.activeUsers ? "Click to see who was active" : ""}">
+    <td><b>${label(x.date)}</b>${x.date === usData.today ? ' <span class="pill">today</span>' : ""}</td><td>${x.activeUsers}</td><td>${x.seconds ? fmtDur(x.seconds) : "—"}</td>
+    <td>${x.logins || "—"}</td><td>${x.messages || "—"}</td><td>${x.tests || "—"}</td><td>${x.trTests || "—"}</td><td>${x.grammar || "—"}</td><td>${x.searches || "—"}</td><td>${x.chat || "—"}</td></tr>`).join("");
+  const who = usStudent ? usData.students.find((s) => s.id === usStudent)?.name : "";
+  box.innerHTML = `
+    <div class="card">
+      <div class="us-controls">
+        <div class="seg" id="usRange">${[7, 14, 30, 90].map((n) => `<button type="button" data-usr="${n}" class="${n === usRange ? "on" : ""}">${n} days</button>`).join("")}</div>
+        <select id="usStudent" aria-label="Show one student"><option value="">All students</option>${usData.students.map((s) => `<option value="${esc(s.id)}" ${s.id === usStudent ? "selected" : ""}>${esc(s.name)}</option>`).join("")}</select>
+        <div class="seg" id="usMetric"><button type="button" data-usm="min" class="${usMetric === "min" ? "on" : ""}">Minutes</button><button type="button" data-usm="students" class="${usMetric === "students" ? "on" : ""}">${usStudent ? "Active days" : "Students"}</button></div>
+      </div>
+      <div class="stats us-sum">
+        <div class="stat"><b>${today.activeUsers}</b><span>${usStudent ? "Today" : "Students today"} · ${mins(today.seconds)}</span></div>
+        <div class="stat"><b>${yesterday ? yesterday.activeUsers : 0}</b><span>${usStudent ? "Yesterday" : "Students yesterday"} · ${mins(yesterday?.seconds || 0)}</span></div>
+        <div class="stat"><b>${avg}</b><span>Average per day</span></div>
+        <div class="stat"><b>${busiest.activeUsers ? busiest.activeUsers : "—"}</b><span>Busiest day${busiest.activeUsers ? " · " + dt(busiest.date).toLocaleDateString([], { day: "numeric", month: "short" }) : ""}</span></div>
+      </div>
+      <h4 class="adm-group">${usMetric === "min" ? "Minutes on site" : usStudent ? "Days active" : "Active students"} per day${who ? " · " + esc(who) : ""}</h4>
+      <div class="us-bars">${bars}</div>
+      <div class="us-lbls">${labels}</div>
+      <p class="small us-note">Each day runs midnight to midnight, ${esc(usData.tz)} time.${hasEarlier || !firstTime ? ` Time on site is recorded only from ${firstTime ? dt(firstTime).toLocaleDateString([], { day: "numeric", month: "short" }) : "now"}; earlier days show the activity that could be rebuilt from saved data (sign-ups, tests, messages, searches).` : ""}</p>
+    </div>
+    <div class="card"><h3>Day by day</h3><p class="small" style="margin-top:-4px">Click a day to see which students were active.</p>
+      <div class="tablewrap tall"><table class="us-table">
+        <thead><tr><th>Date</th><th>Students</th><th>Time</th><th>Sign-ins</th><th>Speak msgs</th><th>Tests</th><th>Hindi tests</th><th>Grammar</th><th>Searches</th><th>Group chat</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>
+    </div>`;
+}
+async function toggleUsageDay(tr) {
+  const next = tr.nextElementSibling;
+  if (next?.classList.contains("us-detail")) { next.remove(); return; }
+  if (tr.classList.contains("empty")) return;
+  const cell = document.createElement("tr");
+  cell.className = "us-detail";
+  cell.innerHTML = '<td colspan="10"><p class="small">Loading…</p></td>';
+  tr.after(cell);
+  try {
+    const d = await adminReq("GET", `/api/admin/usage/${tr.dataset.day}`);
+    cell.firstElementChild.innerHTML = d.students.length ? `<table class="us-inner"><thead><tr><th>Student</th><th>Time</th><th>Sign-ins</th><th>Speak msgs</th><th>Tests</th><th>Hindi tests</th><th>Grammar</th><th>Searches</th><th>Group chat</th></tr></thead><tbody>
+      ${d.students.map((s) => `<tr><td><b>${esc(s.name)}</b></td><td>${s.seconds ? fmtDur(s.seconds) : "—"}</td><td>${s.logins || "—"}</td><td>${s.messages || "—"}</td><td>${s.tests || "—"}</td><td>${s.trTests || "—"}</td><td>${s.grammar || "—"}</td><td>${s.searches || "—"}</td><td>${s.chat || "—"}</td></tr>`).join("")}
+      </tbody></table>` : '<p class="small">Nobody was active on this day.</p>';
+  } catch (e) { cell.firstElementChild.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+}
+(function wireAdminUi() {
+  const out = document.getElementById("adminOut");
+  out.addEventListener("click", (e) => {
+    const tab = e.target.closest("[data-adm]");
+    if (tab) return showAdmTab(tab.dataset.adm);
+    const f = e.target.closest("[data-adf]");
+    if (f) { admFilter = f.dataset.adf; return applyStudentView(); }
+    const r = e.target.closest("[data-usr]");
+    if (r) { usRange = +r.dataset.usr; return loadAdminUsage(); }
+    const m = e.target.closest("[data-usm]");
+    if (m) { usMetric = m.dataset.usm; return renderUsage(); }
+    const row = e.target.closest("tr[data-day]");
+    if (row) toggleUsageDay(row);
+  });
+  out.addEventListener("click", async (e) => {
+    const q = e.target.closest("[data-qblock]");
+    if (q) {
+      const blocking = q.dataset.blocked !== "1", u = admUsers.find((x) => x.id === q.dataset.qblock);
+      if (blocking && !confirm(`Block ${u?.name || "this student"} from using the app? They will see a message and cannot use any feature until you unblock them.`)) return;
+      try { await adminReq("POST", `/api/admin/students/${encodeURIComponent(q.dataset.qblock)}/access`, { blocked: blocking }); toast(blocking ? "Student blocked." : "Student unblocked."); loadAdmin(); }
+      catch (err) { alert(err.message); }
+    }
+    if (e.target.closest("#admDefaultLimitSave")) {
+      try {
+        await adminReq("POST", "/api/admin/settings", { defaultDailyLimitMin: Number(document.getElementById("admDefaultLimit").value) || 0 });
+        toast("Default daily limit saved.");
+        loadAdmin();
+      } catch (err) { alert(err.message); }
+    }
+  });
+  out.addEventListener("input", (e) => { if (e.target.id === "admSearch") applyStudentView(); });
+  out.addEventListener("change", (e) => {
+    if (e.target.id === "admSort") applyStudentView();
+    if (e.target.id === "usStudent") { usStudent = e.target.value; loadAdminUsage(); }
+  });
+})();
 
 function showAdminLogin() {
   $("#adminPwInput").value = "";
@@ -1391,15 +1671,46 @@ $("#userDetailModal").addEventListener("click", (e) => { if (e.target === $("#us
 
 // ---- Admin: edit student (level, age, notes) ----
 function openEditStudent(uid, name, level, age, notes) {
+  const u = admUsers.find((x) => x.id === uid) || {};
   $("#editStudentTitle").textContent = `Edit — ${name}`;
   $("#editStudentId").value = uid;
+  $("#editName").value = u.name ?? name ?? "";
   $("#editLevel").value = level || "intermediate";
   $("#editAge").value = age || "";
+  $("#editCity").value = u.city || "";
+  $("#editPhone").value = u.phone || "";
+  $("#editEmail").value = u.email || "";
   $("#editNotes").value = notes || "";
+  $("#editBlocked").checked = !!u.blocked;
+  $("#editBlockReason").value = u.blockReason || "";
+  $("#editBlockReason").disabled = !u.blocked;
+  $("#editLimit").value = u.dailyLimitMin ?? "";
+  describeAccess(u);
   $("#editStudentErr").textContent = "";
   $("#editStudentModal").hidden = false;
-  $("#editLevel").focus();
+  $("#editName").focus();
 }
+// "Used today: 12 min of 30" and what the limit blank/0 means, from the latest numbers.
+function describeAccess(u) {
+  const def = admSettings?.defaultDailyLimitMin || 0;
+  const mins = (s) => Math.round((s || 0) / 60);
+  $("#editLimitHint").textContent = `Blank = use the default (${def ? def + " min" : "no limit"}). 0 = no limit for this student.`;
+  $("#editUsed").textContent = `Used today: ${mins(u.usedTodaySec)} min${u.limitSec != null ? ` of ${mins(u.limitSec)}` : ""}${u.extraMin ? ` (includes +${u.extraMin} granted)` : ""}`;
+}
+$("#editBlocked").addEventListener("change", (e) => { $("#editBlockReason").disabled = !e.target.checked; if (e.target.checked) $("#editBlockReason").focus(); });
+// +15 / +30 minutes (or taking extra time back) takes effect straight away
+$("#editStudentModal").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-extra], #editClearExtra");
+  if (!b) return;
+  const id = $("#editStudentId").value;
+  try {
+    const body = b.id === "editClearExtra" ? { clearExtra: true } : { addMinutesToday: Number(b.dataset.extra) };
+    await adminReq("POST", `/api/admin/students/${encodeURIComponent(id)}/access`, body);
+    toast(b.id === "editClearExtra" ? "Extra time removed." : `Added ${b.dataset.extra} minutes for today.`);
+    await loadAdmin();
+    describeAccess(admUsers.find((x) => x.id === id) || {});
+  } catch (err) { $("#editStudentErr").textContent = err.message; }
+});
 function closeEditStudent() { $("#editStudentModal").hidden = true; }
 $("#closeEditStudent").addEventListener("click", closeEditStudent);
 $("#cancelEditStudent").addEventListener("click", closeEditStudent);
@@ -1412,7 +1723,10 @@ $("#editStudentForm").addEventListener("submit", async (e) => {
   const adminNotes = $("#editNotes").value;
   $("#editStudentErr").textContent = "";
   try {
-    await adminReq("PATCH", `/api/admin/students/${encodeURIComponent(id)}`, { level, age: age ? Number(age) : undefined, adminNotes });
+    const url = `/api/admin/students/${encodeURIComponent(id)}`;
+    await adminReq("PATCH", url, { name: $("#editName").value, level, age: age ? Number(age) : undefined, city: $("#editCity").value, phone: $("#editPhone").value, email: $("#editEmail").value, adminNotes });
+    const limit = $("#editLimit").value.trim();
+    await adminReq("POST", `${url}/access`, { blocked: $("#editBlocked").checked, blockReason: $("#editBlockReason").value, dailyLimitMin: limit === "" ? null : Number(limit) });
     closeEditStudent();
     toast("Student updated.");
     loadAdmin();
@@ -1434,7 +1748,7 @@ document.getElementById("trBtn").onclick = async () => {
   document.getElementById("trBtn").disabled = true;
   out.innerHTML = '<p class="small">Translating…</p>';
   try {
-    const r = await api("/api/translate", { text });
+    const r = await api("/api/translate", { text, studentId: student?.id });
     let html = `<div class="card">
       <div class="g-section">
         <span class="g-label">English Translation</span>

@@ -76,6 +76,7 @@
       <button data-tab="test"><span class="ti">📝</span><span class="tl">Test</span></button>
       <button data-tab="discuss"><span class="ti">🗣️</span><span class="tl">Discuss</span></button>
       <button data-tab="groupchat"><span class="ti">👥</span><span class="tl">Chat</span></button>
+      <button data-tab="shayari"><span class="ti">✒️</span><span class="tl">Shayari</span></button>
       <button data-tab="interview"><span class="ti">🎤</span><span class="tl">Interview</span></button>
       <button data-tab="progress"><span class="ti">📊</span><span class="tl">Progress</span></button>
       <button data-tab="dictionary"><span class="ti">📖</span><span class="tl">Dict</span></button>
@@ -250,7 +251,7 @@
       </div>
     </section>
     <section id="groupchat" class="tab">
-      <div class="pagehead"><h2>Group Chat</h2><p class="small">Chat in English with other students. Be kind and respectful. Links are not allowed. <span id="gcOnline" class="online"></span></p></div>
+      <div class="pagehead"><h2>Group Chat</h2> <button type="button" class="ghost mini groupchat-sh-link" id="gcShayariLink">✒️ Shayari corner</button><p class="small">Chat in English with other students. Be kind and respectful. Links are not allowed. <span id="gcOnline" class="online"></span></p></div>
       <details class="card gcmembers" id="gcMembers" open>
         <summary id="gcMembersSum">👥 Members</summary>
         <div id="gcMembersList" class="gcchips"></div>
@@ -263,6 +264,44 @@
       </div>
       <p id="gcBanner" class="gcbanner" hidden></p>
       <p id="gcErr" class="err small"></p>
+    </section>
+    <section id="shayari" class="tab">
+      <div class="pagehead"><h2>Shayari <span aria-hidden="true">✒️</span></h2><p class="small">Learn couplets from great poets and pick up new words, then write and share your own.</p></div>
+      <div class="seg" id="shMode">
+        <button data-shmode="learn" class="on">📖 Learn</button>
+        <button data-shmode="write">✍️ Write &amp; share</button>
+      </div>
+
+      <div id="shLearn">
+        <div id="shDay"></div>
+        <div class="starters sh-poets" id="shPoets"></div>
+        <div id="shPoetCard"></div>
+        <div id="shList"></div>
+        <details class="card phrases sh-basics" id="shBasics"><summary><b>💡 Poetry words to know</b></summary><div id="shBasicsBody"></div></details>
+      </div>
+
+      <div id="shWrite" hidden>
+        <div class="card sh-compose">
+          <p id="shChallenge" class="sh-challenge"></p>
+          <textarea id="shText" rows="4" maxlength="400" placeholder="Write your shayari here… two lines are enough. Hindi, Urdu, Roman or English."></textarea>
+          <div class="sh-compose-row">
+            <label class="sh-sel"><span>Language</span>
+              <select id="shLang"><option>Roman</option><option>Hindi</option><option>Urdu</option><option>English</option></select>
+            </label>
+            <label class="sh-sel"><span>Mood</span>
+              <select id="shMood"><option>Love</option><option>Life</option><option>Pain</option><option>Hope</option><option>Friendship</option><option>Fun</option></select>
+            </label>
+            <span id="shCount" class="small sh-count">0 / 400</span>
+            <button id="shPost" type="button">Post shayari</button>
+          </div>
+          <p id="shErr" class="err small"></p>
+        </div>
+        <div class="seg sh-filter" id="shFilter">
+          <button data-shf="all" class="on">Everyone</button>
+          <button data-shf="mine">My shayari</button>
+        </div>
+        <div id="shWall"></div>
+      </div>
     </section>
     <section id="progress" class="tab">
       <div id="progressOut"></div>
@@ -297,20 +336,33 @@
   </main>
 
   <footer class="site-footer">
+    <div class="footer-glow"></div>
     <div class="footer-inner">
       <div class="footer-brand">
-        <span class="footer-logo">🎓</span>
+        <div class="footer-logo-badge">🎓</div>
         <div>
           <div class="footer-title">Speakeasy Academy</div>
           <div class="footer-tagline">AI-powered English coach for speaking, grammar &amp; tests</div>
           <div class="footer-by">By <strong>Gourav Kumar</strong> &middot; Software Developer</div>
+          <a href="https://github.com/codewithgourav2004" target="_blank" rel="noopener" class="footer-gh">⌨ GitHub</a>
         </div>
+      </div>
+      <div class="footer-col">
+        <div class="footer-label">Features</div>
+        <ul class="footer-feat">
+          <li><span>💬</span> AI Speaking Coach</li>
+          <li><span>✏️</span> Grammar Check</li>
+          <li><span>📝</span> Adaptive Tests</li>
+          <li><span>🔤</span> Hindi → English</li>
+          <li><span>👥</span> Group Chat</li>
+          <li><span>🎤</span> Interview Prep</li>
+        </ul>
       </div>
       <div class="footer-col">
         <div class="footer-label">Built with</div>
         <div class="footer-tags">
           <span>Node.js</span><span>Express.js</span><span>Gemini AI</span>
-          <span>Vanilla JS</span><span>Web Speech API</span><span>HTML / CSS</span>
+          <span>MongoDB</span><span>Web Speech API</span><span>Vanilla JS</span>
         </div>
       </div>
       <div class="footer-col">
@@ -324,7 +376,10 @@
         <div class="footer-cta">Need a website? <a href="mailto:gk154139@gmail.com">Get in touch &rarr;</a></div>
       </div>
     </div>
-    <div class="footer-bottom">&copy; 2025 Gourav Kumar &middot; Speakeasy Academy &middot; All rights reserved</div>
+    <div class="footer-bottom">
+      <span>&copy; 2025 <strong>Gourav Kumar</strong> &middot; Speakeasy Academy</span>
+      <span class="footer-love">Made with ♥ for English learners</span>
+    </div>
   </footer>
 
   <button id="stopVoice" class="stopvoice" hidden title="Stop the voice (Esc)">⏹ Stop voice</button>

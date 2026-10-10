@@ -376,6 +376,7 @@ npm run dev        # same but auto-restarts on file changes
 | `ADMIN_PASSWORD` | Enables the Admin tab. If unset, admin is disabled. |
 | `PORT` | Default 5000 locally. Render sets it automatically. |
 | `DATABASE_URL` | Postgres connection string (free at neon.tech or Supabase). **Set this on Render**; it keeps students, chats, scores, group chat and enquiries across restarts and redeploys. Without it they are saved as files, which a temporary disk loses. |
+| `MONGODB_URL` (or `MONGODB_URI`) | MongoDB connection string, e.g. a free MongoDB Atlas cluster: `mongodb+srv://USER:PASSWORD@cluster0.xxxxx.mongodb.net/Speakeasy?appName=Cluster0`. **Takes priority over `DATABASE_URL`.** The database name is taken from the address (or `MONGODB_DB`, default `speakeasy`). Data goes in one collection, `app_files`. `mongodb://localhost:27017/` only works on your own PC, never on Render. In Atlas create a database user and allow `0.0.0.0/0` under Network Access (Render has no fixed address). If your network cannot resolve `mongodb+srv` addresses, the server falls back to public DNS automatically. |
 | `ADMIN_TZ` | Time zone that decides where each day starts in Daily usage (default `Asia/Kolkata`) |
 | `DATA_DIR` | Optional folder for saved data (for example a Render Persistent Disk at `/var/data`). Question and topic files always stay in `backend/data`. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `ENQUIRY_TO` | Optional. When set, every enquiry is also emailed to `ENQUIRY_TO`. Gmail: `smtp.gmail.com`, 587, your address, and a 16-character App password. `ENQUIRY_FROM` sets the sender name. |
@@ -385,9 +386,20 @@ Notes:
 - Free tiers have request limits and can return 429 or 503 ("high demand"). Each attempt times out after 20 s. The server tries every model in order, waits about a second, and makes one more pass before giving up. A bad key stops immediately. Students then see a short message, not the provider's raw error.
 - Model names get retired (for example `gemini-2.0-flash`). `gemini-flash-lite-latest` and `gemini-flash-latest` are aliases that follow the current model. If the message says "The AI model isn't available", update `OPENAI_MODEL` / `OPENAI_FALLBACK_MODEL`.
 - On Gemini free tiers, submitted text may be used by the provider to improve its products. Tell students, or use a paid key.
-- **Where data lives:** with `DATABASE_URL` set, saved data (students, chats, scores, searches, group chat, enquiries) is kept in a Postgres table `app_files`, one row per former file, and loaded into memory at start. Changes are written within a fraction of a second and again on shutdown. Without it, the same data is saved as JSON files in `DATA_DIR` (default `backend/data/`): `students.json`, `chats/`, `results.json`, `tr_results.json`, `groupchat.json`, `searches.json`, `grammar_checks.json`, `enquiries.json`. The content files `questions.json`, `discussion.json` and `hindi_sentences.json` always come from the repository.
+- **Where data lives:** with `MONGODB_URL` set (MongoDB) or `DATABASE_URL` set (Postgres; MongoDB wins if both are set), saved data (students, chats, scores, searches, group chat, enquiries) is kept in a Postgres table or MongoDB collection called `app_files`, one record per former file, and loaded into memory at start. Changes are written within a fraction of a second and again on shutdown. Without it, the same data is saved as JSON files in `DATA_DIR` (default `backend/data/`): `students.json`, `chats/`, `results.json`, `tr_results.json`, `groupchat.json`, `searches.json`, `grammar_checks.json`, `enquiries.json`. The content files `questions.json`, `discussion.json` and `hindi_sentences.json` always come from the repository.
+- Only **one server** should use a given database at a time: each keeps the data in memory and writes it back, so two servers (for example a test copy and the real one) overwrite each other. Test scripts must start with `MONGODB_URL=` and `DATABASE_URL=` empty.
 - If the database cannot be reached at start, the site still starts, falls back to files, and the Admin tab shows a red warning that data is not permanent.
 - `IMPORT_LOCAL_DATA=true` (one time, with an empty database) copies existing local JSON files into the database.
+
+### Admin: block students and time limits
+- **Edit** (Students tab) changes a student's name, age, level, city, phone, email and private notes, and has an **Access** section:
+  - **Block** a student, with an optional message they will see. A blocked student cannot sign in or use any AI, test or chat feature; every protected route answers 403 `{code:"blocked"}`. **Unblock** restores access. Students-table rows also have a one-click Block / Unblock button and a "Blocked" filter and tile.
+  - **Daily time limit** in minutes for that student (blank = use the default, 0 = no limit). Time counts from the 15-second heartbeat. When it runs out the app shows a lock screen with a countdown to tomorrow (a "day" follows `ADMIN_TZ`), and routes answer 403 `{code:"limit"}`.
+  - **+15 / +30 minutes today** grants extra time for today only; "remove extra time" takes it back. A lifted lock opens by itself within about 15 seconds.
+- **Default daily limit for everyone** is set on the Students tab and stored in `settings.json`. A student's own limit wins over it.
+- Students see "⏱ N min left today" in the Speak header, which turns amber when time is nearly up.
+- Because there are no passwords, a blocked student could register again under a different name. The block is per name.
+- API: `POST /api/admin/students/:id/access` (`blocked`, `blockReason`, `dailyLimitMin`, `addMinutesToday`, `clearExtra`), `POST /api/admin/settings` (`defaultDailyLimitMin`), `PATCH /api/admin/students/:id`, `GET /api/students/:id/status` (used by the student app).
 
 ### Admin: Daily usage
 - Each day the server records, per student: seconds on site (from the 15-second heartbeat), sign-ins, Speak messages, grammar tests, Hindi writing tests, grammar checks, dictionary searches and group-chat messages. One small file per day: `usage/YYYY-MM-DD.json` (a database row each when `DATABASE_URL` is set). A "day" runs midnight to midnight in `ADMIN_TZ`.
@@ -398,12 +410,15 @@ Notes:
 
 ### Students and privacy
 - A student signs in with a **name, age and level**. There is no password: anyone who types the same name gets that student's data. Use this only for a classroom or demo.
+- If the server no longer knows a signed-in student (for example after its data was reset), the app quietly signs them in again from the name, age and level saved in the browser instead of showing the sign-in box.
+- Private admin notes are never sent to students. The Grammar and Translate routes now require a signed-in student, like the other AI routes.
 - Login is persisted in `localStorage` — the student stays signed in across browser restarts and refreshes until they click **Logout**. The **Speak** tab has a **Clear chat** button that deletes the conversation history (test scores are unaffected).
 - Time on site is counted from a 15-second heartbeat while the tab is visible; the server caps what it credits, so it can't be inflated.
 - Student files (`students.json`, `chats/`, `groupchat.json`, `searches.json`, `results.json`, `tr_results.json`, `grammar_checks.json`) hold real names and ages. They are listed in `backend/.gitignore` so new commits skip them. See "Deploying" for what to do if they were committed earlier.
 
 ### Phones, tablets and touch screens
 - **Phones (≤ 760 px):** the tabs are a bar fixed to the bottom of the screen (icon + label, scrolls sideways). The header is one slim row (logo, name, Logout, admin, theme). Inputs are 16 px so iPhones don't zoom in, buttons have at least a 44 px touch target, and chat areas fill the screen height. The mic button is just an icon and hints are shorter; both switch back when the window is made wider.
+- **Full-screen sections (phones):** Speak, Group chat and a running Interview fill the screen height; the page does not scroll, only the message list does (and it jumps to the newest message, also when the keyboard opens). The bottom tab bar **hides** while you swipe up or type and returns on swipe down, on a tab change, or from the small ⌃ handle. While typing, the coach header and group members fold away. The script sets `--hdr` (header height), `--vh` (visible height) and `--navh` (tab bar height) and the classes `nav-hidden` and `kbd`, plus `body[data-fill]`, at the end of `app.js`.
 - **Tablets (≤ 1100 px):** the tab bar gets its own row under the header and scrolls sideways; the chosen tab scrolls into view (only the bar moves, never the page).
 - **Touch only (no hover):** tapping a group-chat message shows its react / edit / delete buttons.
 - **Stacking order:** header 10, tab bar 40, stop-voice button 45, sign-in boxes and overlays 300, toasts 310.
@@ -413,7 +428,8 @@ Notes:
 ### Deploying
 - **One Render Web Service (simplest):** `render.yaml` describes it. Root Directory `backend`, build `npm install`, start `node server.js`. The server also serves the `Frontend` folder, so one address serves both the page and the API. Set the variables from the table above in the Render dashboard; they are not in git.
 - **Optional Vercel frontend:** `Frontend/vercel.json` forwards `/api/*` to the Render address, so the page code needs no changes. In Vercel set Root Directory to `Frontend`, Framework Preset *Other*, and leave Install and Build commands empty. Update the address in `vercel.json` if the Render URL changes.
-- **Free Render plan:** the service sleeps when idle (the first request can take a minute) and its disk is wiped on every restart and deploy. **Student data is lost unless `DATABASE_URL` is set.** Setup: create a free project at neon.tech, copy the connection string (it ends in `?sslmode=require`), add it to the Render service as `DATABASE_URL`, redeploy. The Admin tab then shows "💾 Student data is saved in the database".
+- **Two Render services?** Vercel's `Frontend/vercel.json` names one Render address. Set the database variable on **that** service, not another one.
+- **Free Render plan:** the service sleeps when idle (the first request can take a minute) and its disk is wiped on every restart and deploy. **Student data is lost unless `DATABASE_URL` is set.** Setup: either create a free MongoDB Atlas cluster and set `MONGODB_URL`, or create a free project at neon.tech, copy the connection string (it ends in `?sslmode=require`), add it to the Render service as `DATABASE_URL`, redeploy. The Admin tab then shows "💾 Student data is saved in the database".
 - **Public repository warning:** files committed before `.gitignore` listed them stay in git history. If student files were committed, run `git rm --cached` on them and make the repository private.
 
 ### Main API routes
@@ -423,4 +439,5 @@ Notes:
 - Content and logging: `GET /api/discussion`, `POST /api/log/search`
 - Enquiries: `POST /api/enquiry` (public; hidden spam field, 5 per hour per visitor); admin: `GET /api/admin/enquiries`, `POST /api/admin/enquiries/:eid/status`, `DELETE /api/admin/enquiries/:eid`
 - Group chat: `GET|POST /api/groupchat/:room`, `PATCH /api/groupchat/:room/:msgId` (edit own), `POST /api/groupchat/:room/:msgId/react`, `DELETE /api/groupchat/:room/:msgId` (own message; the admin key also works, used by the Admin tab)
+- Access: `GET /api/students/:id/status`, `POST /api/admin/students/:id/access`, `POST /api/admin/settings`, `PATCH /api/admin/students/:id`; usage: `GET /api/admin/usage`, `GET /api/admin/usage/:date`
 - Admin (header `x-admin-key`): `GET /api/admin/summary`, `GET /api/admin/groupchat`, `POST /api/admin/groupchat/enabled`, `POST /api/admin/groupchat/:room/announce`, `DELETE /api/admin/groupchat/:room`, `POST /api/admin/students/:id/mute`, `GET /api/admin/users/:id/tests`

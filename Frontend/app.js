@@ -86,13 +86,15 @@ async function enter(s) {
 }
 $("#welcomeForm").onsubmit = async (e) => {
   e.preventDefault();
+  const errEl = $("#welcomeErr");
+  errEl.textContent = "";
   try {
     const { student: s, isNew, access } = await api("/api/login", { name: $("#nameInput").value, age: $("#ageInput").value, level: $("#levelInput").value, phone: $("#phoneInput").value, email: $("#emailInput").value, city: $("#cityInput").value });
     await enter(s);
     applyAccess(access);
     if (!isNew) toast(`Welcome back, ${s.name}!`);
   } catch (err) {
-    $("#welcomeErr").textContent = err.message;
+    errEl.textContent = err.message;
   }
 };
 function logout() {
@@ -1670,6 +1672,22 @@ async function openUserDetail(uid, uname) {
         </tr>`).join("") + `</table></div>`;
     } else { html += '<p class="small">No grammar checks yet.</p>'; }
 
+    const searches = d.searches || [];
+    html += `<h3 style="margin-top:20px">Dictionary Search History (${searches.length})</h3>`;
+    if (searches.length) {
+      const wordFreq = {};
+      for (const s of searches) wordFreq[s.word] = (wordFreq[s.word] || 0) + 1;
+      const topWords = Object.entries(wordFreq).sort((a, b) => b[1] - a[1]).slice(0, 10);
+      html += `<div style="margin-bottom:12px"><span class="small" style="opacity:.65">Most searched: </span>` +
+        topWords.map(([w, c]) => `<span class="pill" style="margin:2px">${esc(w)}${c > 1 ? ` <b style="opacity:.6">${c}×</b>` : ""}</span>`).join("") + `</div>`;
+      html += `<div class="tablewrap"><table><tr><th>Date &amp; Time</th><th>Word searched</th></tr>` +
+        searches.slice().reverse().slice(0, 100).map((s) => `<tr>
+          <td class="small">${new Date(s.at).toLocaleString()}</td>
+          <td><b>${esc(s.word)}</b></td>
+        </tr>`).join("") + `</table></div>`;
+      if (searches.length > 100) html += `<p class="small" style="opacity:.6">Showing last 100 of ${searches.length} searches.</p>`;
+    } else { html += '<p class="small">No dictionary searches yet.</p>'; }
+
     out.innerHTML = html;
   } catch (e) {
     out.innerHTML = `<p class="err">${esc(e.message)}</p>`;
@@ -1963,6 +1981,65 @@ if (SR) {
   document.getElementById("ivMic").disabled = true;
   document.getElementById("ivNote").textContent = "Speech recognition isn't supported in this browser. Use Chrome or Edge, or type instead.";
 }
+
+// ---- Phones: full-screen sections, auto-hiding tab bar, keyboard-aware height ----
+(() => {
+  const phone = matchMedia("(max-width:760px)");
+  const FILL = ["speak", "groupchat"];
+  const body = document.body, header = document.querySelector("header");
+  const peek = document.createElement("button");
+  peek.className = "navpeek"; peek.type = "button"; peek.textContent = "⌃"; peek.setAttribute("aria-label", "Show menu");
+  peek.hidden = true; document.body.append(peek);
+
+  const showNav = () => { body.classList.remove("nav-hidden"); peek.hidden = true; };
+  const hideNav = () => { if (!phone.matches) return; body.classList.add("nav-hidden"); peek.hidden = false; };
+  peek.onclick = showNav;
+
+  function syncFill() {
+    const tab = document.querySelector("main .tab.active")?.id;
+    const ivRunning = tab === "interview" && !document.getElementById("ivRun").hidden;
+    const fill = phone.matches && (FILL.includes(tab) || ivRunning);
+    if (fill) body.dataset.fill = "1"; else delete body.dataset.fill;
+    if (!phone.matches) showNav();
+  }
+  function syncSizes() {
+    body.style.setProperty("--hdr", header.offsetHeight + "px");
+    const vh = window.visualViewport?.height;
+    if (vh) body.style.setProperty("--vh", vh + "px");
+    // keep the newest message in view when the keyboard opens or the screen rotates
+    const log = document.querySelector("main .tab.active .chatlog");
+    if (log && body.dataset.fill) log.scrollTop = log.scrollHeight;
+  }
+  new MutationObserver(syncFill).observe(document.querySelector("main"), { attributes: true, subtree: true, attributeFilter: ["class", "hidden"] });
+  new ResizeObserver(syncSizes).observe(header);
+  window.visualViewport?.addEventListener("resize", syncSizes);
+  phone.addEventListener("change", () => { syncFill(); syncSizes(); });
+  document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", showNav));
+
+  // Swipe up (reading on) hides the bar, swipe down brings it back. Page scrolling works the same way.
+  let lastY = null, acc = 0;
+  const move = (y) => {
+    if (!phone.matches) return;
+    if (lastY !== null) { const d = y - lastY; acc = Math.sign(d) === Math.sign(acc) ? acc + d : d; if (acc < -28) hideNav(); else if (acc > 28) showNav(); }
+    lastY = y;
+  };
+  document.addEventListener("touchstart", (e) => { lastY = e.touches[0].clientY; acc = 0; }, { passive: true });
+  document.addEventListener("touchmove", (e) => move(e.touches[0].clientY), { passive: true });
+  document.addEventListener("touchend", () => { lastY = null; }, { passive: true });
+  let lastScroll = window.scrollY;
+  window.addEventListener("scroll", () => {
+    const y = window.scrollY, d = y - lastScroll; lastScroll = y;
+    if (!phone.matches || body.dataset.fill) return;
+    if (y < 60 || d < -6) showNav(); else if (d > 8) hideNav();
+  }, { passive: true });
+
+  // Typing hides the bar and the intro blocks to leave room for the keyboard
+  const typing = (el) => el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) && el.type !== "checkbox" && el.type !== "radio";
+  document.addEventListener("focusin", (e) => { if (phone.matches && typing(e.target)) { body.classList.add("kbd"); hideNav(); } });
+  document.addEventListener("focusout", () => setTimeout(() => { if (!typing(document.activeElement)) { body.classList.remove("kbd"); showNav(); } }, 150));
+
+  syncFill(); syncSizes();
+})();
 
 // ---- Start ----
 if (student?.id) enter(student); else showWelcome();

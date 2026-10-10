@@ -668,7 +668,9 @@ nav button[hidden] { display:none !important; }
 .hp { position:absolute !important; left:-9999px; width:1px; height:1px; opacity:0; pointer-events:none; }
 #enquiryForm textarea { width:100%; min-height:100px; margin:0; }
 #enqMsg:empty { display:none; }
-#enqMsg.ok { color:var(--ok); } #enqMsg.err { color:var(--bad); }
+#enqMsg.ok, #enqMsg.err, #welcomeErr:not(:empty) { border-radius:10px; padding:10px 14px; text-align:left; font-size:.88rem; line-height:1.5; }
+#enqMsg.ok { background:color-mix(in srgb,var(--ok) 10%,var(--card)); border:1px solid color-mix(in srgb,var(--ok) 35%,var(--line)); color:color-mix(in srgb,var(--ok) 70%,var(--ink)); }
+#enqMsg.err, #welcomeErr:not(:empty) { background:color-mix(in srgb,var(--bad) 10%,var(--card)); border:1px solid color-mix(in srgb,var(--bad) 35%,var(--line)); color:var(--bad); }
 .storage { margin:0 0 14px; padding:10px 14px; border-radius:12px; font-size:.9rem; line-height:1.45; }
 .storage.ok { background:color-mix(in srgb,var(--ok) 12%,var(--card)); border:1px solid color-mix(in srgb,var(--ok) 40%,var(--line)); }
 .storage.warn { background:color-mix(in srgb,var(--bad) 12%,var(--card)); border:1px solid color-mix(in srgb,var(--bad) 45%,var(--line)); }
@@ -793,3 +795,51 @@ button.mini { padding:2px 9px; min-height:0 !important; font-size:.72rem; border
   #testSetup .startrow > button { flex:1; padding:13px 16px; }
 }
 @media (max-width:360px) { #testSetup .topics { grid-template-columns:1fr; } }
+
+
+/* ================= Phones: the active section fills the screen, tab bar hides while you use it ================= */
+@media (max-width:760px) {
+  body { --navh:calc(72px + env(safe-area-inset-bottom)); transition:padding-bottom .2s; }
+  body.nav-hidden { --navh:env(safe-area-inset-bottom); padding-bottom:env(safe-area-inset-bottom); }
+  header nav { transition:transform .22s ease; will-change:transform; }
+  body.nav-hidden header nav { transform:translateY(115%); box-shadow:none; pointer-events:none; }
+  .navpeek { position:fixed; left:50%; bottom:calc(6px + env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:49; width:52px; height:26px; padding:0 !important; min-height:0 !important; border-radius:99px; font-size:1rem; line-height:1; background:var(--card) !important; color:var(--muted) !important; border:1px solid var(--line) !important; box-shadow:0 4px 14px rgba(0,0,0,.25) !important; }
+  .navpeek[hidden] { display:none !important; }
+  body:not(.nav-hidden) .navpeek { display:none !important; }
+
+  /* Chat-style sections: one full-height column, only the message list scrolls */
+  body[data-fill="1"] { overflow:hidden; }
+  body[data-fill="1"] main { padding:8px 10px 0; }
+  body[data-fill="1"] #speak.active,
+  body[data-fill="1"] #groupchat.active,
+  body[data-fill="1"] #interview.active #ivRun:not([hidden]) { display:flex; flex-direction:column; min-height:0; height:calc(var(--vh,100dvh) - var(--hdr,56px) - var(--navh) - 8px); }
+  body[data-fill="1"] #interview.active { display:block; }
+  body[data-fill="1"] .chatlog { flex:1 1 auto; height:auto !important; min-height:0 !important; max-height:none; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; scroll-behavior:smooth; }
+  body[data-fill="1"] #speak.active > *:not(.chatlog),
+  body[data-fill="1"] #groupchat.active > *:not(.chatlog),
+  body[data-fill="1"] #ivRun > *:not(.chatlog) { flex:none; }
+  body[data-fill="1"] #speak .row, body[data-fill="1"] #groupchat .row, body[data-fill="1"] #ivRow { margin-top:8px; padding-bottom:6px; }
+  body[data-fill="1"] #speechNote:empty, body[data-fill="1"] #ivNote:empty { display:none; }
+  body[data-fill="1"] #groupchat .pagehead { display:none; }
+  body[data-fill="1"] .gcmembers { margin-bottom:6px; }
+  /* Typing: the keyboard needs the room, so the intro blocks fold away */
+  body.kbd .coach-head, body.kbd #groupchat .gcmembers, body.kbd #gcRooms { display:none; }
+  /* Stop-voice moves to the top so it never covers the message box */
+  .stopvoice { bottom:auto !important; top:calc(var(--hdr,56px) + 10px); right:12px; padding:7px 14px; font-size:.85rem; }
+}
+@media (min-width:761px) { .navpeek { display:none !important; } }
+
+/* fill mode polish: compact coach header, a thin strip under the message box for the menu handle */
+@media (max-width:760px) {
+  body.nav-hidden[data-fill="1"] { --navh:calc(28px + env(safe-area-inset-bottom)); padding-bottom:calc(28px + env(safe-area-inset-bottom)); }
+  body.nav-hidden[data-fill="1"] .navpeek { height:22px; bottom:calc(3px + env(safe-area-inset-bottom)); font-size:.9rem; }
+  body[data-fill="1"] .coach-head { flex-wrap:wrap; padding:8px 10px; gap:4px 10px; margin-bottom:6px; border-radius:14px; }
+  body[data-fill="1"] .coach-avatar { display:none; }
+  body[data-fill="1"] .coach-info { flex:1 1 0; }
+  body[data-fill="1"] .coach-info h2 { font-size:.95rem; }
+  body[data-fill="1"] .coach-pills { flex-wrap:nowrap; overflow:hidden; gap:5px; }
+  body[data-fill="1"] .coach-pills .pill { font-size:.7rem; padding:2px 8px; white-space:nowrap; }
+  body[data-fill="1"] .coach-head .coach-tools { flex:none; gap:8px; }
+  body[data-fill="1"] .coach-head .switch-label, body[data-fill="1"] .coach-head .btn-label { display:none; }
+  body[data-fill="1"] .coach-head #clearChat { padding:6px 10px; min-height:0; }
+}

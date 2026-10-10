@@ -166,6 +166,14 @@ app.post("/api/login", (req, res) => {
   const phone = String(req.body.phone || "").trim().slice(0, 20);
   const email = String(req.body.email || "").trim().toLowerCase().slice(0, 100);
   const city = String(req.body.city || "").trim().slice(0, 40);
+  if (email) {
+    const dup = Object.values(students).find(s => s.id !== id && s.email === email);
+    if (dup) return res.status(409).json({ error: "That email is already linked to another account. Please use your original name to sign in." });
+  }
+  if (phone) {
+    const dup = Object.values(students).find(s => s.id !== id && s.phone === phone);
+    if (dup) return res.status(409).json({ error: "That phone number is already linked to another account. Please use your original name to sign in." });
+  }
   if (phone) students[id].phone = phone;
   if (email) students[id].email = email;
   if (city) students[id].city = city;
@@ -302,8 +310,9 @@ app.get("/api/admin/users/:id/tests", requireAdmin, (req, res) => {
   const mcq = readJson(RESULTS_FILE, []).filter((r) => r.studentId === id);
   const tr = readJson(TR_RESULTS_FILE, []).filter((r) => r.studentId === id);
   const grammar = readJson(GRAMMAR_CHECKS_FILE, []).filter((r) => r.studentId === id);
+  const searches = readJson(SEARCHES_FILE, []).filter((r) => r.studentId === id);
   const profile = s ? { name: s.name, age: s.age ?? null, level: s.level, phone: s.phone || "", email: s.email || "", city: s.city || "", created: s.created, lastSeen: s.lastSeen, visits: s.visits || 1, timeSpent: Math.round(s.timeSpent || 0), adminNotes: s.adminNotes || "" } : null;
-  res.json({ profile, mcq, tr, grammar });
+  res.json({ profile, mcq, tr, grammar, searches });
 });
 
 app.get("/api/students/:id/grammar-history", requireStudent, (req, res) => {
@@ -1075,6 +1084,8 @@ app.post("/api/enquiry", wrap(async (req, res) => {
   enquiryTimes.set(req.ip, [...recent, now]);
   const student = getStudent(String(req.body.studentId || ""));
   const all = readJson(ENQUIRIES_FILE, []);
+  const recentSameEmail = all.filter(e => e.email === email && Date.now() - new Date(e.at).getTime() < 1800000);
+  if (recentSameEmail.length >= 2) return res.status(429).json({ error: "You've already sent an enquiry from this email recently. We'll get back to you soon!" });
   const record = { id: all.reduce((m, x) => Math.max(m, x.id), 0) + 1, name, email, phone, message, studentName: student?.name || "", at: new Date().toISOString(), status: "new", emailed: false };
   all.push(record);
   writeJson(ENQUIRIES_FILE, all.slice(-1000));
@@ -1111,7 +1122,7 @@ app.use((req, res, next) => {
   res.sendFile(FRONTEND_INDEX);
 });
 
-await initStore({ dataDir: DATA_DIR, databaseUrl: process.env.DATABASE_URL, mongoUrl: process.env.MONGODB_URL });
+await initStore({ dataDir: DATA_DIR, databaseUrl: process.env.DATABASE_URL, mongoUrl: process.env.MONGODB_URL || process.env.MONGODB_URI });
 backfillUsage();
 for (const sig of ["SIGTERM", "SIGINT"]) process.on(sig, async () => { await flushStore().catch(() => {}); process.exit(0); }); // save pending changes before Render restarts us
 

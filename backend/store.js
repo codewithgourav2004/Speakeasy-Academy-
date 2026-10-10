@@ -10,6 +10,7 @@
 // moment later (and on shutdown). The question bank and other content files always come from disk.
 import fs from "node:fs";
 import path from "node:path";
+import dns from "node:dns";
 import pg from "pg";
 import { MongoClient } from "mongodb";
 
@@ -27,6 +28,15 @@ const RUNTIME = [/^(students|results|tr_results|searches|grammar_checks|groupcha
 const keyOf = (file) => path.relative(DATA_DIR, file).split(path.sep).join("/");
 const isRuntime = (key) => RUNTIME.some((re) => re.test(key));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Explain a connection failure without leaking the password: an empty message usually means the URL was
+// not understood and Postgres fell back to localhost.
+function describeDbError(e, url) {
+  const why = e.message || e.code || e.errors?.[0]?.code || "no details";
+  let where = "DATABASE_URL is empty";
+  try { const u = new URL(url); where = `trying ${u.hostname}:${u.port || 5432}`; } catch { if (url) where = "DATABASE_URL is not a valid address - it should start with postgresql://"; }
+  return `${String(why).slice(0, 100)}; ${where}`;
+}
 
 export async function initStore({ dataDir, databaseUrl, mongoUrl, poolFactory } = {}) {
   DATA_DIR = dataDir;
@@ -49,7 +59,7 @@ export async function initStore({ dataDir, databaseUrl, mongoUrl, poolFactory } 
       console.log(`Student data is stored in the database (${rows.length} saved record${rows.length === 1 ? "" : "s"} loaded).`);
       return storeInfo();
     } catch (e) {
-      problem = `Could not reach the database (${String(e.message).slice(0, 120)})`;
+      problem = `Could not reach the database (${describeDbError(e, databaseUrl)})`;
       console.error(`${problem}; attempt ${attempt} of 4`);
       try { await pool?.end(); } catch {}
       pool = null;
@@ -63,12 +73,17 @@ export async function initStore({ dataDir, databaseUrl, mongoUrl, poolFactory } 
 
 // MongoDB: the same key/value records, one document per file ({ _id: key, value, updated_at }).
 async function initMongo(url) {
+  // mongodb+srv:// addresses need a DNS "SRV" lookup. Some networks cannot answer it, so fall back to public DNS.
+  if (url.startsWith("mongodb+srv://")) {
+    try { await dns.promises.resolveSrv("_mongodb._tcp." + new URL(url).hostname); }
+    catch (e) { dns.setServers(["8.8.8.8", "1.1.1.1"]); console.log(`Local DNS could not look up the MongoDB address (${e.code}); using public DNS instead.`); }
+  }
   for (let attempt = 1; attempt <= 4; attempt++) {
     let client = null;
     try {
       client = new MongoClient(url, { serverSelectionTimeoutMS: 6000 });
       await client.connect();
-      const col = client.db(process.env.MONGODB_DB || "speakeasy").collection("app_files");
+      const col = client.db(process.env.MONGODB_DB || client.options.dbName || "speakeasy").collection("app_files");
       const rows = await col.find({}).toArray();
       mem.clear();
       for (const r of rows) mem.set(r._id, r.value);

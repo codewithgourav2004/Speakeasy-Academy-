@@ -161,6 +161,21 @@ const newAccountTimes = new Map(); // ip → timestamps of new account creations
 const EMAIL_RE_LOGIN = /^[^\s@<>"',;:]+@[^\s@<>"',;:]+\.[^\s@<>"',;:]{2,}$/;
 const PHONE_RE = /^\+?[\d\s\-().]+$/; // valid chars; digit count checked separately
 
+// Slug IDs that are clearly test/fake/placeholder accounts
+const TEST_NAME_SLUGS = new Set([
+  "test","testing","tester","test-user","testuser","test-account","test1","test2","test-1","test-2","test-3",
+  "test-student","test-name","mytest","atestuser",
+  "demo","demo-user","demouser","demo-account","demo-student",
+  "sample","sample-user","sampleuser","fake","fake-user","fakeuser","dummy","dummy-user","dummyuser",
+  "admin","administrator","root","superuser","mod","moderator",
+  "user","user1","user2","user-1","user-2","user123","username","newuser",
+  "guest","guest-user","guestuser","anonymous","anon","anony",
+  "temp","temporary","temp-user","tempuser","trial","trial-user",
+  "abc","abcd","abcde","xyz","xyzzy","asdf","asdfgh","qwerty","qwertyui",
+  "aaa","aaaa","bbb","bbbb","ccc","111","1111","000","0000","123","1234","12345",
+  "hello","hi","hey","heyy","random","bot","robot","null","undefined","none","na","n-a",
+]);
+
 app.post("/api/login", (req, res) => {
   const name = String(req.body.name || "").trim().slice(0, 40);
   const id = slug(name);
@@ -176,6 +191,12 @@ app.post("/api/login", (req, res) => {
     const ipNew = (newAccountTimes.get(req.ip) || []).filter(t => Date.now() - t < 3600e3);
     if (ipNew.length >= 3) return res.status(429).json({ error: "Too many new accounts created from this connection. Please wait before trying again." });
     newAccountTimes.set(req.ip, [...ipNew, Date.now()]);
+    // Block test/fake/placeholder names on new registrations
+    const idClean = id.replace(/-/g, "");
+    const isTestName = TEST_NAME_SLUGS.has(id) || TEST_NAME_SLUGS.has(idClean)
+      || /^test/i.test(id) || /^demo/i.test(id)
+      || /^(.)\1{2,}$/.test(idClean); // all-same-char: aaaa, 1111
+    if (isTestName) return res.status(400).json({ error: "Please use your real name. Names like 'test', 'demo', or 'abc' are not allowed." });
   }
   students[id] ??= { id, name, level: "intermediate", created: now };
   students[id].age = age;
@@ -1239,6 +1260,25 @@ app.delete("/api/admin/shayari/:pid", requireAdmin, (req, res) => {
   data.posts = data.posts.filter((p) => p.id !== parseInt(req.params.pid, 10));
   writeJson(SH_FILE, data);
   res.json({ ok: true });
+});
+
+// Admin: list test/fake accounts, and delete them
+const isTestSlug = (id) => {
+  const clean = id.replace(/-/g, "");
+  return TEST_NAME_SLUGS.has(id) || TEST_NAME_SLUGS.has(clean)
+    || /^test/i.test(id) || /^demo/i.test(id)
+    || /^(.)\1{2,}$/.test(clean);
+};
+app.get("/api/admin/test-users", requireAdmin, (_req, res) => {
+  const students = Object.values(readJson(STUDENTS_FILE, {}));
+  res.json(students.filter((s) => isTestSlug(s.id)).map((s) => ({ id: s.id, name: s.name, created: s.created, visits: s.visits || 1 })));
+});
+app.delete("/api/admin/test-users", requireAdmin, (req, res) => {
+  const students = readJson(STUDENTS_FILE, {});
+  const toDelete = Object.keys(students).filter(isTestSlug);
+  for (const id of toDelete) delete students[id];
+  writeJson(STUDENTS_FILE, students);
+  res.json({ deleted: toDelete.length, ids: toDelete });
 });
 
 // ---- Enquiries: a visitor asks a question; it is saved for the admin and emailed if SMTP is set up ----

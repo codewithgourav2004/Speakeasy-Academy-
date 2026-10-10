@@ -1240,6 +1240,21 @@ document.getElementById("adminOut").addEventListener("click", async (e) => {
   } catch (err) { alert(err.message); }
 });
 
+document.getElementById("adminOut").addEventListener("click", async (e) => {
+  const btn = e.target.closest("#admCleanTestBtn");
+  if (!btn) return;
+  try {
+    const list = await adminReq("GET", "/api/admin/test-users");
+    if (!list.length) { alert("No test accounts found."); return; }
+    const names = list.map((u) => `• ${u.name} (${u.id})`).join("\n");
+    if (!confirm(`Found ${list.length} test account(s):\n${names}\n\nDelete all of them permanently?`)) return;
+    btn.disabled = true; btn.textContent = "Removing…";
+    const r = await adminReq("DELETE", "/api/admin/test-users");
+    alert(`Removed ${r.deleted} test account(s).`);
+    loadAdmin();
+  } catch (err) { alert(err.message); btn.disabled = false; btn.textContent = "Find & remove"; }
+});
+
 // ---- Access: lock screen (blocked, or today's time is used up) and the "time left" badge ----
 let lockTimer = null;
 const warned = {};
@@ -1323,6 +1338,10 @@ async function loadAdmin() {
       ${admTabsHTML(d.newEnquiries)}
       <div class="adm-panel" data-p="overview">
       ${admTilesHTML(d)}
+      <div class="card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div><b>🧹 Test accounts</b><p class="small" style="margin:2px 0 0">Remove dummy registrations (names like "test", "demo", "abc", etc.)</p></div>
+        <button class="ghost danger" id="admCleanTestBtn">Find &amp; remove</button>
+      </div>
       <div class="card"><h3>Age groups</h3>
         ${Object.entries(d.ageGroups).map(([g, n]) => `<div class="statrow"><span>${g}</span><span class="small">${n}</span></div><div class="bar"><div style="width:${(n / maxAge) * 100}%"></div></div>`).join("")}
       </div>

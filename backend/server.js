@@ -21,6 +21,7 @@ const RESULTS_FILE = path.join(DATA_DIR, "results.json");
 const SEARCHES_FILE = path.join(DATA_DIR, "searches.json");
 const TR_RESULTS_FILE = path.join(DATA_DIR, "tr_results.json");
 const GRAMMAR_CHECKS_FILE = path.join(DATA_DIR, "grammar_checks.json");
+const WOTD_FILE = path.join(DATA_DIR, "word_of_day.json");
 const bank = JSON.parse(fs.readFileSync(path.join(__dirname, "data", "questions.json"), "utf8"));
 const TOPICS = Object.keys(bank);
 const hindiBank = JSON.parse(fs.readFileSync(path.join(__dirname, "data", "hindi_sentences.json"), "utf8"));
@@ -194,13 +195,21 @@ app.post("/api/login", (req, res) => {
     // Block test/fake/placeholder names on new registrations
     const idClean = id.replace(/-/g, "");
     const isTestName = TEST_NAME_SLUGS.has(id) || TEST_NAME_SLUGS.has(idClean)
-      || /^test/i.test(id) || /^demo/i.test(id)
+      || /^test/i.test(id) || /^demo/i.test(id) || /^zz-/i.test(id)
       || /^(.)\1{2,}$/.test(idClean); // all-same-char: aaaa, 1111
     if (isTestName) return res.status(400).json({ error: "Please use your real name. Names like 'test', 'demo', or 'abc' are not allowed." });
   }
   students[id] ??= { id, name, level: "intermediate", created: now };
   students[id].age = age;
   students[id].visits = (students[id].visits || 0) + 1;
+  // Streak: count consecutive calendar days with at least one login
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const lastDay = students[id].lastLoginDay;
+  if (!lastDay || lastDay < yesterday) students[id].streak = 1;
+  else if (lastDay === yesterday) students[id].streak = (students[id].streak || 1) + 1;
+  // lastDay === todayKey → already logged in today, keep streak
+  if (lastDay !== todayKey) students[id].lastLoginDay = todayKey;
   if (LEVELS.includes(req.body.level)) students[id].level = req.body.level;
   const phone = String(req.body.phone || "").trim().slice(0, 20);
   const email = String(req.body.email || "").trim().toLowerCase().slice(0, 100);
@@ -1108,6 +1117,66 @@ app.post("/api/admin/settings", requireAdmin, (req, res) => {
   res.json(getSettings());
 });
 
+// ---- Announcement: admin broadcasts a banner message to all students ----
+app.get("/api/announcement", (_req, res) => {
+  const s = getSettings();
+  res.json(s.announcement || null);
+});
+app.post("/api/admin/announcement", requireAdmin, (req, res) => {
+  const text = String(req.body.text || "").trim().slice(0, 300);
+  if (!text) return res.status(400).json({ error: "Announcement text is required." });
+  const s = getSettings();
+  s.announcement = { text, at: new Date().toISOString() };
+  writeJson(SETTINGS_FILE, s);
+  res.json(s.announcement);
+});
+app.delete("/api/admin/announcement", requireAdmin, (_req, res) => {
+  const s = getSettings();
+  delete s.announcement;
+  writeJson(SETTINGS_FILE, s);
+  res.json({ ok: true });
+});
+
+// ---- Word of the Day: AI picks one interesting word per day, cached ----
+app.get("/api/word-of-day", wrap(async (_req, res) => {
+  const today = new Date().toISOString().slice(0, 10);
+  const cached = readJson(WOTD_FILE, {});
+  if (cached.date === today && cached.word) return res.json(cached);
+  try {
+    const raw = await askAI(
+      "You are an English teacher creating vocabulary content for Indian students (intermediate level).",
+      [{ role: "user", content: `Pick one interesting English word that Indian students learning English would benefit from knowing. Avoid extremely basic words (cat, dog, run). Return ONLY valid JSON:\n{"word":"<word>","phonetic":"<IPA pronunciation>","partOfSpeech":"<noun/verb/adj/adverb>","definition":"<clear 1-sentence definition>","example":"<natural example sentence>","hindi":"<Hindi meaning in Devanagari>","tip":"<short practical usage tip>"}` }],
+      220
+    );
+    const r = parseJson(raw);
+    if (!r?.word || !r?.definition) throw new Error("bad");
+    const wotd = { date: today, word: String(r.word), phonetic: String(r.phonetic || ""), partOfSpeech: String(r.partOfSpeech || ""), definition: String(r.definition), example: String(r.example || ""), hindi: String(r.hindi || ""), tip: String(r.tip || "") };
+    writeJson(WOTD_FILE, wotd);
+    res.json(wotd);
+  } catch {
+    res.json({ date: today, word: "perseverance", phonetic: "/ˌpɜːsɪˈvɪərəns/", partOfSpeech: "noun", definition: "Continued effort to do something despite difficulty or delay.", example: "Her perseverance helped her learn English in just six months.", hindi: "दृढ़ता", tip: "Use it to praise someone who keeps trying without giving up." });
+  }
+}));
+
+// ---- Vocab Quiz: personalised quiz from the student's own search history ----
+app.get("/api/students/:id/vocab-quiz", requireStudent, wrap(async (req, res) => {
+  const searches = readJson(SEARCHES_FILE, []).filter((s) => s.studentId === req.student.id);
+  const wordFreq = {};
+  for (const s of searches) wordFreq[s.word] = (wordFreq[s.word] || 0) + 1;
+  const unique = Object.keys(wordFreq);
+  if (unique.length < 3) return res.json({ quiz: [], message: "Look up at least 3 words in the Dictionary to unlock your personal vocabulary quiz!" });
+  const pool = unique.sort((a, b) => wordFreq[b] - wordFreq[a]).slice(0, 15);
+  const picked = pool.sort(() => Math.random() - 0.5).slice(0, Math.min(5, pool.length));
+  const raw = await askAI(
+    "You are creating a vocabulary quiz for English learners.",
+    [{ role: "user", content: `Create a short multiple-choice vocabulary quiz for these English words: ${picked.join(", ")}.\nFor each word give 1 correct definition and 3 wrong-but-plausible options. Shuffle the options.\nReturn ONLY a JSON array (no markdown):\n[{"word":"<word>","correct":"<correct definition>","options":["<opt1>","<opt2>","<opt3>","<opt4>"]}]` }],
+    600
+  );
+  const quiz = parseJson(raw);
+  if (!Array.isArray(quiz)) throw new Error("bad response");
+  res.json({ quiz: quiz.slice(0, 5).map((q) => ({ word: q.word, correct: q.correct, options: Array.isArray(q.options) ? q.options.slice(0, 4) : [q.correct] })) });
+}));
+
 // ---- Shayari: learn couplets and English quotes, and share your own ----
 // Content (poets, couplets, quotes) is a file in the repository. What students write lives in shayari_wall.json.
 const shayariBank = JSON.parse(fs.readFileSync(path.join(__dirname, "data", "shayari.json"), "utf8"));
@@ -1276,9 +1345,52 @@ app.get("/api/admin/test-users", requireAdmin, (_req, res) => {
 app.delete("/api/admin/test-users", requireAdmin, (req, res) => {
   const students = readJson(STUDENTS_FILE, {});
   const toDelete = Object.keys(students).filter(isTestSlug);
-  for (const id of toDelete) delete students[id];
+  const deleted = purgeStudents(toDelete);
+  res.json({ deleted: deleted.length, ids: deleted });
+});
+
+// Admin: remove students and everything they created (chat, scores, searches, group-chat messages, shayari, daily usage).
+function purgeStudents(ids) {
+  const gone = new Set(ids);
+  const students = readJson(STUDENTS_FILE, {});
+  const existing = ids.filter((id) => students[id]);
+  if (!existing.length) return [];
+  for (const id of existing) { delete students[id]; removeJson(chatFile(id)); }
   writeJson(STUDENTS_FILE, students);
-  res.json({ deleted: toDelete.length, ids: toDelete });
+  for (const file of [RESULTS_FILE, TR_RESULTS_FILE, GRAMMAR_CHECKS_FILE, SEARCHES_FILE]) {
+    const rows = readJson(file, []);
+    const kept = rows.filter((r) => !gone.has(r.studentId));
+    if (kept.length !== rows.length) writeJson(file, kept);
+  }
+  // group chat: their messages and reactions
+  const gc = gcLoad();
+  for (const room of Object.keys(gc.rooms || {})) {
+    gc.rooms[room] = gc.rooms[room].filter((m) => !gone.has(m.studentId));
+    for (const m of gc.rooms[room]) for (const [emoji, who] of Object.entries(m.reactions || {})) {
+      m.reactions[emoji] = who.filter((id) => !gone.has(id));
+      if (!m.reactions[emoji].length) delete m.reactions[emoji];
+    }
+  }
+  writeJson(GC_FILE, gc);
+  // shayari wall: their posts and reactions
+  const sh = shLoad();
+  sh.posts = sh.posts.filter((p) => !gone.has(p.studentId));
+  for (const p of sh.posts) for (const k of SH_KINDS) if (p[k]) p[k] = p[k].filter((id) => !gone.has(id));
+  for (const r of Object.values(sh.items || {})) for (const k of SH_KINDS) if (r[k]) r[k] = r[k].filter((id) => !gone.has(id));
+  writeJson(SH_FILE, sh);
+  // daily usage rows (look back about 14 months)
+  for (let i = 0; i < 420; i++) {
+    const file = usageFile(dayKey(new Date(Date.now() - i * 86400000)));
+    const rows = readJson(file, null);
+    if (rows && existing.some((id) => rows[id])) { for (const id of existing) delete rows[id]; writeJson(file, rows); }
+  }
+  return existing;
+}
+app.post("/api/admin/students/delete", requireAdmin, (req, res) => {
+  const ids = [...new Set((Array.isArray(req.body.ids) ? req.body.ids : []).map(String).filter((id) => /^[a-z0-9-]{1,40}$/.test(id)))].slice(0, 300);
+  if (!ids.length) return res.status(400).json({ error: "Pick at least one student." });
+  const deleted = purgeStudents(ids);
+  res.json({ deleted: deleted.length, ids: deleted });
 });
 
 // ---- Enquiries: a visitor asks a question; it is saved for the admin and emailed if SMTP is set up ----

@@ -76,7 +76,6 @@
       <button data-tab="test"><span class="ti">📝</span><span class="tl">Test</span></button>
       <button data-tab="discuss"><span class="ti">🗣️</span><span class="tl">Discuss</span></button>
       <button data-tab="groupchat"><span class="ti">👥</span><span class="tl">Chat</span></button>
-      <button data-tab="shayari"><span class="ti">✒️</span><span class="tl">Shayari</span></button>
       <button data-tab="interview"><span class="ti">🎤</span><span class="tl">Interview</span></button>
       <button data-tab="progress"><span class="ti">📊</span><span class="tl">Progress</span></button>
       <button data-tab="dictionary"><span class="ti">📖</span><span class="tl">Dict</span></button>
@@ -90,6 +89,10 @@
       <button id="themeBtn" class="ghost" title="Toggle dark/light mode">🌙</button>
     </div>
   </header>
+  <div id="announcementBanner" hidden>
+    <span id="announcementText"></span>
+    <button id="announcementDismiss" aria-label="Dismiss">✕</button>
+  </div>
 
   <main>
     <section id="speak" class="tab active">
@@ -251,7 +254,11 @@
       </div>
     </section>
     <section id="groupchat" class="tab">
-      <div class="pagehead"><h2>Group Chat</h2> <button type="button" class="ghost mini groupchat-sh-link" id="gcShayariLink">✒️ Shayari corner</button><p class="small">Chat in English with other students. Be kind and respectful. Links are not allowed. <span id="gcOnline" class="online"></span></p></div>
+      <div class="seg gc-switch" id="gcSwitch">
+        <button data-gcview="chat" class="on">💬 Chat</button>
+        <button data-gcview="shayari">✒️ Shayari</button>
+      </div>
+      <div class="pagehead"><h2>Group Chat</h2><p class="small">Chat in English with other students. Be kind and respectful. Links are not allowed. <span id="gcOnline" class="online"></span></p></div>
       <details class="card gcmembers" id="gcMembers" open>
         <summary id="gcMembersSum">👥 Members</summary>
         <div id="gcMembersList" class="gcchips"></div>
@@ -264,48 +271,48 @@
       </div>
       <p id="gcBanner" class="gcbanner" hidden></p>
       <p id="gcErr" class="err small"></p>
-    </section>
-    <section id="shayari" class="tab">
-      <div class="pagehead"><h2>Shayari <span aria-hidden="true">✒️</span></h2><p class="small">Learn couplets and English quotes by type, pick up new words, then write and share your own.</p></div>
-      <div class="seg" id="shMode">
-        <button data-shmode="learn" class="on">📖 Learn</button>
-        <button data-shmode="write">✍️ Write &amp; share</button>
-      </div>
-
-      <div id="shLearn">
-        <div class="seg sh-kind" id="shKind">
-          <button data-shkind="sher" class="on">Shayari &amp; dohe</button>
-          <button data-shkind="quotes">English quotes</button>
+      <div id="shayari" class="sh-pane" hidden>
+        <div class="pagehead"><h2>Shayari <span aria-hidden="true">✒️</span></h2><p class="small">Learn couplets and English quotes by type, pick up new words, then write and share your own.</p></div>
+        <div class="seg" id="shMode">
+          <button data-shmode="learn" class="on">📖 Learn</button>
+          <button data-shmode="write">✍️ Write &amp; share</button>
         </div>
-        <div class="starters sh-chips" id="shTypes" aria-label="Type"></div>
-        <div id="shDay"></div>
-        <div class="starters sh-chips" id="shPoets"></div>
-        <div id="shPoetCard"></div>
-        <div id="shList"></div>
-        <details class="card phrases sh-basics" id="shBasics"><summary><b>💡 Poetry words to know</b></summary><div id="shBasicsBody"></div></details>
-      </div>
 
-      <div id="shWrite" hidden>
-        <div class="card sh-compose">
-          <p id="shChallenge" class="sh-challenge"></p>
-          <div class="sh-label">Type of shayari</div>
-          <div class="starters sh-chips sh-pick" id="shTypePick"></div>
-          <textarea id="shText" rows="4" maxlength="400" placeholder="Write your shayari or quote here… two lines are enough. Hindi, Urdu, Roman or English."></textarea>
-          <div class="sh-compose-row">
-            <label class="sh-sel"><span>Language</span>
-              <select id="shLang"><option>Roman</option><option>Hindi</option><option>Urdu</option><option>English</option></select>
-            </label>
-            <span id="shCount" class="small sh-count">0 / 400</span>
-            <button id="shPost" type="button">Post shayari</button>
+        <div id="shLearn">
+          <div class="seg sh-kind" id="shKind">
+            <button data-shkind="sher" class="on">Shayari &amp; dohe</button>
+            <button data-shkind="quotes">English quotes</button>
           </div>
-          <p id="shErr" class="err small"></p>
+          <div class="starters sh-chips" id="shTypes" aria-label="Type"></div>
+          <div id="shDay"></div>
+          <div class="starters sh-chips" id="shPoets"></div>
+          <div id="shPoetCard"></div>
+          <div id="shList"></div>
+          <details class="card phrases sh-basics" id="shBasics"><summary><b>💡 Poetry words to know</b></summary><div id="shBasicsBody"></div></details>
         </div>
-        <div class="seg sh-filter" id="shFilter">
-          <button data-shf="all" class="on">Everyone</button>
-          <button data-shf="mine">My shayari</button>
+
+        <div id="shWrite" hidden>
+          <div class="card sh-compose">
+            <p id="shChallenge" class="sh-challenge"></p>
+            <div class="sh-label">Type of shayari</div>
+            <div class="starters sh-chips sh-pick" id="shTypePick"></div>
+            <textarea id="shText" rows="4" maxlength="400" placeholder="Write your shayari or quote here… two lines are enough. Hindi, Urdu, Roman or English."></textarea>
+            <div class="sh-compose-row">
+              <label class="sh-sel"><span>Language</span>
+                <select id="shLang"><option>Roman</option><option>Hindi</option><option>Urdu</option><option>English</option></select>
+              </label>
+              <span id="shCount" class="small sh-count">0 / 400</span>
+              <button id="shPost" type="button">Post shayari</button>
+            </div>
+            <p id="shErr" class="err small"></p>
+          </div>
+          <div class="seg sh-filter" id="shFilter">
+            <button data-shf="all" class="on">Everyone</button>
+            <button data-shf="mine">My shayari</button>
+          </div>
+          <div class="starters sh-chips" id="shWallTypes" aria-label="Filter by type"></div>
+          <div id="shWall"></div>
         </div>
-        <div class="starters sh-chips" id="shWallTypes" aria-label="Filter by type"></div>
-        <div id="shWall"></div>
       </div>
     </section>
     <section id="progress" class="tab">
@@ -332,6 +339,7 @@
     </section>
     <section id="dictionary" class="tab">
       <div class="pagehead"><h2>Dictionary</h2><p class="small">Look up any English word — definitions, pronunciation, examples and synonyms.</p></div>
+      <div id="wotdCard"></div>
       <div class="dict-search">
         <input id="dictInput" placeholder="Enter a word…" autocomplete="off" spellcheck="false">
         <button id="dictBtn">Look up</button>

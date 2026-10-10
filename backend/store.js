@@ -24,7 +24,7 @@ const dirty = new Set(); // keys waiting to be written to the database
 let timer = null;
 
 // Files that hold data created while the app runs. Everything else (questions, topics...) stays on disk.
-const RUNTIME = [/^(students|results|tr_results|searches|grammar_checks|groupchat|enquiries|settings|shayari_wall)\.json$/, /^chats\/[a-z0-9-]+\.json$/, /^usage\/(\d{4}-\d{2}-\d{2}|backfill)\.json$/];
+const RUNTIME = [/^(students|results|tr_results|searches|grammar_checks|groupchat|enquiries|settings|shayari_wall|word_of_day)\.json$/, /^chats\/[a-z0-9-]+\.json$/, /^usage\/(\d{4}-\d{2}-\d{2}|backfill)\.json$/];
 const keyOf = (file) => path.relative(DATA_DIR, file).split(path.sep).join("/");
 const isRuntime = (key) => RUNTIME.some((re) => re.test(key));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

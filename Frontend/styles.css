@@ -1078,3 +1078,99 @@ button.mini.on { background:var(--brand-soft) !important; color:var(--brand) !im
   .sh-pick { margin:0; padding:0; }
   .quote-en { font-size:1.12rem; }
 }
+
+/* ---- Announcement banner ---- */
+#announcementBanner { display:flex; align-items:center; gap:10px; padding:10px 18px; background:color-mix(in srgb,#f59e0b 15%,var(--card)); border-bottom:2px solid #f59e0b; font-size:.88rem; font-weight:500; color:var(--ink); position:sticky; top:0; z-index:200; }
+#announcementBanner span { flex:1; }
+#announcementDismiss { background:none; border:none; cursor:pointer; font-size:1rem; color:var(--muted); padding:2px 6px; line-height:1; }
+#announcementDismiss:hover { color:var(--ink); }
+
+/* ---- Daily streak card ---- */
+.streak-card { display:flex; align-items:center; gap:16px; background:linear-gradient(135deg,color-mix(in srgb,#f97316 12%,var(--card)),var(--card)); border:1px solid color-mix(in srgb,#f97316 30%,var(--line)); }
+.streak-flame { font-size:2.4rem; line-height:1; }
+.streak-num { font-size:1.4rem; font-weight:800; color:#f97316; }
+.streak-msg { font-size:.82rem; color:var(--muted); margin-top:2px; }
+
+/* ---- Word of the Day ---- */
+.wotd-card { border:2px solid color-mix(in srgb,var(--brand) 30%,var(--line)); background:color-mix(in srgb,var(--brand) 4%,var(--card)); margin-bottom:16px; }
+.wotd-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.wotd-label { font-size:.75rem; font-weight:700; color:var(--brand); text-transform:uppercase; letter-spacing:.05em; }
+.wotd-word { font-size:2rem; font-weight:800; color:var(--ink); margin:4px 0; }
+.wotd-meta { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.wotd-ph { font-size:.85rem; color:var(--muted); font-family:monospace; }
+.wotd-def { font-size:.95rem; margin:0 0 6px; }
+.wotd-ex { font-size:.88rem; color:var(--muted); margin:0 0 8px; }
+.wotd-row { display:flex; flex-wrap:wrap; gap:10px; }
+.wotd-hindi { font-size:.85rem; background:color-mix(in srgb,var(--brand) 8%,var(--bg)); padding:3px 10px; border-radius:99px; }
+.wotd-tip { font-size:.82rem; color:var(--muted); }
+
+/* ---- Vocab quiz ---- */
+.vq-question { margin:14px 0; }
+.vq-word { font-size:.95rem; font-weight:600; margin-bottom:8px; }
+.vq-options { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.vq-option { text-align:left; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:8px 12px; font-size:.85rem; cursor:pointer; transition:background .15s; }
+.vq-option:hover:not(:disabled) { background:color-mix(in srgb,var(--brand) 8%,var(--bg)); border-color:var(--brand); }
+.vq-option.correct { background:color-mix(in srgb,var(--ok) 15%,var(--card)); border-color:var(--ok); color:color-mix(in srgb,var(--ok) 70%,var(--ink)); font-weight:600; }
+.vq-option.wrong { background:color-mix(in srgb,var(--bad) 10%,var(--card)); border-color:var(--bad); color:var(--bad); }
+.vq-done .vq-option { pointer-events:none; }
+.vq-result { margin-top:14px; padding:12px 16px; border-radius:12px; background:color-mix(in srgb,var(--brand) 8%,var(--card)); font-size:.95rem; }
+@media (max-width:480px) { .vq-options { grid-template-columns:1fr; } }
+
+/* ---- Admin: inactive row, idle dot, announcement ---- */
+.row-inactive td { opacity:.65; }
+.online-dot.idle { background:#f59e0b; }
+.pill-idle { background:color-mix(in srgb,#f59e0b 18%,var(--card)); border-color:color-mix(in srgb,#f59e0b 40%,var(--line)); color:#b45309; font-size:.7rem; }
+.ann-admin-card .ann-row { display:flex; gap:8px; flex-wrap:wrap; }
+.ann-admin-card input { flex:1; min-width:200px; }
+.ann-preview { padding:8px 12px; border-radius:8px; background:color-mix(in srgb,#f59e0b 10%,var(--card)); border:1px solid color-mix(in srgb,#f59e0b 30%,var(--line)); font-size:.85rem; margin-bottom:10px; }
+
+
+/* ================= Desktop: one-row header, chat sections fill the window ================= */
+@media (min-width:1101px) {
+  header { flex-wrap:nowrap; }
+  header h1 { flex:none; white-space:nowrap; }
+  header nav { flex:1 1 auto; min-width:0; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; justify-content:flex-start; }
+  header nav::-webkit-scrollbar { display:none; }
+  header nav button { flex:none; white-space:nowrap; }
+  header .user { flex:none; }
+}
+@media (min-width:1101px) and (max-width:1500px) {
+  header nav button { padding-left:11px; padding-right:11px; font-size:.92rem; }
+}
+@media (min-width:761px) {
+  html:has(body[data-fill="1"]) { overflow:hidden; height:100%; }
+  body[data-fill="1"] { position:fixed; inset:0; width:100%; height:var(--vh,100dvh); display:flex; flex-direction:column; overflow:hidden; box-sizing:border-box; padding-bottom:0; }
+  body[data-fill="1"] header { position:relative; flex:none; }
+  body[data-fill="1"] .site-footer { display:none; }
+  body[data-fill="1"] main { flex:1 1 auto; min-height:0; width:100%; max-width:none; margin:0; box-sizing:border-box; display:flex; flex-direction:column; padding:14px clamp(12px,3vw,32px) 16px; }
+  body[data-fill="1"] #speak.active,
+  body[data-fill="1"] #groupchat.active,
+  body[data-fill="1"] #interview.active #ivRun:not([hidden]) { flex:1 1 auto; min-height:0; height:auto; display:flex; flex-direction:column; width:100%; max-width:960px; margin:0 auto; }
+  body[data-fill="1"] #interview.active { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
+  body[data-fill="1"] .chatlog { flex:1 1 auto; height:auto !important; min-height:0 !important; max-height:none; overflow-y:auto; overscroll-behavior:contain; scroll-behavior:smooth; }
+  body[data-fill="1"] #speak.active > *:not(.chatlog),
+  body[data-fill="1"] #groupchat.active > *:not(.chatlog),
+  body[data-fill="1"] #ivRun > *:not(.chatlog) { flex:none; }
+  body[data-fill="1"] #speak .row, body[data-fill="1"] #groupchat .row, body[data-fill="1"] #ivRow { margin-top:12px; }
+  body[data-fill="1"] #speechNote:empty, body[data-fill="1"] #ivNote:empty { display:none; }
+  body[data-fill="1"] .coach-head { margin-bottom:10px; padding:12px 16px; }
+  body[data-fill="1"] #groupchat .pagehead p { display:none; }
+}
+
+/* Admin: delete students */
+.adm-bulk { display:flex; align-items:center; gap:8px; padding:5px 8px 5px 12px; border-radius:99px; background:color-mix(in srgb,var(--bad) 10%,var(--card)); border:1px solid color-mix(in srgb,var(--bad) 35%,var(--line)); }
+.adm-bulk[hidden] { display:none; }
+.adm-bulk b { font-size:.85rem; }
+.adm-pick { width:17px; height:17px; margin:0 8px 0 0; vertical-align:middle; accent-color:var(--brand); cursor:pointer; }
+#admUsersTable thead th:first-child { width:34px; }
+button.mini.danger { color:var(--bad) !important; }
+
+/* Shayari lives inside Group Chat: a Chat / Shayari switch */
+.gc-switch { margin-bottom:12px; }
+#groupchat.gc-view-shayari > *:not(#gcSwitch):not(#shayari) { display:none !important; }
+#shayari.sh-pane[hidden] { display:none; }
+body.kbd #gcSwitch { display:none; }
+@media (max-width:760px) {
+  .gc-switch { display:flex; width:100%; margin-bottom:8px; }
+  .gc-switch button { flex:1; padding:8px 10px; }
+}

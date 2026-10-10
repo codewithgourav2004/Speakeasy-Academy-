@@ -77,12 +77,26 @@ async function enter(s) {
   localStorage.setItem("student", JSON.stringify(s));
   $("#welcome").hidden = true;
   refreshAccess();
-  $("#userChip").textContent = `👤 ${s.name}`;
+  const streakBadge = s.streak > 1 ? ` 🔥 ${s.streak}` : "";
+  $("#userChip").textContent = `👤 ${s.name}${streakBadge}`;
   $("#userChip").hidden = $("#logoutBtn").hidden = false;
+  loadAnnouncement();
   await loadChat(true);
   const active = document.querySelector("nav button.active")?.dataset.tab;
   if (active === "test") loadTestSetup();
   if (active === "progress") loadProgress();
+  if (active === "dictionary") loadWotd();
+}
+
+function loadAnnouncement() {
+  fetch("/api/announcement").then(r => r.ok ? r.json() : null).then(a => {
+    if (!a?.text) return;
+    const key = "ann_dismissed_" + (a.at || "");
+    if (sessionStorage.getItem(key)) return;
+    $("#announcementText").textContent = a.text;
+    $("#announcementBanner").hidden = false;
+    $("#announcementDismiss").onclick = () => { $("#announcementBanner").hidden = true; sessionStorage.setItem(key, "1"); };
+  }).catch(() => {});
 }
 $("#welcomeForm").onsubmit = async (e) => {
   e.preventDefault();
@@ -526,7 +540,10 @@ async function loadProgress() {
     for (const g of gChecks) for (const t of (g.errorTypes || [])) errTypeCounts[t] = (errTypeCounts[t] || 0) + 1;
     const topErrTypes = Object.entries(errTypeCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
 
+    const streak = student.streak || 1;
+    const streakMsg = streak >= 30 ? "🏆 Incredible!" : streak >= 14 ? "🌟 On fire!" : streak >= 7 ? "💪 Great streak!" : streak >= 3 ? "📈 Keep going!" : "";
     out.innerHTML = `
+      ${streak > 1 ? `<div class="card streak-card"><div class="streak-flame">🔥</div><div><div class="streak-num">${streak}-day streak</div><div class="streak-msg">${streakMsg} You've visited ${streak} days in a row. Keep it up!</div></div></div>` : ""}
       <div class="stats">
         <div class="stat"><b>${p.messages}</b><span>Messages sent</span></div>
         <div class="stat"><b>${p.corrections}</b><span>Corrections</span></div>
@@ -559,10 +576,64 @@ async function loadProgress() {
             <td>${(g.errorTypes || []).map((t) => `<span class="dict-syn" style="font-size:.72rem">${esc(t)}</span>`).join(" ")}</td>
           </tr>`).join("")}
         </table></div>` : '<p class="small">No grammar checks yet. Use the Grammar tab to check your text.</p>'}
+      </div>
+      <div class="card" id="vocabQuizCard">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div><h3 style="margin:0">📚 Vocabulary Quiz</h3><p class="small" style="margin:4px 0 0">Test yourself on words you've looked up</p></div>
+          <button id="startVocabQuiz">Start quiz →</button>
+        </div>
+        <div id="vocabQuizBody"></div>
       </div>`;
   } catch (e) {
     out.innerHTML = `<p class="err">${esc(e.message)}</p>`;
   }
+}
+
+// ---- Vocab Quiz engine ----
+document.getElementById("progressOut").addEventListener("click", async (e) => {
+  if (e.target.id === "startVocabQuiz") {
+    const btn = e.target, body = $("#vocabQuizBody");
+    btn.disabled = true; btn.textContent = "Loading…";
+    try {
+      const { quiz, message } = await api(`/api/students/${student.id}/vocab-quiz`);
+      if (!quiz.length) { body.innerHTML = `<p class="small" style="margin-top:10px">${esc(message)}</p>`; btn.textContent = "Start quiz →"; btn.disabled = false; return; }
+      renderVocabQuiz(quiz, body);
+      btn.hidden = true;
+    } catch (err) { body.innerHTML = `<p class="err">${esc(err.message)}</p>`; btn.textContent = "Start quiz →"; btn.disabled = false; }
+  }
+  const opt = e.target.closest(".vq-option");
+  if (opt && !opt.closest(".vq-done")) {
+    const q = opt.closest(".vq-question");
+    q.classList.add("vq-done");
+    const correct = q.dataset.correct;
+    q.querySelectorAll(".vq-option").forEach((o) => {
+      if (o.dataset.val === correct) o.classList.add("correct");
+      else if (o === opt) o.classList.add("wrong");
+    });
+    const scoreEl = document.getElementById("vqScore");
+    if (scoreEl && opt.dataset.val === correct) scoreEl.dataset.score = Number(scoreEl.dataset.score || 0) + 1;
+    checkVocabQuizDone();
+  }
+});
+function renderVocabQuiz(quiz, body) {
+  body.innerHTML = `<div id="vqScore" data-score="0" data-total="${quiz.length}" style="display:none"></div>` +
+    quiz.map((q) => `<div class="vq-question" data-correct="${esc(q.correct)}">
+      <p class="vq-word">What does <b>${esc(q.word)}</b> mean?</p>
+      <div class="vq-options">${(q.options || []).map((o) => `<button class="vq-option" data-val="${esc(o)}">${esc(o)}</button>`).join("")}</div>
+    </div>`).join("") +
+    `<div id="vqResult" hidden></div>`;
+}
+function checkVocabQuizDone() {
+  const qs = document.querySelectorAll(".vq-question");
+  if (!qs.length || [...qs].some((q) => !q.classList.contains("vq-done"))) return;
+  const scoreEl = document.getElementById("vqScore");
+  const score = Number(scoreEl?.dataset.score || 0), total = Number(scoreEl?.dataset.total || qs.length);
+  const pct = Math.round(score / total * 100);
+  const msg = pct === 100 ? "🏆 Perfect score!" : pct >= 80 ? "🌟 Excellent!" : pct >= 60 ? "👍 Good job!" : "📖 Keep practising!";
+  const res = document.getElementById("vqResult");
+  if (res) { res.hidden = false; res.className = "vq-result"; res.innerHTML = `<b>${msg}</b> You scored ${score}/${total} (${pct}%)`; }
+  const btn = document.getElementById("startVocabQuiz");
+  if (btn) { btn.hidden = false; btn.disabled = false; btn.textContent = "Try again →"; }
 }
 
 // Test setup helpers: select all / clear topics, live count, question-count stepper
@@ -622,6 +693,34 @@ function renderTest() {
   }));
   $("#tSubmit").onclick = submitTest;
 }
+
+// ---- Word of the Day ----
+async function loadWotd() {
+  const box = $("#wotdCard");
+  if (!box || box.dataset.loaded) return;
+  box.dataset.loaded = "1";
+  try {
+    const w = await fetch("/api/word-of-day").then(r => r.json());
+    box.innerHTML = `<div class="card wotd-card">
+      <div class="wotd-header">
+        <span class="wotd-label">✨ Word of the Day</span>
+        <button class="ghost mini" id="wotdLookupBtn">Look up full definition →</button>
+      </div>
+      <div class="wotd-word">${esc(w.word)}</div>
+      <div class="wotd-meta">${w.phonetic ? `<span class="wotd-ph">${esc(w.phonetic)}</span>` : ""}${w.partOfSpeech ? `<span class="pill">${esc(w.partOfSpeech)}</span>` : ""}</div>
+      <p class="wotd-def">${esc(w.definition)}</p>
+      ${w.example ? `<p class="wotd-ex"><i>"${esc(w.example)}"</i></p>` : ""}
+      <div class="wotd-row">
+        ${w.hindi ? `<span class="wotd-hindi" lang="hi">🇮🇳 ${esc(w.hindi)}</span>` : ""}
+        ${w.tip ? `<span class="wotd-tip">💡 ${esc(w.tip)}</span>` : ""}
+      </div>
+    </div>`;
+    document.getElementById("wotdLookupBtn")?.addEventListener("click", () => {
+      $("#dictInput").value = w.word; lookupWord();
+    });
+  } catch {}
+}
+document.querySelector('nav button[data-tab="dictionary"]').addEventListener("click", loadWotd);
 
 // ---- Dictionary ----
 // Dictionary empty state
@@ -1255,6 +1354,81 @@ document.getElementById("adminOut").addEventListener("click", async (e) => {
   } catch (err) { alert(err.message); btn.disabled = false; btn.textContent = "Find & remove"; }
 });
 
+// ---- Admin: CSV export ----
+document.getElementById("adminOut").addEventListener("click", (e) => {
+  if (!e.target.closest("#admExportCsv")) return;
+  if (!admUsers.length) { alert("No students to export."); return; }
+  const cols = ["Name","Age","Level","City","Phone","Email","Time (s)","Messages","Tests","Avg Score","Searches","Visits","Joined","Last seen"];
+  const rows = admUsers.map((u) => [u.name, u.age ?? "", u.level, u.city || "", u.phone || "", u.email || "", Math.round(u.timeSpent), u.messages, u.tests, u.avgScore != null ? u.avgScore + "%" : "", u.searches ?? 0, u.visits, new Date(u.created).toLocaleDateString(), new Date(u.lastSeen).toLocaleDateString()]);
+  const csv = [cols, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  a.download = `speakeasy-students-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+});
+
+// ---- Admin: announcement post/clear ----
+document.getElementById("adminOut").addEventListener("click", async (e) => {
+  if (e.target.id === "annPost") {
+    const text = document.getElementById("annInput")?.value.trim();
+    if (!text) return;
+    try {
+      await adminReq("POST", "/api/admin/announcement", { text });
+      document.getElementById("annMsg").textContent = "✓ Announcement posted.";
+      setTimeout(loadAdmin, 800);
+    } catch (err) { document.getElementById("annMsg").textContent = err.message; }
+  }
+  if (e.target.id === "annClear") {
+    if (!confirm("Remove the current announcement?")) return;
+    try { await adminReq("DELETE", "/api/admin/announcement"); loadAdmin(); } catch (err) { alert(err.message); }
+  }
+});
+
+// ---- Admin: delete students (and everything they created) ----
+const pickedIds = () => [...document.querySelectorAll("#admUsersBody .adm-pick:checked")].map((c) => c.dataset.pick);
+function updateBulk() {
+  const n = pickedIds().length, bar = document.getElementById("admBulk");
+  if (bar) bar.hidden = n === 0;
+  const label = document.getElementById("admBulkN");
+  if (label) label.textContent = `${n} selected`;
+  const all = document.getElementById("admPickAll");
+  if (all) { const shown = [...document.querySelectorAll("#admUsersBody tr:not([hidden]) .adm-pick")]; all.checked = shown.length > 0 && shown.every((c) => c.checked); }
+}
+async function deleteStudents(ids) {
+  const names = ids.map((id) => admUsers.find((u) => u.id === id)?.name || id);
+  const shownNames = names.slice(0, 12).map((n) => "• " + n).join("\n") + (names.length > 12 ? `\n…and ${names.length - 12} more` : "");
+  if (!confirm(`Permanently delete ${ids.length} student${ids.length === 1 ? "" : "s"}?\n\n${shownNames}\n\nTheir chats, test scores, searches, group-chat messages, shayari and usage history are removed too. This cannot be undone.`)) return;
+  try {
+    const r = await adminReq("POST", "/api/admin/students/delete", { ids });
+    toast(`Deleted ${r.deleted} student${r.deleted === 1 ? "" : "s"}.`);
+    loadAdmin();
+  } catch (err) { alert(err.message); }
+}
+document.getElementById("adminOut").addEventListener("change", (e) => {
+  if (e.target.id === "admPickAll") {
+    document.querySelectorAll("#admUsersBody tr:not([hidden]) .adm-pick").forEach((c) => (c.checked = e.target.checked));
+    updateBulk();
+  } else if (e.target.classList?.contains("adm-pick")) updateBulk();
+});
+document.getElementById("adminOut").addEventListener("click", (e) => {
+  const t = e.target.closest("#admBulkDel, #admBulkClear, #admPickTest, [data-qdel]");
+  if (!t) return;
+  if (t.id === "admBulkDel") return deleteStudents(pickedIds());
+  if (t.id === "admBulkClear") { document.querySelectorAll("#admUsersBody .adm-pick").forEach((c) => (c.checked = false)); return updateBulk(); }
+  if (t.id === "admPickTest") {
+    const isTest = (u) => /^(test|demo|zz)\b/i.test(u.name.trim()) || /^(test|demo|zz)-/i.test(u.id);
+    let n = 0;
+    document.querySelectorAll("#admUsersBody tr").forEach((r) => {
+      const cb = r.querySelector(".adm-pick"), u = admUsers.find((x) => x.id === cb?.dataset.pick);
+      if (cb && u && !r.hidden && isTest(u)) { cb.checked = true; n++; }
+    });
+    updateBulk();
+    if (!n) toast("No test accounts found in this list.");
+    return;
+  }
+  deleteStudents([t.dataset.qdel]);
+});
+
 // ---- Access: lock screen (blocked, or today's time is used up) and the "time left" badge ----
 let lockTimer = null;
 const warned = {};
@@ -1338,6 +1512,17 @@ async function loadAdmin() {
       ${admTabsHTML(d.newEnquiries)}
       <div class="adm-panel" data-p="overview">
       ${admTilesHTML(d)}
+      <div class="card ann-admin-card">
+        <h3 style="margin:0 0 10px">📢 Announcement banner</h3>
+        <p class="small" style="margin:0 0 10px">Post a message students see as a banner when they open the app. Leave blank to remove it.</p>
+        ${d.settings?.announcement ? `<div class="ann-preview"><b>Current:</b> ${esc(d.settings.announcement.text)}</div>` : ""}
+        <div class="ann-row">
+          <input id="annInput" maxlength="300" placeholder="Type an announcement for all students…" value="${esc(d.settings?.announcement?.text || "")}">
+          <button id="annPost">Post</button>
+          ${d.settings?.announcement ? `<button class="ghost danger" id="annClear">Clear</button>` : ""}
+        </div>
+        <p id="annMsg" class="small" style="margin-top:6px"></p>
+      </div>
       <div class="card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
         <div><b>🧹 Test accounts</b><p class="small" style="margin:2px 0 0">Remove dummy registrations (names like "test", "demo", "abc", etc.)</p></div>
         <button class="ghost danger" id="admCleanTestBtn">Find &amp; remove</button>
@@ -1364,7 +1549,7 @@ async function loadAdmin() {
       <div class="card"><h3>Users</h3>
         <div class="tablewrap tall"><table id="admUsersTable">
           <thead><tr><th></th><th>Name</th><th>Age</th><th>Level</th><th>City</th><th>Phone</th><th>Email</th><th>Time</th><th>Msgs</th><th>MCQ Tests</th><th>MCQ Avg</th><th>Hindi Tests</th><th>Hindi Avg</th><th>Grammar</th><th>Searches</th><th>Visits</th><th>Joined</th><th>Last seen</th><th>Chat</th><th>Edit</th></tr></thead>
-          <tbody id="admUsersBody">${d.users.map((u) => `<tr><td title="${u.online ? "Online now" : "Offline"}"><span class="online-dot ${u.online ? "on" : ""}"></span></td><td><button class="link-btn" data-uid="${esc(u.id)}" data-uname="${esc(u.name)}">${esc(u.name)}</button>${u.adminNotes ? ` <span title="${esc(u.adminNotes)}" style="cursor:help">📝</span>` : ""}</td><td>${u.age ?? "—"}</td><td>${esc(u.level)}</td><td>${esc(u.city || "—")}</td><td>${u.phone ? `<a href="tel:${esc(u.phone)}">${esc(u.phone)}</a>` : "—"}</td><td>${u.email ? `<a href="mailto:${esc(u.email)}">${esc(u.email)}</a>` : "—"}</td><td>${fmtDur(u.timeSpent)}</td><td>${u.messages}</td><td>${u.tests}</td><td>${u.avgScore != null ? u.avgScore + "%" : "—"}</td><td>${u.trTests ?? 0}</td><td>${u.trAvgScore != null ? u.trAvgScore + "%" : "—"}</td><td>${u.grammarChecks ?? 0}</td><td>${u.searches ?? 0}</td><td>${u.visits}</td><td>${new Date(u.created).toLocaleDateString()}</td><td>${new Date(u.lastSeen).toLocaleString()}</td><td><button class="ghost mutebtn ${u.chatMuted ? "muted" : ""}" data-mute="${esc(u.id)}" data-muted="${u.chatMuted ? 1 : 0}">${u.chatMuted ? "🔇 Muted" : "Mute"}</button></td><td><button class="ghost" data-edit-uid="${esc(u.id)}" data-edit-name="${esc(u.name)}" data-edit-level="${esc(u.level)}" data-edit-age="${u.age ?? ""}" data-edit-notes="${esc(u.adminNotes || "")}">✏️ Edit</button></td></tr>`).join("") || '<tr><td colspan="20" class="small">No users yet.</td></tr>'}</tbody>
+          <tbody id="admUsersBody">${d.users.map((u) => { const inactive = Date.now() - new Date(u.lastSeen) > 7 * 864e5 && !u.online; return `<tr class="${inactive ? "row-inactive" : ""}"><td title="${u.online ? "Online now" : inactive ? "Inactive 7+ days" : "Offline"}"><span class="online-dot ${u.online ? "on" : inactive ? "idle" : ""}"></span></td><td><button class="link-btn" data-uid="${esc(u.id)}" data-uname="${esc(u.name)}">${esc(u.name)}</button>${u.adminNotes ? ` <span title="${esc(u.adminNotes)}" style="cursor:help">📝</span>` : ""}${inactive ? ' <span class="pill pill-idle" title="Inactive 7+ days">💤</span>' : ""}</td><td>${u.age ?? "—"}</td><td>${esc(u.level)}</td><td>${esc(u.city || "—")}</td><td>${u.phone ? `<a href="tel:${esc(u.phone)}">${esc(u.phone)}</a>` : "—"}</td><td>${u.email ? `<a href="mailto:${esc(u.email)}">${esc(u.email)}</a>` : "—"}</td><td>${fmtDur(u.timeSpent)}</td><td>${u.messages}</td><td>${u.tests}</td><td>${u.avgScore != null ? u.avgScore + "%" : "—"}</td><td>${u.trTests ?? 0}</td><td>${u.trAvgScore != null ? u.trAvgScore + "%" : "—"}</td><td>${u.grammarChecks ?? 0}</td><td>${u.searches ?? 0}</td><td>${u.visits}</td><td>${new Date(u.created).toLocaleDateString()}</td><td>${new Date(u.lastSeen).toLocaleString()}</td><td><button class="ghost mutebtn ${u.chatMuted ? "muted" : ""}" data-mute="${esc(u.id)}" data-muted="${u.chatMuted ? 1 : 0}">${u.chatMuted ? "🔇 Muted" : "Mute"}</button></td><td><button class="ghost" data-edit-uid="${esc(u.id)}" data-edit-name="${esc(u.name)}" data-edit-level="${esc(u.level)}" data-edit-age="${u.age ?? ""}" data-edit-notes="${esc(u.adminNotes || "")}">✏️ Edit</button></td></tr>`; }).join("") || '<tr><td colspan="20" class="small">No users yet.</td></tr>'}</tbody>
         </table></div>
       </div>
       </div>
@@ -1594,8 +1779,11 @@ function admStudentToolbarHTML() {
     <select id="admSort" aria-label="Sort students">
       <option value="seen">Last seen</option><option value="time">Most time on site</option><option value="name">Name A–Z</option><option value="joined">Newest first</option>
     </select>
+    <button class="ghost" id="admExportCsv" title="Download student list as CSV">⬇ Export CSV</button>
     <div class="seg" id="admFilter">${[["all", "All"], ["online", "Online"], ["today", "Today"], ["idle", "Away 7+ days"], ["blocked", "Blocked"]].map(([id, l]) => `<button type="button" data-adf="${id}" class="${id === "all" ? "on" : ""}">${l}</button>`).join("")}</div>
     <span id="admCount" class="small"></span>
+    <button type="button" class="ghost mini" id="admPickTest" title="Tick accounts whose names start with Test, Demo or Zz">Select test accounts</button>
+    <div id="admBulk" class="adm-bulk" hidden><b id="admBulkN">0 selected</b><button type="button" class="ghost danger" id="admBulkDel">🗑 Delete selected</button><button type="button" class="ghost" id="admBulkClear">Clear</button></div>
     <div class="adm-limit"><label class="small">⏱ Default daily limit for everyone <input id="admDefaultLimit" type="number" min="0" max="1440" value="0"> minutes <span style="opacity:.7">(0 = no limit; a student's own limit overrides this)</span></label><button type="button" id="admDefaultLimitSave" class="ghost">Save</button></div>
   </div>`;
 }
@@ -1614,8 +1802,12 @@ function initStudentTools(users, settings) {
     const mins = (s) => Math.round(s / 60);
     const badge = u.blocked ? `<span class="pill bad" title="${esc(u.blockReason || "Blocked")}">🚫 Blocked</span>`
       : u.limitSec != null ? `<span class="pill ${u.access === "limit" ? "bad" : ""}" title="Used today / daily limit">⏱ ${mins(u.usedTodaySec)}/${mins(u.limitSec)} min${u.access === "limit" ? " · locked" : ""}</span>` : "";
-    link.parentElement.insertAdjacentHTML("beforeend", ` ${badge} <button type="button" class="ghost mini" data-qblock="${esc(u.id)}" data-blocked="${u.blocked ? 1 : 0}">${u.blocked ? "Unblock" : "Block"}</button>`);
+    link.parentElement.insertAdjacentHTML("beforeend", ` ${badge} <button type="button" class="ghost mini" data-qblock="${esc(u.id)}" data-blocked="${u.blocked ? 1 : 0}">${u.blocked ? "Unblock" : "Block"}</button> <button type="button" class="ghost mini danger" data-qdel="${esc(u.id)}" title="Delete this student and all their data">🗑</button>`);
+    const first = row.firstElementChild;
+    if (first && !first.querySelector(".adm-pick")) first.insertAdjacentHTML("afterbegin", `<input type="checkbox" class="adm-pick" data-pick="${esc(u.id)}" aria-label="Select ${esc(u.name)}">`);
   }
+  const head = document.querySelector("#admUsersTable thead th");
+  if (head && !head.querySelector("#admPickAll")) head.innerHTML = '<input type="checkbox" id="admPickAll" title="Select all shown" aria-label="Select all shown students">';
   applyStudentView();
 }
 function applyStudentView() {
@@ -1637,6 +1829,8 @@ function applyStudentView() {
     if (ok) shown++;
     body.append(r);
   }
+  for (const r of rows) if (r.hidden) { const cb = r.querySelector(".adm-pick"); if (cb) cb.checked = false; }
+  updateBulk();
   const c = document.getElementById("admCount");
   if (c) c.textContent = `Showing ${shown} of ${rows.length}`;
   document.querySelectorAll("#admFilter button").forEach((b) => b.classList.toggle("on", b.dataset.adf === admFilter));
@@ -2172,7 +2366,8 @@ if (SR) {
   function syncFill() {
     const tab = document.querySelector("main .tab.active")?.id;
     const ivRunning = tab === "interview" && !document.getElementById("ivRun").hidden;
-    const fill = phone.matches && (FILL.includes(tab) || ivRunning);
+    const shView = tab === "groupchat" && document.getElementById("groupchat").classList.contains("gc-view-shayari");
+    const fill = (FILL.includes(tab) && !shView) || ivRunning;
     if (fill) body.dataset.fill = "1"; else delete body.dataset.fill;
     if (!phone.matches) showNav();
   }
@@ -2446,9 +2641,17 @@ async function shStart() {
       </article>`;
   }).catch(() => {});
 }
-document.querySelector('nav button[data-tab="shayari"]').addEventListener("click", shStart);
+// Group Chat has two views: the live chat and the Shayari corner
+function gcSetView(v) {
+  stopVoice();
+  document.getElementById("groupchat").classList.toggle("gc-view-shayari", v === "shayari");
+  document.querySelectorAll("#gcSwitch button").forEach((b) => b.classList.toggle("on", b.dataset.gcview === v));
+  document.getElementById("shayari").hidden = v !== "shayari";
+  if (v === "shayari") shStart();
+  else { const log = document.getElementById("gcLog"); if (log) log.scrollTop = log.scrollHeight; }
+}
+document.getElementById("gcSwitch").addEventListener("click", (e) => { const b = e.target.closest("[data-gcview]"); if (b) gcSetView(b.dataset.gcview); });
 
-document.getElementById("gcShayariLink")?.addEventListener("click", () => openTab("shayari"));
 
 // ---- Start ----
 if (student?.id) enter(student); else showWelcome();

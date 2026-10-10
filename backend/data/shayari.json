@@ -1,0 +1,1225 @@
+{
+  "poets": [
+    {
+      "id": "ghalib",
+      "name": "Mirza Ghalib",
+      "hi": "मिर्ज़ा ग़ालिब",
+      "years": "1797–1869",
+      "about": "Delhi's most celebrated Urdu and Persian poet. Known for deep thoughts, wit and a very personal voice."
+    },
+    {
+      "id": "mir",
+      "name": "Mir Taqi Mir",
+      "hi": "मीर तक़ी मीर",
+      "years": "1723–1810",
+      "about": "Called the 'god of poetry'. His simple words and sad, tender feeling shaped the Urdu ghazal."
+    },
+    {
+      "id": "iqbal",
+      "name": "Allama Iqbal",
+      "hi": "अल्लामा इक़बाल",
+      "years": "1877–1938",
+      "about": "Poet-philosopher who wrote about self-belief ('khudi'), effort and hope. Wrote 'Saare Jahan Se Achha'."
+    },
+    {
+      "id": "faiz",
+      "name": "Faiz Ahmed Faiz",
+      "hi": "फ़ैज़ अहमद फ़ैज़",
+      "years": "1911–1984",
+      "about": "Mixed love poetry with the dream of a fairer world. One of the most loved poets of the 20th century."
+    },
+    {
+      "id": "faraz",
+      "name": "Ahmad Faraz",
+      "hi": "अहमद फ़राज़",
+      "years": "1931–2008",
+      "about": "Pakistani poet famous for easy, romantic ghazals that people sing and quote."
+    },
+    {
+      "id": "parveen",
+      "name": "Parveen Shakir",
+      "hi": "परवीन शाकिर",
+      "years": "1952–1994",
+      "about": "Pakistani poet who gave a fresh, honest voice to a woman's feelings in Urdu poetry."
+    },
+    {
+      "id": "jaun",
+      "name": "Jaun Elia",
+      "hi": "जौन एलिया",
+      "years": "1931–2002",
+      "about": "Born in Amroha. Known for blunt, ironic and deeply honest lines about love and loneliness."
+    },
+    {
+      "id": "rahat",
+      "name": "Rahat Indori",
+      "hi": "राहत इंदौरी",
+      "years": "1950–2020",
+      "about": "Mushaira star and film lyricist from Indore, loved for his bold, powerful delivery."
+    },
+    {
+      "id": "gulzar",
+      "name": "Gulzar",
+      "hi": "गुलज़ार",
+      "years": "born 1934",
+      "about": "Poet, lyricist and film-maker. Famous for soft images and simple everyday words."
+    },
+    {
+      "id": "kabir",
+      "name": "Kabir",
+      "hi": "कबीर",
+      "years": "c. 1440–1518",
+      "about": "Saint-poet whose two-line 'dohe' teach honesty, humility and kindness in plain language."
+    },
+    {
+      "id": "bashir",
+      "name": "Bashir Badr",
+      "hi": "बशीर बद्र",
+      "years": "born 1935",
+      "about": "Writes ghazals in light, everyday language, which is why so many couplets are quoted by ordinary people."
+    },
+    {
+      "id": "dagh",
+      "name": "Dagh Dehlvi",
+      "hi": "दाग़ देहलवी",
+      "years": "1831–1905",
+      "about": "Master of the playful, graceful Delhi style, famous for the way he used everyday speech."
+    },
+    {
+      "id": "nida",
+      "name": "Nida Fazli",
+      "hi": "निदा फ़ाज़ली",
+      "years": "1938–2016",
+      "about": "Poet and lyricist known for short, simple lines that carry big ideas about life."
+    },
+    {
+      "id": "rahim",
+      "name": "Abdul Rahim Khan-i-Khanan",
+      "hi": "रहीम",
+      "years": "1556–1627",
+      "about": "Poet and minister at Emperor Akbar's court, loved for his short, wise dohas about friendship, love and conduct."
+    }
+  ],
+  "sher": [
+    {
+      "id": 1,
+      "poet": "ghalib",
+      "hi": "हज़ारों ख़्वाहिशें ऐसी कि हर ख़्वाहिश पे दम निकले\nबहुत निकले मिरे अरमान लेकिन फिर भी कम निकले",
+      "roman": "Hazaaron khwaahishen aisi ki har khwaahish pe dam nikle\nBahut nikle mere armaan lekin phir bhi kam nikle",
+      "en": "I have thousands of wishes, each so strong that I could die for it. Many of my desires came true, yet they were still too few.",
+      "words": [
+        [
+          "khwaahish",
+          "wish, desire"
+        ],
+        [
+          "armaan",
+          "deep longing"
+        ],
+        [
+          "dam nikalna",
+          "to almost die (the breath leaves)"
+        ]
+      ],
+      "type": "Love"
+    },
+    {
+      "id": 2,
+      "poet": "ghalib",
+      "hi": "हम को मालूम है जन्नत की हक़ीक़त लेकिन\nदिल के ख़ुश रखने को 'ग़ालिब' ये ख़याल अच्छा है",
+      "roman": "Hum ko maaloom hai jannat ki haqeeqat lekin\nDil ke khush rakhne ko 'Ghalib' ye khayaal achha hai",
+      "en": "I know the reality of heaven, but to keep the heart happy, Ghalib, it is a nice thought.",
+      "words": [
+        [
+          "haqeeqat",
+          "reality, truth"
+        ],
+        [
+          "jannat",
+          "heaven"
+        ],
+        [
+          "khayaal",
+          "thought, idea"
+        ]
+      ],
+      "type": "Life"
+    },
+    {
+      "id": 3,
+      "poet": "ghalib",
+      "hi": "इश्क़ ने 'ग़ालिब' निकम्मा कर दिया\nवर्ना हम भी आदमी थे काम के",
+      "roman": "Ishq ne 'Ghalib' nikamma kar diya\nVarna hum bhi aadmi the kaam ke",
+      "en": "Love has made me useless, Ghalib; otherwise I too was a man of some worth.",
+      "words": [
+        [
+          "ishq",
+          "love, deep love"
+        ],
+        [
+          "nikamma",
+          "useless, good for nothing"
+        ],
+        [
+          "varna",
+          "otherwise"
+        ]
+      ],
+      "type": "Love"
+    },
+    {
+      "id": 4,
+      "poet": "ghalib",
+      "hi": "दिल-ए-नादाँ तुझे हुआ क्या है\nआख़िर इस दर्द की दवा क्या है",
+      "roman": "Dil-e-naadaan tujhe hua kya hai\nAakhir is dard ki dawa kya hai",
+      "en": "O innocent heart, what has happened to you? What, after all, is the cure for this pain?",
+      "words": [
+        [
+          "naadaan",
+          "innocent, naive"
+        ],
+        [
+          "dard",
+          "pain"
+        ],
+        [
+          "dawa",
+          "medicine, cure"
+        ]
+      ],
+      "type": "Emotional"
+    },
+    {
+      "id": 5,
+      "poet": "ghalib",
+      "hi": "रगों में दौड़ते फिरने के हम नहीं क़ाइल\nजब आँख ही से न टपका तो फिर लहू क्या है",
+      "roman": "Ragon mein daudte phirne ke hum nahin qaail\nJab aankh hi se na tapka to phir lahoo kya hai",
+      "en": "I am not impressed by blood that only runs through the veins. If it does not drip from the eye, what is it worth?",
+      "words": [
+        [
+          "ragon",
+          "veins"
+        ],
+        [
+          "qaail",
+          "convinced, an admirer"
+        ],
+        [
+          "lahoo",
+          "blood"
+        ],
+        [
+          "tapakna",
+          "to drip"
+        ]
+      ],
+      "type": "Emotional"
+    },
+    {
+      "id": 6,
+      "poet": "ghalib",
+      "hi": "उन के देखे से जो आ जाती है मुँह पर रौनक़\nवो समझते हैं कि बीमार का हाल अच्छा है",
+      "roman": "Un ke dekhe se jo aa jaati hai munh par raunaq\nWoh samajhte hain ke beemaar ka haal achha hai",
+      "en": "When my beloved looks at me, my face lights up, and so they think the patient is doing well.",
+      "words": [
+        [
+          "raunaq",
+          "glow, brightness"
+        ],
+        [
+          "beemaar",
+          "sick person, patient"
+        ],
+        [
+          "haal",
+          "condition"
+        ]
+      ],
+      "type": "Fun"
+    },
+    {
+      "id": 7,
+      "poet": "mir",
+      "hi": "पत्ता पत्ता बूटा बूटा हाल हमारा जाने है\nजाने न जाने गुल ही न जाने बाग़ तो सारा जाने है",
+      "roman": "Patta patta boota boota haal hamaara jaane hai\nJaane na jaane gul hi na jaane baagh to saara jaane hai",
+      "en": "Every leaf and every plant knows my condition. Only the flower does not know, though the whole garden does.",
+      "words": [
+        [
+          "patta",
+          "leaf"
+        ],
+        [
+          "gul",
+          "flower (here, the beloved)"
+        ],
+        [
+          "baagh",
+          "garden"
+        ]
+      ],
+      "type": "Love"
+    },
+    {
+      "id": 8,
+      "poet": "mir",
+      "hi": "इब्तिदा-ए-इश्क़ है रोता है क्या\nआगे आगे देखिए होता है क्या",
+      "roman": "Ibtidaa-e-ishq hai rota hai kya\nAage aage dekhiye hota hai kya",
+      "en": "It is only the beginning of love, so why cry? Just wait and see what happens next.",
+      "words": [
+        [
+          "ibtidaa",
+          "beginning"
+        ],
+        [
+          "aage",
+          "ahead, further on"
+        ],
+        [
+          "dekhiye",
+          "watch, see"
+        ]
+      ],
+      "type": "Motivation"
+    },
+    {
+      "id": 9,
+      "poet": "mir",
+      "hi": "दिखाई दिए यूँ कि बे-ख़ुद किया\nहमें आप से भी जुदा कर चले",
+      "roman": "Dikhaai diye yun ki be-khud kiya\nHamen aap se bhi juda kar chale",
+      "en": "The beloved appeared in such a way that I lost myself, and left me separated even from my own self.",
+      "words": [
+        [
+          "be-khud",
+          "beside oneself, lost in feeling"
+        ],
+        [
+          "juda",
+          "separate, apart"
+        ],
+        [
+          "aap se",
+          "from oneself"
+        ]
+      ],
+      "type": "Love"
+    },
+    {
+      "id": 10,
+      "poet": "iqbal",
+      "hi": "सितारों से आगे जहाँ और भी हैं\nअभी इश्क़ के इम्तिहाँ और भी हैं",
+      "roman": "Sitaaron se aage jahaan aur bhi hain\nAbhi ishq ke imtihaan aur bhi hain",
+      "en": "There are more worlds beyond the stars, and there are more tests of love still to come.",
+      "words": [
+        [
+          "sitaare",
+          "stars"
+        ],
+        [
+          "jahaan",
+          "world"
+        ],
+        [
+          "imtihaan",
+          "test, exam"
+        ]
+      ],
+      "type": "Motivation"
+    },
+    {
+      "id": 11,
+      "poet": "iqbal",
+      "hi": "ख़ुदी को कर बुलंद इतना कि हर तक़दीर से पहले\nख़ुदा बंदे से ख़ुद पूछे बता तेरी रज़ा क्या है",
+      "roman": "Khudi ko kar buland itna ki har taqdeer se pehle\nKhuda bande se khud poochhe bata teri raza kya hai",
+      "en": "Raise your self-belief so high that, before every decree of destiny, God Himself asks you: tell me, what is your wish?",
+      "words": [
+        [
+          "khudi",
+          "self-respect, selfhood"
+        ],
+        [
+          "buland",
+          "high, lofty"
+        ],
+        [
+          "taqdeer",
+          "destiny"
+        ],
+        [
+          "raza",
+          "wish, will"
+        ]
+      ],
+      "type": "Motivation"
+    },
+    {
+      "id": 12,
+      "poet": "iqbal",
+      "hi": "लब पे आती है दुआ बन के तमन्ना मेरी\nज़िंदगी शम्अ की सूरत हो ख़ुदाया मेरी",
+      "roman": "Lab pe aati hai dua ban ke tamanna meri\nZindagi shama ki soorat ho Khudaya meri",
+      "en": "My wish comes to my lips as a prayer: O God, may my life be like a candle.",
+      "words": [
+        [
+          "lab",
+          "lips"
+        ],
+        [
+          "tamanna",
+          "wish, desire"
+        ],
+        [
+          "shama",
+          "candle, flame"
+        ]
+      ],
+      "type": "Motivation"
+    },
+    {
+      "id": 13,
+      "poet": "faiz",
+      "hi": "और भी दुख हैं ज़माने में मोहब्बत के सिवा\nराहतें और भी हैं वस्ल की राहत के सिवा",
+      "roman": "Aur bhi dukh hain zamaane mein mohabbat ke siwa\nRaahaten aur bhi hain wasl ki raahat ke siwa",
+      "en": "There are other sorrows in the world besides love, and other comforts besides the comfort of being together.",
+      "words": [
+        [
+          "zamaana",
+          "the world, the times"
+        ],
+        [
+          "siwa",
+          "except, besides"
+        ],
+        [
+          "wasl",
+          "union, meeting"
+        ]
+      ],
+      "type": "Life"
+    },
+    {
+      "id": 14,
+      "poet": "faiz",
+      "hi": "गुलों में रंग भरे बाद-ए-नौ-बहार चले\nचले भी आओ कि गुलशन का कारोबार चले",
+      "roman": "Gulon mein rang bhare baad-e-nau-bahaar chale\nChale bhi aao ki gulshan ka kaarobaar chale",
+      "en": "Let the fresh spring breeze blow and fill the flowers with colour. Come now, so that the garden's work can go on.",
+      "words": [
+        [
+          "baad-e-nau-bahaar",
+          "breeze of the new spring"
+        ],
+        [
+          "gulshan",
+          "garden"
+        ],
+        [
+          "kaarobaar",
+          "business, daily work"
+        ]
+      ],
+      "type": "Motivation"
+    },
+    {
+      "id": 15,
+      "poet": "faraz",
+      "hi": "रंजिश ही सही दिल ही दुखाने के लिए आ\nआ फिर से मुझे छोड़ के जाने के लिए आ",
+      "roman": "Ranjish hi sahi dil hi dukhaane ke liye aa\nAa phir se mujhe chhod ke jaane ke liye aa",
+      "en": "Be angry if you must, but come, even just to hurt my heart. Come again, even if only to leave me once more.",
+      "words": [
+        [
+          "ranjish",
+          "anger, resentment"
+        ],
+        [
+          "dukhaana",
+          "to hurt"
+        ],
+        [
+          "chhodna",
+          "to leave"
+        ]
+      ],
+      "type": "Love"
+    },
+    {
+      "id": 16,
+      "poet": "faraz",
+      "hi": "अब के हम बिछड़े तो शायद कभी ख़्वाबों में मिलें\nजिस तरह सूखे हुए फूल किताबों में मिलें",
+      "roman": "Ab ke hum bichhde to shaayad kabhi khwaabon mein milen\nJis tarah sookhe hue phool kitaabon mein milen",
+      "en": "If we part now, perhaps we will meet only in dreams, the way dried flowers are found inside books.",
+      "words": [
+        [
+          "bichhadna",
+          "to part, to be separated"
+        ],
+        [
+          "khwaab",
+          "dream"
+        ],
+        [
+          "sookha",
+          "dry"
+        ]
+      ],
+      "type": "Emotional"
+    },
+    {
+      "id": 17,
+      "poet": "parveen",
+      "hi": "मैं सच कहूँगी मगर फिर भी हार जाऊँगी\nवो झूठ बोलेगा और ला-जवाब कर देगा",
+      "roman": "Main sach kahoongi magar phir bhi haar jaaungi\nWoh jhooth bolega aur laa-jawaab kar dega",
+      "en": "I will speak the truth, yet I will still lose. He will tell a lie and leave me with no reply.",
+      "words": [
+        [
+          "sach",
+          "truth"
+        ],
+        [
+          "jhooth",
+          "lie"
+        ],
+        [
+          "laa-jawaab",
+          "speechless, with no reply"
+        ]
+      ],
+      "type": "Emotional"
+    },
+    {
+      "id": 18,
+      "poet": "jaun",
+      "hi": "उस गली ने ये सुन के सब्र किया\nजाने वाले यहाँ के थे ही नहीं",
+      "roman": "Us gali ne ye sun ke sabr kiya\nJaane waale yahaan ke the hi nahin",
+      "en": "The street comforted itself on hearing this: the ones who left never really belonged here.",
+      "words": [
+        [
+          "gali",
+          "street, lane"
+        ],
+        [
+          "sabr",
+          "patience, acceptance"
+        ],
+        [
+          "jaane waale",
+          "those who are leaving"
+        ]
+      ],
+      "type": "Emotional"
+    },
+    {
+      "id": 19,
+      "poet": "jaun",
+      "hi": "क्या तकल्लुफ़ करें ये कहने में\nजो भी ख़ुश है हम उस से जलते हैं",
+      "roman": "Kya takalluf karen ye kehne mein\nJo bhi khush hai hum us se jalte hain",
+      "en": "Why be formal about saying it: I envy everyone who is happy.",
+      "words": [
+        [
+          "takalluf",
+          "formality, politeness"
+        ],
+        [
+          "khush",
+          "happy"
+        ],
+        [
+          "jalna",
+          "to feel jealous"
+        ]
+      ],
+      "type": "Fun"
+    },
+    {
+      "id": 20,
+      "poet": "rahat",
+      "hi": "सभी का ख़ून है शामिल यहाँ की मिट्टी में\nकिसी के बाप का हिंदोस्तान थोड़ी है",
+      "roman": "Sabhi ka khoon hai shaamil yahaan ki mitti mein\nKisi ke baap ka Hindostaan thodi hai",
+      "en": "Everyone's blood is mixed into the soil of this land. India does not belong to any one person.",
+      "words": [
+        [
+          "khoon",
+          "blood"
+        ],
+        [
+          "shaamil",
+          "included, mixed in"
+        ],
+        [
+          "mitti",
+          "soil"
+        ]
+      ],
+      "type": "Motivation"
+    },
+    {
+      "id": 21,
+      "poet": "rahat",
+      "hi": "अगर ख़िलाफ़ हैं होने दो जान थोड़ी है\nये सब धुआँ है कोई आसमान थोड़ी है",
+      "roman": "Agar khilaaf hain hone do jaan thodi hai\nYe sab dhuaan hai koi aasmaan thodi hai",
+      "en": "If they are against me, let them be; they are not my life. This is all smoke, not the sky.",
+      "words": [
+        [
+          "khilaaf",
+          "against"
+        ],
+        [
+          "dhuaan",
+          "smoke"
+        ],
+        [
+          "aasmaan",
+          "sky"
+        ]
+      ],
+      "type": "Motivation"
+    },
+    {
+      "id": 22,
+      "poet": "gulzar",
+      "hi": "आदतन तुम ने कर दिए वादे\nआदतन हम ने ऐतबार किया",
+      "roman": "Aadatan tum ne kar diye waade\nAadatan hum ne aitbaar kiya",
+      "en": "Out of habit you made promises, and out of habit I believed them.",
+      "words": [
+        [
+          "aadatan",
+          "out of habit"
+        ],
+        [
+          "waada",
+          "promise"
+        ],
+        [
+          "aitbaar",
+          "trust, belief"
+        ]
+      ],
+      "type": "Love"
+    },
+    {
+      "id": 23,
+      "poet": "kabir",
+      "hi": "बुरा जो देखन मैं चला, बुरा न मिलिया कोय\nजो दिल खोजा आपना, मुझसे बुरा न कोय",
+      "roman": "Bura jo dekhan main chala, bura na miliya koi\nJo dil khoja aapna, mujh se bura na koi",
+      "en": "I set out to find the wicked, but I found no one. When I looked into my own heart, no one was worse than me.",
+      "words": [
+        [
+          "bura",
+          "bad, evil"
+        ],
+        [
+          "khojna",
+          "to search"
+        ],
+        [
+          "aapna",
+          "one's own"
+        ]
+      ],
+      "type": "Life"
+    },
+    {
+      "id": 24,
+      "poet": "bashir",
+      "hi": "कुछ तो मजबूरियाँ रही होंगी\nयूँ कोई बेवफ़ा नहीं होता",
+      "roman": "Kuchh to majbooriyaan rahi hongi\nYun koi bewafa nahin hota",
+      "en": "There must have been some compulsions. No one is unfaithful for no reason.",
+      "words": [
+        [
+          "majboori",
+          "compulsion, helplessness"
+        ],
+        [
+          "bewafa",
+          "unfaithful, disloyal"
+        ],
+        [
+          "yun",
+          "just like that"
+        ]
+      ],
+      "type": "Love"
+    },
+    {
+      "id": 25,
+      "poet": "bashir",
+      "hi": "उजाले अपनी यादों के हमारे साथ रहने दो\nन जाने किस गली में ज़िंदगी की शाम हो जाए",
+      "roman": "Ujaale apni yaadon ke hamaare saath rehne do\nNa jaane kis gali mein zindagi ki shaam ho jaaye",
+      "en": "Let the light of your memories stay with me. Who knows in which street the evening of life may fall.",
+      "words": [
+        [
+          "ujaala",
+          "light, brightness"
+        ],
+        [
+          "yaad",
+          "memory"
+        ],
+        [
+          "shaam",
+          "evening"
+        ]
+      ],
+      "type": "Life"
+    },
+    {
+      "id": 26,
+      "poet": "dagh",
+      "hi": "ख़ूब पर्दा है कि चिलमन से लगे बैठे हैं\nसाफ़ छुपते भी नहीं सामने आते भी नहीं",
+      "roman": "Khoob parda hai ki chilman se lage baithe hain\nSaaf chhupte bhi nahin saamne aate bhi nahin",
+      "en": "What a fine veil! The beloved sits right behind the screen, neither clearly hiding nor coming forward.",
+      "words": [
+        [
+          "parda",
+          "veil, curtain"
+        ],
+        [
+          "chilman",
+          "thin bamboo screen"
+        ],
+        [
+          "saamne",
+          "in front"
+        ]
+      ],
+      "type": "Love"
+    },
+    {
+      "id": 27,
+      "poet": "nida",
+      "hi": "कभी किसी को मुकम्मल जहाँ नहीं मिलता\nकहीं ज़मीन तो कहीं आसमाँ नहीं मिलता",
+      "roman": "Kabhi kisi ko mukammal jahaan nahin milta\nKahin zameen to kahin aasmaan nahin milta",
+      "en": "No one ever gets a complete world. Somewhere the earth is missing, and somewhere the sky.",
+      "words": [
+        [
+          "mukammal",
+          "complete, perfect"
+        ],
+        [
+          "zameen",
+          "earth, ground"
+        ],
+        [
+          "aasmaan",
+          "sky"
+        ]
+      ],
+      "type": "Life"
+    },
+    {
+      "id": 28,
+      "poet": "rahim",
+      "type": "Love",
+      "hi": "रहिमन धागा प्रेम का, मत तोड़ो चटकाय\nटूटे से फिर ना जुड़े, जुड़े गाँठ परि जाय",
+      "roman": "Rahiman dhaaga prem ka, mat todo chatkaay\nToote se phir na jude, jude gaanth pari jaay",
+      "en": "The thread of love should not be snapped carelessly. Once it breaks it does not join again, and if it does join, a knot remains.",
+      "words": [
+        [
+          "dhaaga",
+          "thread"
+        ],
+        [
+          "todna",
+          "to break"
+        ],
+        [
+          "gaanth",
+          "knot"
+        ]
+      ]
+    },
+    {
+      "id": 29,
+      "poet": "kabir",
+      "type": "Study",
+      "hi": "पोथी पढ़ि पढ़ि जग मुआ, पंडित भया न कोय\nढाई आखर प्रेम का, पढ़े सो पंडित होय",
+      "roman": "Pothi padhi padhi jag mua, pandit bhaya na koy\nDhai aakhar prem ka, padhe so pandit hoy",
+      "en": "The world died reading books again and again, yet no one became truly wise. Whoever learns the two and a half letters of love becomes a real scholar.",
+      "words": [
+        [
+          "pothi",
+          "book"
+        ],
+        [
+          "pandit",
+          "scholar, learned person"
+        ],
+        [
+          "aakhar",
+          "letter"
+        ]
+      ]
+    },
+    {
+      "id": 30,
+      "poet": "kabir",
+      "type": "Motivation",
+      "hi": "काल करे सो आज कर, आज करे सो अब\nपल में परलय होएगी, बहुरि करेगा कब",
+      "roman": "Kaal kare so aaj kar, aaj kare so ab\nPal mein parlay hoyegi, bahuri karega kab",
+      "en": "Do tomorrow's work today, and today's work right now. Disaster can strike in a moment, so when will you ever do it?",
+      "words": [
+        [
+          "kaal",
+          "tomorrow"
+        ],
+        [
+          "aaj",
+          "today"
+        ],
+        [
+          "pal",
+          "a moment"
+        ]
+      ]
+    },
+    {
+      "id": 31,
+      "poet": "kabir",
+      "type": "Study",
+      "hi": "गुरु गोविंद दोऊ खड़े, काके लागूं पाँय\nबलिहारी गुरु आपने, गोविंद दियो बताय",
+      "roman": "Guru Govind dou khade, kake laagun paay\nBalihaari Guru aapne, Govind diyo bataay",
+      "en": "The teacher and God both stand before me. Whose feet should I touch first? I bow to my teacher, who showed me the way to God.",
+      "words": [
+        [
+          "guru",
+          "teacher"
+        ],
+        [
+          "balihaari",
+          "I am grateful, I bow"
+        ],
+        [
+          "bataana",
+          "to show, to tell"
+        ]
+      ]
+    }
+  ],
+  "basics": [
+    [
+      "Sher",
+      "A two-line poem that holds one complete idea. Each line is called a 'misra'."
+    ],
+    [
+      "Ghazal",
+      "A poem made of shers that follow the same rhyme pattern, each sher standing on its own."
+    ],
+    [
+      "Matla / Maqta",
+      "The first sher of a ghazal (matla) and the last sher, which usually carries the poet's pen-name (maqta)."
+    ],
+    [
+      "Qafia / Radif",
+      "Qafia is the rhyming word; radif is the phrase that repeats after it at the end of each line."
+    ],
+    [
+      "Nazm",
+      "A poem on one theme from beginning to end, like a story or a letter."
+    ],
+    [
+      "Doha",
+      "A two-line rhyming verse of wisdom, popular in Hindi, such as Kabir's."
+    ]
+  ],
+  "quotes": [
+    {
+      "id": 1,
+      "type": "Motivation",
+      "author": "Steve Jobs",
+      "en": "The only way to do great work is to love what you do.",
+      "hindi": "बेहतरीन काम करने का एक ही तरीका है: जो काम करो, उससे प्यार करो।",
+      "simple": "You will do your best work when you enjoy what you do.",
+      "words": [
+        [
+          "great",
+          "excellent, very good"
+        ],
+        [
+          "the only way",
+          "the one method"
+        ]
+      ]
+    },
+    {
+      "id": 2,
+      "type": "Motivation",
+      "author": "Nelson Mandela",
+      "note": "attributed",
+      "en": "It always seems impossible until it's done.",
+      "hindi": "जब तक कोई काम हो नहीं जाता, वह असंभव ही लगता है।",
+      "simple": "Hard things look impossible at first, but they look possible once someone has done them.",
+      "words": [
+        [
+          "impossible",
+          "not able to be done"
+        ],
+        [
+          "until",
+          "up to the time when"
+        ]
+      ]
+    },
+    {
+      "id": 3,
+      "type": "Motivation",
+      "author": "Confucius",
+      "note": "attributed",
+      "en": "It does not matter how slowly you go as long as you do not stop.",
+      "hindi": "आप कितना धीरे चलते हैं, यह मायने नहीं रखता, बस रुकना नहीं चाहिए।",
+      "simple": "Slow progress is still progress. Just keep going.",
+      "words": [
+        [
+          "matter",
+          "be important"
+        ],
+        [
+          "as long as",
+          "if, provided that"
+        ],
+        [
+          "slowly",
+          "not fast"
+        ]
+      ]
+    },
+    {
+      "id": 4,
+      "type": "Motivation",
+      "author": "Japanese proverb",
+      "en": "Fall seven times, stand up eight.",
+      "hindi": "सात बार गिरो, आठ बार उठो।",
+      "simple": "Failing is normal. What counts is that you get up again.",
+      "words": [
+        [
+          "proverb",
+          "a short, wise saying"
+        ],
+        [
+          "stand up",
+          "rise from the ground"
+        ]
+      ]
+    },
+    {
+      "id": 5,
+      "type": "Motivation",
+      "author": "Wayne Gretzky",
+      "en": "You miss 100% of the shots you don't take.",
+      "hindi": "जो शॉट आप लगाते ही नहीं, उनमें से 100% चूक जाते हैं।",
+      "simple": "If you never try, you can never succeed.",
+      "words": [
+        [
+          "miss",
+          "fail to hit or get"
+        ],
+        [
+          "shot",
+          "an attempt to score"
+        ]
+      ]
+    },
+    {
+      "id": 6,
+      "type": "Motivation",
+      "author": "Theodore Roosevelt",
+      "note": "attributed",
+      "en": "Believe you can and you're halfway there.",
+      "hindi": "मान लो कि तुम कर सकते हो, तो आधा रास्ता पार हो गया।",
+      "simple": "Self-belief is the first and biggest step.",
+      "words": [
+        [
+          "believe",
+          "feel sure something is true"
+        ],
+        [
+          "halfway",
+          "at the middle of the way"
+        ]
+      ]
+    },
+    {
+      "id": 7,
+      "type": "Study",
+      "author": "Benjamin Franklin",
+      "en": "An investment in knowledge pays the best interest.",
+      "hindi": "ज्ञान में लगाया गया निवेश सबसे अच्छा ब्याज देता है।",
+      "simple": "Time and money spent on learning give you the biggest return.",
+      "words": [
+        [
+          "investment",
+          "money or time put in to gain later"
+        ],
+        [
+          "knowledge",
+          "what you know"
+        ],
+        [
+          "interest",
+          "extra money earned"
+        ]
+      ]
+    },
+    {
+      "id": 8,
+      "type": "Study",
+      "author": "Nelson Mandela",
+      "en": "Education is the most powerful weapon which you can use to change the world.",
+      "hindi": "शिक्षा सबसे शक्तिशाली हथियार है जिससे आप दुनिया को बदल सकते हैं।",
+      "simple": "Learning gives people the power to make the world better.",
+      "words": [
+        [
+          "education",
+          "learning at school or college"
+        ],
+        [
+          "powerful",
+          "very strong"
+        ],
+        [
+          "weapon",
+          "a tool used to fight"
+        ]
+      ]
+    },
+    {
+      "id": 9,
+      "type": "Study",
+      "author": "B. B. King",
+      "en": "The beautiful thing about learning is that no one can take it away from you.",
+      "hindi": "सीखने की खूबसूरती यह है कि उसे आपसे कोई छीन नहीं सकता।",
+      "simple": "Money can be lost, but what you have learned stays with you.",
+      "words": [
+        [
+          "take away",
+          "remove from someone"
+        ],
+        [
+          "learning",
+          "gaining knowledge"
+        ]
+      ]
+    },
+    {
+      "id": 10,
+      "type": "Study",
+      "author": "Dr. Seuss",
+      "en": "The more that you read, the more things you will know. The more that you learn, the more places you'll go.",
+      "hindi": "जितना ज़्यादा पढ़ोगे, उतना ज़्यादा जानोगे। जितना ज़्यादा सीखोगे, उतनी ज़्यादा जगहें देखोगे।",
+      "simple": "Reading and learning open up new worlds for you.",
+      "words": [
+        [
+          "the more… the more",
+          "as one grows, so does the other"
+        ],
+        [
+          "places",
+          "locations; here, chances in life"
+        ]
+      ]
+    },
+    {
+      "id": 11,
+      "type": "Study",
+      "author": "Robert Collier",
+      "en": "Success is the sum of small efforts, repeated day in and day out.",
+      "hindi": "सफलता उन छोटी-छोटी कोशिशों का जोड़ है जो हर दिन दोहराई जाती हैं।",
+      "simple": "Small steps taken every day add up to big success.",
+      "words": [
+        [
+          "sum",
+          "total"
+        ],
+        [
+          "effort",
+          "hard try"
+        ],
+        [
+          "day in and day out",
+          "every single day"
+        ]
+      ]
+    },
+    {
+      "id": 12,
+      "type": "Love",
+      "author": "William Shakespeare",
+      "en": "Love all, trust a few, do wrong to none.",
+      "hindi": "सबसे प्यार करो, कुछ पर भरोसा करो, किसी के साथ बुरा मत करो।",
+      "simple": "Be kind to everyone, keep a small circle you trust, and never harm anyone.",
+      "words": [
+        [
+          "trust",
+          "believe in someone"
+        ],
+        [
+          "wrong",
+          "a bad or unfair act"
+        ],
+        [
+          "none",
+          "no one"
+        ]
+      ]
+    },
+    {
+      "id": 13,
+      "type": "Love",
+      "author": "David Viscott",
+      "en": "To love and be loved is to feel the sun from both sides.",
+      "hindi": "प्यार करना और प्यार पाना, दोनों तरफ़ से धूप महसूस करने जैसा है।",
+      "simple": "Giving love and receiving love together feel warm and complete.",
+      "words": [
+        [
+          "both sides",
+          "the front and the back"
+        ],
+        [
+          "feel",
+          "to sense or experience"
+        ]
+      ]
+    },
+    {
+      "id": 14,
+      "type": "Love",
+      "author": "Mahatma Gandhi",
+      "note": "attributed",
+      "en": "Where there is love there is life.",
+      "hindi": "जहाँ प्यार है, वहाँ जीवन है।",
+      "simple": "Life is full and alive when there is love in it.",
+      "words": [
+        [
+          "where",
+          "in the place that"
+        ]
+      ]
+    },
+    {
+      "id": 15,
+      "type": "Emotional",
+      "author": "Rumi",
+      "en": "The wound is the place where the light enters you.",
+      "hindi": "घाव वही जगह है जहाँ से रोशनी भीतर आती है।",
+      "simple": "Our pain can open us to wisdom and healing.",
+      "words": [
+        [
+          "wound",
+          "an injury, a hurt"
+        ],
+        [
+          "enter",
+          "to come in"
+        ]
+      ]
+    },
+    {
+      "id": 16,
+      "type": "Emotional",
+      "author": "Maya Angelou",
+      "en": "There is no greater agony than bearing an untold story inside you.",
+      "hindi": "अपने भीतर किसी अनकही कहानी को ढोने से बड़ी पीड़ा कोई नहीं।",
+      "simple": "Keeping an important story to yourself hurts deeply. Sharing it brings relief.",
+      "words": [
+        [
+          "agony",
+          "very great pain"
+        ],
+        [
+          "bear",
+          "to carry, to put up with"
+        ],
+        [
+          "untold",
+          "not yet told"
+        ]
+      ]
+    },
+    {
+      "id": 17,
+      "type": "Emotional",
+      "author": "Carl Jung",
+      "note": "attributed",
+      "en": "Even a happy life cannot be without a measure of darkness.",
+      "hindi": "सबसे खुशहाल जीवन में भी थोड़ा अँधेरा ज़रूर होता है।",
+      "simple": "Every life has some sad times, and they help us value the happy ones.",
+      "words": [
+        [
+          "measure",
+          "an amount"
+        ],
+        [
+          "without",
+          "not having"
+        ],
+        [
+          "darkness",
+          "sadness, no light"
+        ]
+      ]
+    },
+    {
+      "id": 18,
+      "type": "Life",
+      "author": "John Lennon",
+      "en": "Life is what happens when you're busy making other plans.",
+      "hindi": "जब आप दूसरी योजनाएँ बनाने में व्यस्त होते हैं, तब जीवन घट रहा होता है।",
+      "simple": "Real life happens while we are planning. Enjoy the present too.",
+      "words": [
+        [
+          "busy",
+          "having a lot to do"
+        ],
+        [
+          "plan",
+          "an idea of what to do"
+        ]
+      ]
+    },
+    {
+      "id": 19,
+      "type": "Life",
+      "author": "J. R. R. Tolkien",
+      "en": "Not all those who wander are lost.",
+      "hindi": "भटकने वाले सभी लोग खोए हुए नहीं होते।",
+      "simple": "Someone who explores or takes a different road may know exactly what they are doing.",
+      "words": [
+        [
+          "wander",
+          "walk with no fixed aim"
+        ],
+        [
+          "lost",
+          "not knowing the way"
+        ]
+      ]
+    },
+    {
+      "id": 20,
+      "type": "Friendship",
+      "author": "Walter Winchell",
+      "note": "attributed",
+      "en": "A real friend is one who walks in when the rest of the world walks out.",
+      "hindi": "सच्चा दोस्त वह है जो तब आता है जब बाकी दुनिया चली जाती है।",
+      "simple": "A true friend stays with you when everyone else leaves.",
+      "words": [
+        [
+          "real",
+          "true, genuine"
+        ],
+        [
+          "walk out",
+          "leave"
+        ],
+        [
+          "the rest of",
+          "all the others"
+        ]
+      ]
+    }
+  ],
+  "types": [
+    "Love",
+    "Motivation",
+    "Study",
+    "Emotional",
+    "Life",
+    "Friendship",
+    "Fun"
+  ]
+}

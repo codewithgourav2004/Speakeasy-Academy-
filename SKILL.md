@@ -350,6 +350,16 @@ Question format in `backend/data/questions.json`: `{ q, options[4], answer, expl
 
 ---
 
+## Shayari (separate tab, next to Chat)
+- **Types:** Love, Motivation, Study, Emotional, Life, Friendship, Fun. Every couplet, quote and post has one type, and the screen can filter by it.
+- **Learn → Shayari & dohe:** 31 couplets by 14 poets (Ghalib, Mir, Iqbal, Faiz, Faraz, Parveen Shakir, Jaun Elia, Rahat Indori, Gulzar, Kabir, Rahim, Bashir Badr, Dagh, Nida Fazli). Each has the Hindi text, a Roman transliteration, a plain-English meaning and words to learn. Shayari of the day, poet filter with a short bio, **Save** (kept in the browser), **Hear** (Hindi voice), **Meaning** (English voice), Copy, and a "Poetry words to know" box (sher, ghazal, matla/maqta, qafia/radif, nazm, doha).
+- **Learn → English quotes:** 20 well-known quotes (Mandela, Jobs, Franklin, Rumi, Maya Angelou, Shakespeare and others), each with a Hindi translation, "in simple words" and key vocabulary. Quotes that are only commonly attributed to someone are marked "(attributed)". Check attributions before adding new ones.
+- **Reactions:** 👏 Wah and ❤️ on every couplet, every quote and every post on the wall. Pressing the same one again removes it. Counts for built-in items are stored in `shayari_wall.json` under `items` (keys `s1`... for couplets, `q1`... for quotes).
+- **Write & share:** a community wall. Students pick a type, a language (Roman, Hindi, Urdu, English), write 8-400 characters, and post. Same rules as group chat: no links, muted students cannot post, one post every 15 seconds. They can filter the wall by type and by "My shayari", and delete their own posts. There is a daily theme prompt. The newest 500 posts are kept.
+- **Content vs. student data:** couplets and quotes are in `backend/data/shayari.json` (in git). What students write is in `shayari_wall.json` (runtime data: database or `DATA_DIR`; ignored by git). The two names are deliberately different, because both would otherwise resolve to the same file when no database is used.
+- **Admin:** the Group chat admin tab lists the latest 100 posts with a delete button.
+- API: `GET /api/shayari` (content, no sign-in), `GET /api/shayari/reactions`, `POST /api/shayari/items/:key/react`, `GET|POST /api/shayari/posts` (`?mine=1`, `?type=Love`), `POST /api/shayari/posts/:pid/react`, `DELETE /api/shayari/posts/:pid` (own); admin: `GET /api/admin/shayari`, `DELETE /api/admin/shayari/:pid`.
+
 ## Running and configuring the app
 
 ```

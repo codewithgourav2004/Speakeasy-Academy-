@@ -24,7 +24,7 @@ const dirty = new Set(); // keys waiting to be written to the database
 let timer = null;
 
 // Files that hold data created while the app runs. Everything else (questions, topics...) stays on disk.
-const RUNTIME = [/^(students|results|tr_results|searches|grammar_checks|groupchat|enquiries|settings)\.json$/, /^chats\/[a-z0-9-]+\.json$/, /^usage\/(\d{4}-\d{2}-\d{2}|backfill)\.json$/];
+const RUNTIME = [/^(students|results|tr_results|searches|grammar_checks|groupchat|enquiries|settings|shayari_wall)\.json$/, /^chats\/[a-z0-9-]+\.json$/, /^usage\/(\d{4}-\d{2}-\d{2}|backfill)\.json$/];
 const keyOf = (file) => path.relative(DATA_DIR, file).split(path.sep).join("/");
 const isRuntime = (key) => RUNTIME.some((re) => re.test(key));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -72,11 +72,15 @@ export async function initStore({ dataDir, databaseUrl, mongoUrl, poolFactory } 
 }
 
 // MongoDB: the same key/value records, one document per file ({ _id: key, value, updated_at }).
+let publicDns = false;
 async function initMongo(url) {
   // mongodb+srv:// addresses need a DNS "SRV" lookup. Some networks cannot answer it, so fall back to public DNS.
   if (url.startsWith("mongodb+srv://")) {
-    try { await dns.promises.resolveSrv("_mongodb._tcp." + new URL(url).hostname); }
-    catch (e) { dns.setServers(["8.8.8.8", "1.1.1.1"]); console.log(`Local DNS could not look up the MongoDB address (${e.code}); using public DNS instead.`); }
+    try {
+      const host = new URL(url).hostname;
+      await dns.promises.resolveSrv("_mongodb._tcp." + host);
+      await dns.promises.resolveTxt(host).catch((e) => { if (e.code !== "ENODATA") throw e; });
+    } catch (e) { dns.setServers(["8.8.8.8", "1.1.1.1"]); console.log(`Local DNS could not look up the MongoDB address (${e.code}); using public DNS instead.`); }
   }
   for (let attempt = 1; attempt <= 4; attempt++) {
     let client = null;
@@ -95,6 +99,9 @@ async function initMongo(url) {
       return storeInfo();
     } catch (e) {
       problem = `Could not reach MongoDB (${String(e.message).slice(0, 120)})`;
+      if (url.startsWith("mongodb+srv://") && /ESERVFAIL|ETIMEOUT|ECONNREFUSED|ENOTFOUND|EAI_AGAIN/.test(String(e.message)) && !publicDns) {
+        publicDns = true; dns.setServers(["8.8.8.8", "1.1.1.1"]); console.log("DNS lookup failed; switching to public DNS.");
+      }
       console.error(`${problem}; attempt ${attempt} of 4`);
       try { await client?.close(); } catch {}
       mongo = null;

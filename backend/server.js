@@ -159,6 +159,7 @@ const DISPOSABLE_DOMAINS = new Set([
 ]);
 const newAccountTimes = new Map(); // ip → timestamps of new account creations (spam guard)
 const EMAIL_RE_LOGIN = /^[^\s@<>"',;:]+@[^\s@<>"',;:]+\.[^\s@<>"',;:]{2,}$/;
+const PHONE_RE = /^\+?[\d\s\-().]+$/; // valid chars; digit count checked separately
 
 app.post("/api/login", (req, res) => {
   const name = String(req.body.name || "").trim().slice(0, 40);
@@ -191,6 +192,8 @@ app.post("/api/login", (req, res) => {
     if (dup) return res.status(409).json({ error: "That email is already linked to another account. Please use your original name to sign in." });
   }
   if (phone) {
+    const digits = phone.replace(/\D/g, '');
+    if (!PHONE_RE.test(phone) || digits.length < 7 || digits.length > 15) return res.status(400).json({ error: "Please enter a valid phone number (7–15 digits). You can include +, spaces, or dashes." });
     const dup = Object.values(students).find(s => s.id !== id && s.phone === phone);
     if (dup) return res.status(409).json({ error: "That phone number is already linked to another account. Please use your original name to sign in." });
   }
@@ -1102,6 +1105,10 @@ app.post("/api/enquiry", wrap(async (req, res) => {
   const name = clean(req.body.name, 80), email = clean(req.body.email, 120), phone = clean(req.body.phone, 25), message = clean(req.body.message, 2000);
   if (!name) return res.status(400).json({ error: "Please enter your name." });
   if (!EMAIL_RE.test(email)) return res.status(400).json({ error: "Please enter a valid email address so we can reply." });
+  if (phone) {
+    const digits = phone.replace(/\D/g, '');
+    if (!PHONE_RE.test(phone) || digits.length < 7 || digits.length > 15) return res.status(400).json({ error: "Please enter a valid phone number, or leave it blank." });
+  }
   if (message.length < 5) return res.status(400).json({ error: "Please write your question (at least a few words)." });
   const now = Date.now(), recent = (enquiryTimes.get(req.ip) || []).filter((t) => now - t < 3600e3);
   if (recent.length >= 5 || (recent.length && now - recent[recent.length - 1] < 15000)) return res.status(429).json({ error: "Please wait a little before sending another enquiry." });

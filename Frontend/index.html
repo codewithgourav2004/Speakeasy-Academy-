@@ -32,29 +32,39 @@
   <div id="welcome" class="overlay" hidden>
     <form id="welcomeForm" class="modal">
       <button type="button" id="welcomeClose" class="ghost modal-close" aria-label="Close and stay signed in" title="Close (Esc)" hidden>✕</button>
-      <div class="logo">🎓</div>
-      <h2>Welcome to Speakeasy Academy</h2>
-      <p class="tagline">Your friendly English speaking and grammar coach. Practise speaking, fix your mistakes, and learn tenses, modals, passive voice and more at your own level.</p>
-      <div class="feat">
-        <span class="pill">💬 AI speaking coach</span>
-        <span class="pill">✏️ Grammar check</span>
-        <span class="pill">🔄 Hindi → English</span>
-        <span class="pill">📝 Tests for your level</span>
-        <span class="pill">👥 Group chat</span>
+      <div class="welcome-head">
+        <div class="logo">🎓</div>
+        <div>
+          <h2>Welcome to Speakeasy Academy</h2>
+          <p class="tagline">Your friendly English speaking &amp; grammar coach.</p>
+        </div>
       </div>
-      <p class="small">Enter your name to start. Your chats and test scores are saved under it, so use the same name next time to continue.</p>
-      <input id="nameInput" placeholder="Your name" maxlength="40" autocomplete="name" required>
-      <input id="ageInput" type="number" min="10" max="100" placeholder="Your age (10+)" required>
-      <select id="levelInput" aria-label="Your level">
-        <option value="beginner">Beginner</option>
-        <option value="intermediate" selected>Intermediate</option>
-        <option value="advanced">Advanced</option>
-      </select>
-      <input id="phoneInput" type="tel" placeholder="Phone / WhatsApp (optional)" maxlength="20" autocomplete="tel">
-      <input id="emailInput" type="email" placeholder="Email (optional)" maxlength="100" autocomplete="email">
-      <input id="cityInput" placeholder="City (optional)" maxlength="40" autocomplete="address-level2">
+      <p class="feat-line">💬 Speak &nbsp;·&nbsp; ✏️ Grammar &nbsp;·&nbsp; 📝 Tests &nbsp;·&nbsp; 👥 Group chat</p>
+      <label class="fld">
+        <span>Your name</span>
+        <input id="nameInput" placeholder="e.g. Asha Verma" maxlength="40" autocomplete="name" required>
+      </label>
+      <p class="hint">Use the same name next time to continue where you stopped.</p>
+      <div class="fld-row">
+        <label class="fld"><span>Age</span><input id="ageInput" type="number" min="10" max="100" inputmode="numeric" placeholder="10+" required></label>
+        <label class="fld"><span>Level</span>
+          <select id="levelInput" aria-label="Your level">
+            <option value="beginner">Beginner</option>
+            <option value="intermediate" selected>Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+        </label>
+      </div>
+      <details class="more-details">
+        <summary>Add contact details <span class="small">(optional)</span></summary>
+        <div class="more-grid">
+          <input id="phoneInput" type="tel" placeholder="Phone / WhatsApp (e.g. +91 98765 43210)" maxlength="20" autocomplete="tel">
+          <input id="cityInput" placeholder="City" maxlength="40" autocomplete="address-level2">
+          <input id="emailInput" type="email" placeholder="Email" maxlength="100" autocomplete="email">
+        </div>
+      </details>
       <p id="welcomeErr" class="err small"></p>
-      <button type="submit">Start learning</button>
+      <button type="submit" class="start-btn">Start learning →</button>
     </form>
   </div>
 
@@ -191,19 +201,19 @@
       </div>
       <div id="discGenOut"></div>
       <div class="starters" id="discCats"></div>
-      <div id="topicCubeWrap" class="cube-wrap" hidden>
-        <p class="cube-hint">✨ Spin for a random topic</p>
-        <div class="cube-scene" id="cubeScene">
-          <div class="topic-cube" id="topicCube">
-            <div class="cube-face face-front"></div>
-            <div class="cube-face face-back"></div>
-            <div class="cube-face face-right"></div>
-            <div class="cube-face face-left"></div>
-            <div class="cube-face face-top"></div>
-            <div class="cube-face face-bottom"></div>
-          </div>
-        </div>
-        <p class="cube-hint">Tap to spin</p>
+      <div id="topicCubeWrap" class="dice-bar" hidden>
+        <button type="button" class="cube-scene" id="cubeScene" aria-label="Roll the dice for a random topic" title="Roll for a random topic">
+          <span class="topic-cube" id="topicCube">
+            <span class="cube-face face-front" data-n="1"></span>
+            <span class="cube-face face-back" data-n="6"></span>
+            <span class="cube-face face-right" data-n="3"></span>
+            <span class="cube-face face-left" data-n="4"></span>
+            <span class="cube-face face-top" data-n="2"></span>
+            <span class="cube-face face-bottom" data-n="5"></span>
+          </span>
+        </button>
+        <div class="dice-text"><b>Can't decide?</b><span id="cubePicked" class="small">Tap the dice for a random topic</span></div>
+        <button type="button" id="diceSoundBtn" class="dice-sound" aria-label="Dice sound on" title="Dice sound on/off">🔊</button>
       </div>
       <div id="discOut"></div>
     </section>
@@ -402,7 +412,7 @@
       <p class="small">Ask us anything about Speakeasy Academy. We'll reply by email.</p>
       <input id="enqName" placeholder="Your name" maxlength="80" autocomplete="name" required>
       <input id="enqEmail" type="email" placeholder="Your email" maxlength="120" autocomplete="email" required>
-      <input id="enqPhone" type="tel" placeholder="Phone (optional)" maxlength="25" autocomplete="tel">
+      <input id="enqPhone" type="tel" placeholder="Phone (optional, e.g. +91 98765 43210)" maxlength="25" autocomplete="tel">
       <textarea id="enqMessage" rows="4" placeholder="Your question or message" maxlength="2000" required></textarea>
       <input id="enqWebsite" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" placeholder="Leave this empty">
       <p id="enqMsg" class="small" role="status"></p>

@@ -1101,10 +1101,38 @@ const shLoad = () => readJson(SH_FILE, { nextId: 1, posts: [], items: {} });
 const shView = (p, viewerId) => ({
   id: p.id, name: p.name, text: p.text, type: p.type || p.mood || "Life", lang: p.lang, at: p.at, mine: p.studentId === viewerId,
   wah: (p.wah || []).length, heart: (p.heart || []).length, iWah: (p.wah || []).includes(viewerId), iHeart: (p.heart || []).includes(viewerId),
+  en_tr: p.en_tr || null, hi_tr: p.hi_tr || null,
 });
 
 // The couplets, quotes and notes are the same for everyone, so no sign-in is needed to read them.
 app.get("/api/shayari", (_req, res) => res.json(shayariBank));
+
+// AI-generated "shayari of the day" — regenerated once per calendar day, cached in SH_FILE.
+app.get("/api/shayari/daily", wrap(async (_req, res) => {
+  const today = new Date().toISOString().slice(0, 10);
+  const data = shLoad();
+  if (data.daily?.date === today && data.daily?.hi) return res.json(data.daily);
+
+  const types = shayariBank.types?.length ? shayariBank.types : ["Love", "Life", "Nature", "Friendship", "Courage", "Wisdom"];
+  const type = types[Math.floor(Date.now() / 86400000) % types.length];
+  try {
+    const aiRaw = await askAI(
+      "You are a master of Urdu-Hindi poetry (shayari). You write evocative, moving couplets.",
+      [{ role: "user", content: `Write a beautiful 2-line Hindi/Urdu shayari on the theme "${type}".\nReturn ONLY a JSON object — no markdown:\n{"hi":"<Devanagari lines, newline between them>","roman":"<romanized, newline between>","en":"<English meaning, 1-2 poetic sentences>","type":"${type}"}` }],
+      220
+    );
+    const r = parseJson(aiRaw);
+    if (!r?.hi || !r?.en) throw new Error("bad ai response");
+    const daily = { date: today, hi: String(r.hi).slice(0, 400), roman: String(r.roman || "").slice(0, 400), en: String(r.en).slice(0, 400), type: r.type || type };
+    data.daily = daily;
+    writeJson(SH_FILE, data);
+    return res.json(daily);
+  } catch {
+    const items = shayariBank.sher;
+    const fb = items[Math.floor(Date.now() / 86400000) % items.length];
+    res.json({ date: today, hi: fb.hi, roman: fb.roman, en: fb.en, type: fb.type, static: true });
+  }
+}));
 
 // Reactions on the built-in couplets and quotes: { s1: { wah, heart, iWah, iHeart }, q3: ... }
 app.get("/api/shayari/reactions", requireStudent, (req, res) => {
@@ -1139,24 +1167,45 @@ app.get("/api/shayari/posts", requireStudent, (req, res) => {
   res.json(posts.slice(-100).reverse().map((p) => shView(p, req.student.id)));
 });
 
-app.post("/api/shayari/posts", requireStudent, (req, res) => {
+app.post("/api/shayari/posts", requireStudent, wrap(async (req, res) => {
   if (req.student.chatMuted) return res.status(403).json({ error: "You have been muted by the admin and cannot post." });
   const text = String(req.body.text || "").replace(/\r/g, "").replace(/\n{3,}/g, "\n\n").trim().slice(0, 400);
   if (text.length < 8) return res.status(400).json({ error: "Write at least a line of shayari first." });
   if (/(https?:\/\/|www\.)/i.test(text)) return res.status(400).json({ error: "Links are not allowed." });
   if (Date.now() - (shLastPost.get(req.student.id) || 0) < 15000) return res.status(429).json({ error: "Please wait a few seconds before posting again." });
   shLastPost.set(req.student.id, Date.now());
+
+  const lang = SH_LANGS.includes(req.body.lang) ? req.body.lang : "Roman";
+
+  // Auto-translate to English + Hindi (max 6 s; skip if AI unavailable)
+  let en_tr = "", hi_tr = "";
+  try {
+    const trRaw = await Promise.race([
+      askAI(
+        "You are a bilingual poetic translator (English and Hindi). Translate faithfully but keep the poetic feeling.",
+        [{ role: "user", content: `Translate this shayari/poem into BOTH English and Hindi (Devanagari script).\nLanguage it was written in: ${lang}\nText:\n${text}\n\nReturn ONLY JSON (no markdown): {"en":"English poetic translation","hi":"Hindi Devanagari translation"}` }],
+        200
+      ),
+      new Promise((r) => setTimeout(() => r(""), 6000)),
+    ]);
+    if (trRaw) {
+      const tr = parseJson(trRaw);
+      if (tr?.en) en_tr = String(tr.en).slice(0, 400);
+      if (tr?.hi) hi_tr = String(tr.hi).slice(0, 400);
+    }
+  } catch { /* translation failed — post anyway */ }
+
   const data = shLoad();
   const post = {
     id: data.nextId++, studentId: req.student.id, name: req.student.name, text,
     type: SH_TYPES.includes(req.body.type) ? req.body.type : "Life",
-    lang: SH_LANGS.includes(req.body.lang) ? req.body.lang : "Roman",
-    at: new Date().toISOString(),
+    lang, at: new Date().toISOString(),
+    en_tr, hi_tr,
   };
   data.posts = [...data.posts, post].slice(-SH_MAX);
   writeJson(SH_FILE, data);
   res.json(shView(post, req.student.id));
-});
+}));
 
 // "Wah wah!" or a heart; sending the same one again takes it back. (:pid, because requireStudent reads :id as a student id.)
 app.post("/api/shayari/posts/:pid/react", requireStudent, (req, res) => {

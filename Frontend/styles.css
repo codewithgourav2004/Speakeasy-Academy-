@@ -1049,6 +1049,15 @@ button.mini.on { background:var(--brand-soft) !important; color:var(--brand) !im
 .quote-hi { margin-top:8px; font-size:1.02rem; line-height:1.7; color:var(--muted); }
 .sher-react { display:flex; gap:8px; margin-top:12px; padding-top:10px; border-top:1px dashed var(--line); }
 .sher-react .mini, .sh-post-foot .mini { padding:5px 12px; font-size:.82rem; }
+/* ---- Shayari: translation block & AI daily card ---- */
+.sh-tr-block { margin:10px 0 4px; border-top:1px dashed var(--line); padding-top:10px; display:flex; flex-direction:column; gap:6px; }
+.sh-tr-row { display:grid; grid-template-columns:90px 1fr; gap:8px; align-items:baseline; }
+.sh-tr-lang { font-size:.72rem; font-weight:700; color:var(--muted); white-space:nowrap; }
+.sh-tr-text { font-size:.88rem; line-height:1.6; color:var(--ink); }
+.sh-ai-badge { font-size:.72rem; color:var(--brand); font-weight:600; opacity:.8; }
+.sh-daily-ai { border:2px solid color-mix(in srgb,var(--brand) 25%,var(--line)); background:color-mix(in srgb,var(--brand) 4%,var(--card)); }
+.sh-daily-ai .sher-foot { justify-content:flex-end; gap:10px; }
+
 /* ---- Search Analytics admin panel ---- */
 .sa-trend { display:flex; align-items:flex-end; gap:4px; padding:8px 0 0; overflow-x:auto; }
 .sa-bar-col { display:flex; flex-direction:column; align-items:center; gap:2px; min-width:36px; flex:1; }

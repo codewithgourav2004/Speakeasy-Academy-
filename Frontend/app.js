@@ -2310,9 +2310,10 @@ document.getElementById("shayari").addEventListener("click", async (e) => {
     const key = rx.dataset.key, kind = rx.dataset.shrx;
     try {
       if (rx.closest("[data-pid]")) { // a post on the wall
+        const foot = rx.closest(".sh-post-foot");
         const p = await api(`/api/shayari/posts/${key}/react`, { studentId: student.id, kind });
-        rx.closest(".sh-post-foot").querySelectorAll("[data-shrx]").forEach((b) => b.remove());
-        rx.closest(".sh-post-foot").insertAdjacentHTML("afterbegin", shRxPair(key, p));
+        foot.querySelectorAll("[data-shrx]").forEach((b) => b.remove());
+        foot.insertAdjacentHTML("afterbegin", shRxPair(key, p));
       } else {
         shRefreshRx(key, await api(`/api/shayari/items/${key}/react`, { studentId: student.id, kind }));
       }
@@ -2378,6 +2379,10 @@ async function loadShWall() {
     box.innerHTML = posts.length ? posts.map((p) => `<article class="card sh-post" data-pid="${p.id}">
         <div class="sh-post-head"><b>${esc(p.name)}</b><span class="small">${shTimeAgo(p.at)}</span><span class="pill">${esc(shTypeLabel(p.type))}</span><span class="pill">${esc(p.lang)}</span></div>
         <div class="sh-post-text">${shLines(p.text)}</div>
+        ${(p.en_tr || p.hi_tr) ? `<div class="sh-tr-block">
+          ${p.en_tr ? `<div class="sh-tr-row"><span class="sh-tr-lang">🇬🇧 English</span><span class="sh-tr-text">${esc(p.en_tr)}</span></div>` : ""}
+          ${p.hi_tr ? `<div class="sh-tr-row"><span class="sh-tr-lang">🇮🇳 Hindi</span><span class="sh-tr-text" lang="hi">${esc(p.hi_tr)}</span></div>` : ""}
+        </div>` : ""}
         <div class="sh-post-foot">${shRxPair(p.id, p)}${p.mine ? '<button class="ghost mini danger" data-shdel title="Delete">🗑</button>' : ""}</div>
       </article>`).join("")
       : `<p class="small sh-empty">${shFilter === "mine" ? "You haven't posted yet. Write your first shayari above!" : "No shayari here yet. Be the first to share one!"}</p>`;
@@ -2387,16 +2392,16 @@ $("#shText").addEventListener("input", () => { $("#shCount").textContent = `${$(
 $("#shPost").onclick = async () => {
   if (!student) return showWelcome();
   const btn = $("#shPost");
-  btn.disabled = true;
+  btn.disabled = true; btn.textContent = "✦ Translating…";
   try {
     await api("/api/shayari/posts", { studentId: student.id, text: $("#shText").value, type: shPickType, lang: $("#shLang").value });
     $("#shText").value = ""; $("#shCount").textContent = "0 / 400"; $("#shErr").textContent = "";
-    toast("Shayari posted. Wah wah!");
+    toast("Shayari posted. Wah wah! 🎉");
     shFilter = "all"; shWallType = "all";
     document.querySelectorAll("#shFilter button").forEach((b) => b.classList.toggle("on", b.dataset.shf === "all"));
     renderShWallTypes(); loadShWall();
   } catch (e) { $("#shErr").textContent = e.message; }
-  btn.disabled = false;
+  btn.disabled = false; btn.textContent = "Post shayari";
 };
 
 async function shStart() {
@@ -2406,6 +2411,21 @@ async function shStart() {
   if (student) { try { shRx = await api(`/api/shayari/reactions?studentId=${student.id}`); } catch { shRx = {}; } }
   renderShLearn();
   shShowMode();
+  // Load AI daily shayari in background, update the "of the day" card when ready
+  fetch("/api/shayari/daily").then(r => r.ok ? r.json() : null).then(d => {
+    if (!d) return;
+    const box = $("#shDay");
+    if (!box) return;
+    box.innerHTML = `<div class="sh-day-label">✨ AI Shayari of the day</div>
+      <article class="card sher sh-daily-ai">
+        <div class="sher-hi" lang="hi">${shLines(d.hi)}</div>
+        ${d.roman ? `<div class="sher-roman">${shLines(d.roman)}</div>` : ""}
+        <div class="sh-tr-block">
+          <div class="sh-tr-row"><span class="sh-tr-lang">🇬🇧 English</span><span class="sh-tr-text">${esc(d.en)}</span></div>
+        </div>
+        <div class="sher-foot"><span class="pill">${esc(d.type)}</span><span class="sh-ai-badge">✦ AI generated</span></div>
+      </article>`;
+  }).catch(() => {});
 }
 document.querySelector('nav button[data-tab="shayari"]').addEventListener("click", shStart);
 

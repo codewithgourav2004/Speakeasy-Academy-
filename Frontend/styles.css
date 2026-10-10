@@ -843,3 +843,22 @@ button.mini { padding:2px 9px; min-height:0 !important; font-size:.72rem; border
   body[data-fill="1"] .coach-head .switch-label, body[data-fill="1"] .coach-head .btn-label { display:none; }
   body[data-fill="1"] .coach-head #clearChat { padding:6px 10px; min-height:0; }
 }
+
+/* ChatGPT-style: in a chat section the page is locked to the screen; header on top, input at the bottom, footer gone */
+@media (max-width:760px) {
+  html:has(body[data-fill="1"]) { overflow:hidden; height:100%; overscroll-behavior:none; }
+  body[data-fill="1"] { position:fixed; inset:0; width:100%; height:var(--vh,100dvh); display:flex; flex-direction:column; overflow:hidden; box-sizing:border-box; padding-bottom:var(--navh); }
+  body[data-fill="1"] header { position:relative; flex:none; }
+  body[data-fill="1"] main { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; padding:6px 10px 0; }
+  body[data-fill="1"] .site-footer { display:none; }
+  body[data-fill="1"] #speak.active,
+  body[data-fill="1"] #groupchat.active,
+  body[data-fill="1"] #interview.active #ivRun:not([hidden]) { flex:1 1 auto; height:auto; min-height:0; }
+  body[data-fill="1"] #interview.active { flex:1 1 auto; display:flex; flex-direction:column; min-height:0; }
+  body.nav-hidden[data-fill="1"] { padding-bottom:calc(28px + env(safe-area-inset-bottom)); }
+}
+@media (max-width:760px) {
+  body[data-fill="1"] main { width:100%; max-width:none; margin:0; box-sizing:border-box; }
+  body[data-fill="1"] main > .tab { width:100%; min-width:0; box-sizing:border-box; }
+  body[data-fill="1"] #interview.active #ivRun { width:100%; min-width:0; }
+}

@@ -44,7 +44,7 @@
       </div>
       <p class="small">Enter your name to start. Your chats and test scores are saved under it, so use the same name next time to continue.</p>
       <input id="nameInput" placeholder="Your name" maxlength="40" autocomplete="name" required>
-      <input id="ageInput" type="number" min="3" max="100" placeholder="Your age" required>
+      <input id="ageInput" type="number" min="10" max="100" placeholder="Your age (10+)" required>
       <select id="levelInput" aria-label="Your level">
         <option value="beginner">Beginner</option>
         <option value="intermediate" selected>Intermediate</option>
@@ -178,10 +178,33 @@
       </div>
       <div id="discGenRow" class="gen-row" hidden>
         <input id="discTopicInput" placeholder="Enter your topic, e.g. climate change, team work, AI in education…" maxlength="100" autocomplete="off">
-        <button id="discGenBtn">Generate presentation →</button>
+        <select id="discWordLimit" title="Word limit for your presentation">
+          <option value="">Auto (by time)</option>
+          <option value="50">~50 words</option>
+          <option value="100">~100 words</option>
+          <option value="150">~150 words</option>
+          <option value="200">~200 words</option>
+          <option value="300">~300 words</option>
+          <option value="500">~500 words</option>
+        </select>
+        <button id="discGenBtn">Generate →</button>
       </div>
       <div id="discGenOut"></div>
       <div class="starters" id="discCats"></div>
+      <div id="topicCubeWrap" class="cube-wrap" hidden>
+        <p class="cube-hint">✨ Spin for a random topic</p>
+        <div class="cube-scene" id="cubeScene">
+          <div class="topic-cube" id="topicCube">
+            <div class="cube-face face-front"></div>
+            <div class="cube-face face-back"></div>
+            <div class="cube-face face-right"></div>
+            <div class="cube-face face-left"></div>
+            <div class="cube-face face-top"></div>
+            <div class="cube-face face-bottom"></div>
+          </div>
+        </div>
+        <p class="cube-hint">Tap to spin</p>
+      </div>
       <div id="discOut"></div>
     </section>
     <section id="interview" class="tab">

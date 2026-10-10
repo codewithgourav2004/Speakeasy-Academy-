@@ -787,7 +787,9 @@ function renderDiscuss() {
   const all = discMode === "gd" ? disc.gd : disc.presentation;
   const cats = ["All", ...new Set(all.map((t) => t.category))];
   if (!cats.includes(discCat)) discCat = "All";
-  $("#discCats").innerHTML = cats.map((c) => `<button class="chipbtn ${c === discCat ? "on" : ""}" data-cat="${esc(c)}">${esc(c)}</button>`).join("") + '<button class="chipbtn random" data-random="1">🎲 Random topic</button>';
+  $("#discCats").innerHTML = cats.map((c) => `<button class="chipbtn ${c === discCat ? "on" : ""}" data-cat="${esc(c)}">${esc(c)}</button>`).join("");
+  const cubeWrap = $("#topicCubeWrap");
+  if (cubeWrap) { cubeWrap.hidden = false; refreshCubeFaces(); }
   const phrases = disc.phrases[discMode === "gd" ? "gd" : "presentation"];
   const phraseBox = `<details class="card phrases"><summary><b>💡 Useful phrases</b></summary>${Object.entries(phrases).map(([k, v]) => `<div class="g-section"><span class="g-label">${esc(k)}</span>${list(v)}</div>`).join("")}</details>`;
   const cards = discItems().map((t) => discMode === "gd" ? `
@@ -834,22 +836,67 @@ $("#discOut").onclick = (e) => {
 };
 document.querySelector('nav button[data-tab="discuss"]').addEventListener("click", loadDiscuss);
 
+// ---- Rotating topic cube ----
+let cubeRotY = 0;
+
+function refreshCubeFaces() {
+  const cube = document.getElementById("topicCube");
+  if (!cube) return;
+  const items = discItems();
+  if (!items.length) return;
+  cube.querySelectorAll(".cube-face").forEach((f) => {
+    const t = items[Math.floor(Math.random() * items.length)];
+    f.dataset.idx = t.idx;
+    f.textContent = discMode === "gd" ? t.topic : t.title;
+  });
+}
+
+function spinCube() {
+  const cube = document.getElementById("topicCube");
+  if (!cube || cube.dataset.spinning === "1") return;
+  const items = discItems();
+  if (!items.length) return;
+  const picked = items[Math.floor(Math.random() * items.length)];
+  const front = cube.querySelector(".face-front");
+  front.dataset.idx = picked.idx;
+  front.textContent = discMode === "gd" ? picked.topic : picked.title;
+  cube.dataset.spinning = "1";
+  cubeRotY += (2 + Math.floor(Math.random() * 3)) * 360;
+  cube.style.transform = `rotateY(${cubeRotY}deg)`;
+  setTimeout(() => {
+    cube.dataset.spinning = "0";
+    refreshCubeFaces();
+    document.querySelectorAll("#discOut details.topic").forEach((d) => { d.open = false; d.classList.remove("cube-picked"); });
+    const el = document.getElementById(`topic-${picked.idx}`);
+    if (el) {
+      el.open = true;
+      el.classList.add("cube-picked");
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(() => el.classList.remove("cube-picked"), 3000);
+    }
+  }, 1250);
+}
+document.getElementById("cubeScene")?.addEventListener("click", spinCube);
+
 async function generatePresentation() {
   const topic = $("#discTopicInput").value.trim();
   if (!topic) { $("#discTopicInput").focus(); return; }
   if (!student) { toast("Please sign in first."); return; }
+  const wordLimit = Number($("#discWordLimit").value) || 0;
   const out = $("#discGenOut");
   out.innerHTML = '<p class="small">Generating…</p>';
   $("#discGenBtn").disabled = true;
   try {
-    const p = await api("/api/presentation/generate", { topic, studentId: student.id });
+    const p = await api("/api/presentation/generate", { topic, studentId: student.id, wordLimit: wordLimit || undefined });
     const vocabHtml = Array.isArray(p.keyVocab) ? p.keyVocab.map((w) => `<span class="pill">${esc(w)}</span>`).join(" ") : "";
     const struct = p.structure || {};
-    const practiseMsg = `I want to practise a ${p.minutes || 3}-minute presentation on "${esc(p.title || topic)}". Please ask me to give my opening, then give feedback on my grammar and structure.`;
+    const limitLabel = p.wordLimit ? `~${p.wordLimit} words` : `⏱ ${esc(String(p.minutes || 3))} min`;
+    const limitHint = p.wordLimit ? ` in approximately ${p.wordLimit} words` : ` in a ${p.minutes || 3}-minute presentation`;
+    const practiseMsg = `I want to practise a presentation on "${esc(p.title || topic)}"${limitHint}. Please ask me to give my opening, then give feedback on my grammar and structure.${p.wordLimit ? ` My target is around ${p.wordLimit} words total.` : ""}`;
     out.innerHTML = `<details class="card topic" open>
       <summary>
         <span class="ttitle">${esc(p.title || topic)}</span>
-        <span class="meta"><span class="pill">Custom</span><span class="pill">⏱ ${esc(String(p.minutes || 3))} min</span></span>
+        <span class="meta"><span class="pill">Custom</span><span class="pill">${limitLabel}</span></span>
       </summary>
       <div class="g-section"><span class="g-label">Opening line</span><p class="opener">"${esc(p.opener || "")}"</p></div>
       <div class="g-section"><span class="g-label">Ideas to cover</span>${list(Array.isArray(p.ideas) ? p.ideas : [])}</div>

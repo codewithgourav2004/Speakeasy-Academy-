@@ -149,16 +149,33 @@ const allowLocked = (req, _res, next) => { req.allowLocked = true; next(); };
 // What a student may see about themselves: never the admin's private notes or block details.
 const publicStudent = ({ adminNotes, blocked, blockReason, extra, dailyLimitMin, lastPing, ...rest }) => rest;
 
+const DISPOSABLE_DOMAINS = new Set([
+  "mailinator.com","guerrillamail.com","guerrillamail.info","guerrillamail.net","guerrillamail.org","guerrillamail.de","guerrillamailblock.com",
+  "tempmail.com","temp-mail.org","temp-mail.io","trashmail.com","trashmail.me","trashmail.net","trashmail.org","trashmail.io","trashmail.de","trashmail.at",
+  "yopmail.com","yopmail.fr","sharklasers.com","maildrop.cc","throwaway.email","discard.email","tempr.email","spam4.me","grr.la",
+  "mailnesia.com","fakeinbox.com","fakeinbox.net","getnada.com","nada.email","dispostable.com","mohmal.com","mailexpire.com",
+  "spamgourmet.com","spamgourmet.net","spamgourmet.org","filzmail.com","0-mail.com","bigstring.com","mytemp.email",
+  "mailnull.com","mail-temp.com","throwam.com","spamfree24.org","mailmetrash.com","mailin8r.com","mailinator2.com",
+]);
+const newAccountTimes = new Map(); // ip → timestamps of new account creations (spam guard)
+const EMAIL_RE_LOGIN = /^[^\s@<>"',;:]+@[^\s@<>"',;:]+\.[^\s@<>"',;:]{2,}$/;
+
 app.post("/api/login", (req, res) => {
   const name = String(req.body.name || "").trim().slice(0, 40);
   const id = slug(name);
   if (!id) return res.status(400).json({ error: "Please enter your name (letters or numbers)." });
+  if ((name.match(/[a-zA-Z]/g) || []).length < 2) return res.status(400).json({ error: "Please enter your real name (at least 2 letters)." });
   const age = Number.parseInt(req.body.age, 10);
-  if (!Number.isInteger(age) || age < 3 || age > 100) return res.status(400).json({ error: "Please enter a valid age (3-100)." });
+  if (!Number.isInteger(age) || age < 10 || age > 100) return res.status(400).json({ error: "You must be at least 10 years old to use this app." });
   const students = readJson(STUDENTS_FILE, {});
   if (students[id]?.blocked) { const a = accessState(students[id]); return res.status(403).json({ error: a.message, code: "blocked", access: publicAccess(a) }); }
   const now = new Date().toISOString();
   const isNew = !students[id];
+  if (isNew) {
+    const ipNew = (newAccountTimes.get(req.ip) || []).filter(t => Date.now() - t < 3600e3);
+    if (ipNew.length >= 3) return res.status(429).json({ error: "Too many new accounts created from this connection. Please wait before trying again." });
+    newAccountTimes.set(req.ip, [...ipNew, Date.now()]);
+  }
   students[id] ??= { id, name, level: "intermediate", created: now };
   students[id].age = age;
   students[id].visits = (students[id].visits || 0) + 1;
@@ -167,6 +184,9 @@ app.post("/api/login", (req, res) => {
   const email = String(req.body.email || "").trim().toLowerCase().slice(0, 100);
   const city = String(req.body.city || "").trim().slice(0, 40);
   if (email) {
+    if (!EMAIL_RE_LOGIN.test(email)) return res.status(400).json({ error: "Please enter a valid email address." });
+    const emailDomain = email.split("@")[1];
+    if (emailDomain && DISPOSABLE_DOMAINS.has(emailDomain)) return res.status(400).json({ error: "Temporary or disposable email addresses are not allowed. Please use your real email." });
     const dup = Object.values(students).find(s => s.id !== id && s.email === email);
     if (dup) return res.status(409).json({ error: "That email is already linked to another account. Please use your original name to sign in." });
   }
@@ -895,8 +915,12 @@ Rules:
 app.post("/api/presentation/generate", requireStudent, wrap(async (req, res) => {
   const topic = String(req.body.topic || "").trim().slice(0, 100);
   if (!topic) return res.status(400).json({ error: "topic required" });
-  const result = parseJson(await askAI(PRESENTATION_GEN_SYSTEM, [{ role: "user", content: topic }], 900));
-  res.json(result);
+  const wordLimit = [50, 100, 150, 200, 300, 500].includes(Number(req.body.wordLimit)) ? Number(req.body.wordLimit) : 0;
+  const userContent = wordLimit
+    ? `Topic: ${topic}\nWord limit: approximately ${wordLimit} words total (set "minutes" accordingly at ~130 words per minute)`
+    : topic;
+  const result = parseJson(await askAI(PRESENTATION_GEN_SYSTEM, [{ role: "user", content: userContent }], 900));
+  res.json({ ...result, wordLimit: wordLimit || null });
 }));
 
 // ---- Daily usage: what each student did on each day (one small file per day) ----

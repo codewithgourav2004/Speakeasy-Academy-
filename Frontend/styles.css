@@ -1174,3 +1174,5 @@ body.kbd #gcSwitch { display:none; }
   .gc-switch { display:flex; width:100%; margin-bottom:8px; }
   .gc-switch button { flex:1; padding:8px 10px; }
 }
+
+#announcementBanner[hidden] { display:none !important; }

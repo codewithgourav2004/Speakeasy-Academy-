@@ -102,14 +102,22 @@
 
   <main>
     <section id="speak" class="tab active">
+      <!-- Desktop-only decorative card: avatar + title + description -->
       <div class="coach-head">
         <div class="coach-avatar" aria-hidden="true">🎓</div>
         <div class="coach-info">
           <h2>Speak with your coach</h2>
           <p class="small"><span class="live-dot"></span>Online · I'll fix your grammar as we talk</p>
-          <div class="coach-pills"><span class="pill" id="coachLevel"></span><span class="pill" id="fixCount">✏️ 0 corrections</span><span class="pill" id="timeLeftPill" hidden></span></div>
         </div>
-        <div class="coach-tools toolbar">
+      </div>
+      <!-- Controls bar: joins coach-head on desktop, becomes slim topbar on mobile -->
+      <div class="sp-topbar">
+        <div class="coach-pills">
+          <span class="pill" id="coachLevel"></span>
+          <span class="pill" id="fixCount">✏️ 0 corrections</span>
+          <span class="pill" id="timeLeftPill" hidden></span>
+        </div>
+        <div class="coach-tools">
           <label class="switch" title="Read the coach's replies aloud"><input type="checkbox" id="ttsToggle" checked><span class="slider"></span><span class="switch-label">Voice replies</span></label>
           <button id="clearChat" class="ghost" title="Delete all chat messages and start fresh">🗑️ <span class="btn-label">Clear chat</span></button>
         </div>

@@ -300,7 +300,17 @@ app.get("/api/admin/summary", requireAdmin, (_req, res) => {
   const wordCounts = {};
   for (const s of searches) wordCounts[s.word] = (wordCounts[s.word] || 0) + 1;
   const topWords = Object.entries(wordCounts).sort((a, b) => b[1] - a[1]).slice(0, 15).map(([word, count]) => ({ word, count }));
-  const recentSearches = searches.slice(-50).reverse().map(({ name, word, at }) => ({ name, word, at }));
+  const recentSearches = searches.slice(-100).reverse().map(({ name, word, at }) => ({ name, word, at }));
+
+  const searchDayCounts = {};
+  for (const s of searches) { const d = s.at.slice(0, 10); searchDayCounts[d] = (searchDayCounts[d] || 0) + 1; }
+  const searchTrend = Array.from({ length: 14 }, (_, i) => {
+    const dt = new Date(); dt.setDate(dt.getDate() - (13 - i));
+    const d = dt.toISOString().slice(0, 10);
+    return { day: d, count: searchDayCounts[d] || 0 };
+  });
+  const uniqueSearchWords = Object.keys(wordCounts).length;
+  const totalSearchers = new Set(searches.map((s) => s.studentId)).size;
 
   res.json({
     storage: storeInfo(),
@@ -323,6 +333,9 @@ app.get("/api/admin/summary", requireAdmin, (_req, res) => {
     byLevel: LEVELS.map((l) => ({ level: l, count: students.filter((s) => s.level === l).length })),
     topWords,
     recentSearches,
+    searchTrend,
+    uniqueSearchWords,
+    totalSearchers,
     users,
   });
 });
@@ -1072,6 +1085,111 @@ app.post("/api/admin/settings", requireAdmin, (req, res) => {
   if (!Number.isFinite(n) || n < 0 || n > 1440) return res.status(400).json({ error: "The default limit must be between 0 and 1440 minutes (0 means no limit)." });
   writeJson(SETTINGS_FILE, { ...getSettings(), defaultDailyLimitMin: n });
   res.json(getSettings());
+});
+
+// ---- Shayari: learn couplets and English quotes, and share your own ----
+// Content (poets, couplets, quotes) is a file in the repository. What students write lives in shayari_wall.json.
+const shayariBank = JSON.parse(fs.readFileSync(path.join(__dirname, "data", "shayari.json"), "utf8"));
+const SH_FILE = path.join(DATA_DIR, "shayari_wall.json");
+const SH_TYPES = shayariBank.types;
+const SH_LANGS = ["Hindi", "Urdu", "Roman", "English"];
+const SH_KINDS = ["wah", "heart"];
+const SH_MAX = 500;
+const SH_ITEM_KEYS = new Set([...shayariBank.sher.map((s) => "s" + s.id), ...shayariBank.quotes.map((q) => "q" + q.id)]);
+const shLastPost = new Map();
+const shLoad = () => readJson(SH_FILE, { nextId: 1, posts: [], items: {} });
+const shView = (p, viewerId) => ({
+  id: p.id, name: p.name, text: p.text, type: p.type || p.mood || "Life", lang: p.lang, at: p.at, mine: p.studentId === viewerId,
+  wah: (p.wah || []).length, heart: (p.heart || []).length, iWah: (p.wah || []).includes(viewerId), iHeart: (p.heart || []).includes(viewerId),
+});
+
+// The couplets, quotes and notes are the same for everyone, so no sign-in is needed to read them.
+app.get("/api/shayari", (_req, res) => res.json(shayariBank));
+
+// Reactions on the built-in couplets and quotes: { s1: { wah, heart, iWah, iHeart }, q3: ... }
+app.get("/api/shayari/reactions", requireStudent, (req, res) => {
+  const items = shLoad().items || {};
+  const out = {};
+  for (const [key, r] of Object.entries(items)) {
+    const wah = r.wah || [], heart = r.heart || [];
+    if (wah.length || heart.length) out[key] = { wah: wah.length, heart: heart.length, iWah: wah.includes(req.student.id), iHeart: heart.includes(req.student.id) };
+  }
+  res.json(out);
+});
+app.post("/api/shayari/items/:key/react", requireStudent, (req, res) => {
+  const key = req.params.key, kind = String(req.body.kind || "");
+  if (!SH_ITEM_KEYS.has(key)) return res.status(404).json({ error: "Unknown shayari." });
+  if (!SH_KINDS.includes(kind)) return res.status(400).json({ error: "That reaction is not available." });
+  const data = shLoad();
+  data.items ??= {};
+  const r = (data.items[key] ??= {});
+  const who = (r[kind] ??= []);
+  const i = who.indexOf(req.student.id);
+  if (i >= 0) who.splice(i, 1); else who.push(req.student.id);
+  writeJson(SH_FILE, data);
+  const wah = r.wah || [], heart = r.heart || [];
+  res.json({ wah: wah.length, heart: heart.length, iWah: wah.includes(req.student.id), iHeart: heart.includes(req.student.id) });
+});
+
+// The community wall. ?mine=1 shows only your own; ?type=Love shows one type.
+app.get("/api/shayari/posts", requireStudent, (req, res) => {
+  let posts = shLoad().posts;
+  if (req.query.mine === "1") posts = posts.filter((p) => p.studentId === req.student.id);
+  if (SH_TYPES.includes(req.query.type)) posts = posts.filter((p) => (p.type || p.mood) === req.query.type);
+  res.json(posts.slice(-100).reverse().map((p) => shView(p, req.student.id)));
+});
+
+app.post("/api/shayari/posts", requireStudent, (req, res) => {
+  if (req.student.chatMuted) return res.status(403).json({ error: "You have been muted by the admin and cannot post." });
+  const text = String(req.body.text || "").replace(/\r/g, "").replace(/\n{3,}/g, "\n\n").trim().slice(0, 400);
+  if (text.length < 8) return res.status(400).json({ error: "Write at least a line of shayari first." });
+  if (/(https?:\/\/|www\.)/i.test(text)) return res.status(400).json({ error: "Links are not allowed." });
+  if (Date.now() - (shLastPost.get(req.student.id) || 0) < 15000) return res.status(429).json({ error: "Please wait a few seconds before posting again." });
+  shLastPost.set(req.student.id, Date.now());
+  const data = shLoad();
+  const post = {
+    id: data.nextId++, studentId: req.student.id, name: req.student.name, text,
+    type: SH_TYPES.includes(req.body.type) ? req.body.type : "Life",
+    lang: SH_LANGS.includes(req.body.lang) ? req.body.lang : "Roman",
+    at: new Date().toISOString(),
+  };
+  data.posts = [...data.posts, post].slice(-SH_MAX);
+  writeJson(SH_FILE, data);
+  res.json(shView(post, req.student.id));
+});
+
+// "Wah wah!" or a heart; sending the same one again takes it back. (:pid, because requireStudent reads :id as a student id.)
+app.post("/api/shayari/posts/:pid/react", requireStudent, (req, res) => {
+  const kind = String(req.body.kind || "");
+  if (!SH_KINDS.includes(kind)) return res.status(400).json({ error: "That reaction is not available." });
+  const data = shLoad();
+  const post = data.posts.find((p) => p.id === parseInt(req.params.pid, 10));
+  if (!post) return res.status(404).json({ error: "That shayari no longer exists." });
+  const who = (post[kind] ??= []);
+  const i = who.indexOf(req.student.id);
+  if (i >= 0) who.splice(i, 1); else who.push(req.student.id);
+  writeJson(SH_FILE, data);
+  res.json(shView(post, req.student.id));
+});
+
+app.delete("/api/shayari/posts/:pid", requireStudent, (req, res) => {
+  const data = shLoad();
+  const post = data.posts.find((p) => p.id === parseInt(req.params.pid, 10));
+  if (!post) return res.status(404).json({ error: "That shayari no longer exists." });
+  if (post.studentId !== req.student.id) return res.status(403).json({ error: "You can only delete your own shayari." });
+  data.posts = data.posts.filter((p) => p !== post);
+  writeJson(SH_FILE, data);
+  res.json({ ok: true });
+});
+
+app.get("/api/admin/shayari", requireAdmin, (_req, res) => {
+  res.json(shLoad().posts.slice(-100).reverse().map(({ id, name, text, type, mood, lang, at, wah = [], heart = [] }) => ({ id, name, text, type: type || mood || "Life", lang, at, wah: wah.length, heart: heart.length })));
+});
+app.delete("/api/admin/shayari/:pid", requireAdmin, (req, res) => {
+  const data = shLoad();
+  data.posts = data.posts.filter((p) => p.id !== parseInt(req.params.pid, 10));
+  writeJson(SH_FILE, data);
+  res.json({ ok: true });
 });
 
 // ---- Enquiries: a visitor asks a question; it is saved for the admin and emailed if SMTP is set up ----

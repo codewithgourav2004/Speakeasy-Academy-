@@ -1035,3 +1035,37 @@ button.mini.on { background:var(--brand-soft) !important; color:var(--brand) !im
   #shPost { flex:1 1 100%; padding:12px; }
   .sh-count { margin-left:0; }
 }
+
+/* ================= Shayari v2: types, English quotes, reactions ================= */
+.sh-kind { margin-bottom:10px !important; }
+.sh-chips { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; margin:4px -2px 12px; padding:2px; }
+.sh-chips::-webkit-scrollbar { display:none; }
+.sh-chips .chipbtn { flex:none; white-space:nowrap; }
+.sh-pick { flex-wrap:wrap; overflow:visible; margin:0; }
+.sh-pick .chipbtn { flex:0 1 auto; }
+.sh-label { font-size:.75rem; font-weight:600; color:var(--muted); margin-bottom:-4px; }
+.sh-note { margin:0 0 12px; padding:9px 12px; border-radius:12px; background:var(--brand-soft); line-height:1.5; }
+.quote-en { font-size:1.25rem; line-height:1.55; font-weight:600; font-family:Georgia,"Times New Roman",serif; color:var(--ink); }
+.quote-hi { margin-top:8px; font-size:1.02rem; line-height:1.7; color:var(--muted); }
+.sher-react { display:flex; gap:8px; margin-top:12px; padding-top:10px; border-top:1px dashed var(--line); }
+.sher-react .mini, .sh-post-foot .mini { padding:5px 12px; font-size:.82rem; }
+/* ---- Search Analytics admin panel ---- */
+.sa-trend { display:flex; align-items:flex-end; gap:4px; padding:8px 0 0; overflow-x:auto; }
+.sa-bar-col { display:flex; flex-direction:column; align-items:center; gap:2px; min-width:36px; flex:1; }
+.sa-bar { background:var(--brand); border-radius:4px 4px 0 0; width:100%; min-height:2px; transition:height .3s; }
+.sa-bar-lbl { font-size:.65rem; color:var(--muted); white-space:nowrap; }
+.sa-bar-num { font-size:.72rem; font-weight:700; color:var(--brand); }
+.sa-words { display:flex; flex-direction:column; gap:6px; }
+.sa-word-row { display:grid; grid-template-columns:28px 1fr 120px 40px; align-items:center; gap:8px; }
+.sa-rank { font-size:.75rem; color:var(--muted); text-align:right; }
+.sa-word { font-weight:600; font-size:.88rem; }
+.sa-word-bar { background:var(--bg); border-radius:99px; height:8px; overflow:hidden; }
+.sa-word-bar div { height:100%; background:var(--grad); border-radius:99px; transition:width .4s; }
+.sa-count { font-size:.82rem; font-weight:700; color:var(--brand); }
+@media (max-width:500px) { .sa-word-row { grid-template-columns:22px 1fr 60px 34px; } }
+
+@media (max-width:760px) {
+  .sh-chips { margin-left:-12px; margin-right:-12px; padding-left:12px; padding-right:12px; }
+  .sh-pick { margin:0; padding:0; }
+  .quote-en { font-size:1.12rem; }
+}

@@ -839,17 +839,46 @@ document.querySelector('nav button[data-tab="discuss"]').addEventListener("click
 // ---- Rotating topic cube ----
 let cubeRotY = 0;
 
-function refreshCubeFaces() {
-  const cube = document.getElementById("topicCube");
-  if (!cube) return;
-  const items = discItems();
-  if (!items.length) return;
-  cube.querySelectorAll(".cube-face").forEach((f) => {
-    const t = items[Math.floor(Math.random() * items.length)];
-    f.dataset.idx = t.idx;
-    f.textContent = discMode === "gd" ? t.topic : t.title;
+function refreshCubeFaces() {} // the dice faces are fixed pips now; kept so existing calls still work
+
+// Dice sound: made with the Web Audio API (no sound files). Clicks slow down like a real roll, then a soft chime.
+let diceAudio = null, diceSoundOn = (() => { try { return localStorage.getItem("diceSound") !== "off"; } catch { return true; } })();
+function diceCtx() {
+  try { diceAudio ||= new (window.AudioContext || window.webkitAudioContext)(); if (diceAudio.state === "suspended") diceAudio.resume(); return diceAudio; } catch { return null; }
+}
+function diceClick(ctx, when, vol) {
+  const o = ctx.createOscillator(), g = ctx.createGain(), f = ctx.createBiquadFilter();
+  o.type = "triangle"; o.frequency.setValueAtTime(700 + Math.random() * 900, when); o.frequency.exponentialRampToValueAtTime(180, when + 0.05);
+  f.type = "bandpass"; f.frequency.value = 1400; f.Q.value = 0.8;
+  g.gain.setValueAtTime(0.0001, when); g.gain.exponentialRampToValueAtTime(vol, when + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, when + 0.07);
+  o.connect(f).connect(g).connect(ctx.destination); o.start(when); o.stop(when + 0.09);
+}
+function playDiceRoll() {
+  if (!diceSoundOn) return;
+  const ctx = diceCtx(); if (!ctx) return;
+  const t0 = ctx.currentTime + 0.02, total = 1.15;
+  // ~18 clicks, gaps growing as the dice slows down
+  let t = 0, gap = 0.035;
+  while (t < total) { diceClick(ctx, t0 + t, 0.16 * (1 - t / (total * 1.4))); gap *= 1.12; t += gap; }
+}
+function playDiceDone() {
+  if (!diceSoundOn) return;
+  const ctx = diceCtx(); if (!ctx) return;
+  [660, 880].forEach((hz, i) => {
+    const o = ctx.createOscillator(), g = ctx.createGain(), w = ctx.currentTime + i * 0.11;
+    o.type = "sine"; o.frequency.value = hz;
+    g.gain.setValueAtTime(0.0001, w); g.gain.exponentialRampToValueAtTime(0.14, w + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, w + 0.35);
+    o.connect(g).connect(ctx.destination); o.start(w); o.stop(w + 0.4);
   });
 }
+function syncDiceSoundBtn() { const b = $("#diceSoundBtn"); if (b) { b.textContent = diceSoundOn ? "🔊" : "🔇"; b.setAttribute("aria-label", diceSoundOn ? "Dice sound on" : "Dice sound off"); } }
+document.getElementById("diceSoundBtn")?.addEventListener("click", () => {
+  diceSoundOn = !diceSoundOn;
+  try { localStorage.setItem("diceSound", diceSoundOn ? "on" : "off"); } catch {}
+  syncDiceSoundBtn();
+  if (diceSoundOn) playDiceDone();
+});
+syncDiceSoundBtn();
 
 function spinCube() {
   const cube = document.getElementById("topicCube");
@@ -857,21 +886,22 @@ function spinCube() {
   const items = discItems();
   if (!items.length) return;
   const picked = items[Math.floor(Math.random() * items.length)];
-  const front = cube.querySelector(".face-front");
-  front.dataset.idx = picked.idx;
-  front.textContent = discMode === "gd" ? picked.topic : picked.title;
+  const title = discMode === "gd" ? picked.topic : picked.title;
   cube.dataset.spinning = "1";
+  playDiceRoll();
+  $("#cubePicked").textContent = "Rolling…";
   cubeRotY += (2 + Math.floor(Math.random() * 3)) * 360;
-  cube.style.transform = `rotateY(${cubeRotY}deg)`;
+  cube.style.transform = `rotateX(${cubeRotY}deg) rotateY(${cubeRotY}deg)`;
   setTimeout(() => {
     cube.dataset.spinning = "0";
-    refreshCubeFaces();
+    playDiceDone();
+    $("#cubePicked").innerHTML = `🎯 <b>${esc(title)}</b>`;
     document.querySelectorAll("#discOut details.topic").forEach((d) => { d.open = false; d.classList.remove("cube-picked"); });
     const el = document.getElementById(`topic-${picked.idx}`);
     if (el) {
       el.open = true;
       el.classList.add("cube-picked");
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
       setTimeout(() => el.classList.remove("cube-picked"), 3000);
     }
   }, 1250);
@@ -1300,17 +1330,14 @@ async function loadAdmin() {
         ${d.byLevel.map((l) => `<span class="dict-syn">${esc(l.level)}: ${l.count}</span>`).join("")}
       </div>
       ${d.topWords?.length ? `
-      <div class="card"><h3>Top searched words</h3>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
-          ${d.topWords.map((w) => `<span class="dict-syn">${esc(w.word)} <b>${w.count}</b></span>`).join("")}
+      <div class="card search-peek">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <h3 style="margin:0">🔍 Top searched words</h3>
+          <button class="ghost" onclick="showAdmTab('searches')" style="font-size:.8rem">Full analytics →</button>
         </div>
-      </div>` : ""}
-      ${d.recentSearches?.length ? `
-      <div class="card"><h3>Recent dictionary searches</h3>
-        <div class="tablewrap"><table>
-          <tr><th>Student</th><th>Word</th><th>When</th></tr>
-          ${d.recentSearches.map((s) => `<tr><td>${esc(s.name)}</td><td><b>${esc(s.word)}</b></td><td>${new Date(s.at).toLocaleString()}</td></tr>`).join("")}
-        </table></div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${d.topWords.slice(0, 8).map((w) => `<span class="dict-syn">${esc(w.word)} <b>${w.count}</b></span>`).join("")}
+        </div>
       </div>` : ""}
       </div>
       <div class="adm-panel" data-p="students" hidden>
@@ -1321,6 +1348,75 @@ async function loadAdmin() {
           <tbody id="admUsersBody">${d.users.map((u) => `<tr><td title="${u.online ? "Online now" : "Offline"}"><span class="online-dot ${u.online ? "on" : ""}"></span></td><td><button class="link-btn" data-uid="${esc(u.id)}" data-uname="${esc(u.name)}">${esc(u.name)}</button>${u.adminNotes ? ` <span title="${esc(u.adminNotes)}" style="cursor:help">📝</span>` : ""}</td><td>${u.age ?? "—"}</td><td>${esc(u.level)}</td><td>${esc(u.city || "—")}</td><td>${u.phone ? `<a href="tel:${esc(u.phone)}">${esc(u.phone)}</a>` : "—"}</td><td>${u.email ? `<a href="mailto:${esc(u.email)}">${esc(u.email)}</a>` : "—"}</td><td>${fmtDur(u.timeSpent)}</td><td>${u.messages}</td><td>${u.tests}</td><td>${u.avgScore != null ? u.avgScore + "%" : "—"}</td><td>${u.trTests ?? 0}</td><td>${u.trAvgScore != null ? u.trAvgScore + "%" : "—"}</td><td>${u.grammarChecks ?? 0}</td><td>${u.searches ?? 0}</td><td>${u.visits}</td><td>${new Date(u.created).toLocaleDateString()}</td><td>${new Date(u.lastSeen).toLocaleString()}</td><td><button class="ghost mutebtn ${u.chatMuted ? "muted" : ""}" data-mute="${esc(u.id)}" data-muted="${u.chatMuted ? 1 : 0}">${u.chatMuted ? "🔇 Muted" : "Mute"}</button></td><td><button class="ghost" data-edit-uid="${esc(u.id)}" data-edit-name="${esc(u.name)}" data-edit-level="${esc(u.level)}" data-edit-age="${u.age ?? ""}" data-edit-notes="${esc(u.adminNotes || "")}">✏️ Edit</button></td></tr>`).join("") || '<tr><td colspan="20" class="small">No users yet.</td></tr>'}</tbody>
         </table></div>
       </div>
+      </div>
+      <div class="adm-panel" data-p="searches" hidden>
+      ${(() => {
+        if (!d.totalSearches) return '<div class="card"><p class="small">No dictionary searches recorded yet.</p></div>';
+        const topMax = d.topWords?.[0]?.count || 1;
+        const topSearchers = d.users.filter(u => u.searches > 0).sort((a, b) => b.searches - a.searches).slice(0, 10);
+        const trendMax = Math.max(1, ...(d.searchTrend || []).map(x => x.count));
+        const fmtDay = (iso) => { const dt = new Date(iso); return dt.toLocaleDateString([], {month:"short",day:"numeric"}); };
+        return `
+        <div class="stats" style="margin-bottom:16px">
+          <div class="stat"><b>${d.totalSearches}</b><span>Total searches</span></div>
+          <div class="stat"><b>${d.uniqueSearchWords ?? "—"}</b><span>Unique words</span></div>
+          <div class="stat"><b>${d.totalSearchers ?? "—"}</b><span>Students searched</span></div>
+          <div class="stat"><b>${d.users.length ? Math.round(d.totalSearches / d.users.length * 10) / 10 : 0}</b><span>Avg per student</span></div>
+        </div>
+        ${d.searchTrend?.length ? `
+        <div class="card">
+          <h3>14-day search trend</h3>
+          <div class="sa-trend">
+            ${d.searchTrend.map(x => `
+              <div class="sa-bar-col" title="${x.day}: ${x.count} searches">
+                <div class="sa-bar" style="height:${Math.round((x.count / trendMax) * 60)}px"></div>
+                <div class="sa-bar-lbl">${fmtDay(x.day)}</div>
+                ${x.count ? `<div class="sa-bar-num">${x.count}</div>` : ""}
+              </div>`).join("")}
+          </div>
+        </div>` : ""}
+        ${d.topWords?.length ? `
+        <div class="card">
+          <h3>Top searched words (all time)</h3>
+          <div class="sa-words">
+            ${d.topWords.map((w, i) => `
+              <div class="sa-word-row">
+                <span class="sa-rank">${i + 1}</span>
+                <span class="sa-word">${esc(w.word)}</span>
+                <div class="sa-word-bar"><div style="width:${Math.round((w.count / topMax) * 100)}%"></div></div>
+                <span class="sa-count">${w.count}×</span>
+              </div>`).join("")}
+          </div>
+        </div>` : ""}
+        ${topSearchers.length ? `
+        <div class="card">
+          <h3>Most active searchers</h3>
+          <div class="tablewrap"><table>
+            <thead><tr><th>#</th><th>Student</th><th>Searches</th></tr></thead>
+            <tbody>
+              ${topSearchers.map((u, i) => `<tr>
+                <td class="small">${i + 1}</td>
+                <td><button class="link-btn" data-uid="${esc(u.id)}" data-uname="${esc(u.name)}">${esc(u.name)}</button></td>
+                <td><b>${u.searches}</b></td>
+              </tr>`).join("")}
+            </tbody>
+          </table></div>
+        </div>` : ""}
+        ${d.recentSearches?.length ? `
+        <div class="card">
+          <h3>Recent searches (last 100)</h3>
+          <div class="tablewrap"><table>
+            <thead><tr><th>Student</th><th>Word</th><th>When</th></tr></thead>
+            <tbody>
+              ${d.recentSearches.map(s => `<tr>
+                <td>${esc(s.name)}</td>
+                <td><b>${esc(s.word)}</b></td>
+                <td class="small">${new Date(s.at).toLocaleString()}</td>
+              </tr>`).join("")}
+            </tbody>
+          </table></div>
+        </div>` : ""}`;
+      })()}
       </div>
       <div class="adm-panel" data-p="usage" hidden><div id="adminUsage"><p class="small">Loading…</p></div></div>
       <div class="adm-panel" data-p="enquiries" hidden><div class="card"><h3>✉️ Enquiries</h3><div id="adminEnq"><p class="small">Loading…</p></div></div></div>
@@ -1371,6 +1467,13 @@ async function loadAdminChat() {
       </table></div>
       <h4 style="margin:16px 0 6px">Muted students (${d.muted.length})</h4>
       ${d.muted.length ? d.muted.map((s) => `<span class="dict-syn">${esc(s.name)} <button class="ghost" data-aunmute="${esc(s.id)}" style="padding:0 6px">Unmute</button></span>`).join(" ") : '<p class="small" style="margin:0">Nobody is muted.</p>'}`;
+    try {
+      const sh = await adminReq("GET", "/api/admin/shayari");
+      box.insertAdjacentHTML("beforeend", `<h4 style="margin:18px 0 6px">✒️ Shayari wall (${sh.length})</h4>
+        <div class="tablewrap"><table><tr><th>Time</th><th>Student</th><th>Shayari</th><th>Likes</th><th></th></tr>
+        ${sh.map((p) => `<tr><td>${new Date(p.at).toLocaleString()}</td><td>${esc(p.name)}</td><td class="gcmsgcell" style="white-space:pre-line">${esc(p.text)}</td><td>👏 ${p.wah} ❤️ ${p.heart}</td><td><button class="ghost" data-ashdel="${p.id}" title="Delete this shayari">🗑</button></td></tr>`).join("") || '<tr><td colspan="5" class="small">Nothing posted yet.</td></tr>'}
+        </table></div>`);
+    } catch {}
   } catch (e) {
     box.innerHTML = `<p class="err">${esc(e.message)}</p>`;
   }
@@ -1395,6 +1498,11 @@ document.getElementById("adminOut").addEventListener("click", async (e) => {
     if (t.dataset.agc === "clear") {
       if (!confirm(`Delete ALL messages in this room? This cannot be undone.`)) return;
       await adminReq("DELETE", `/api/admin/groupchat/${adminGcRoom}`);
+      return loadAdminChat();
+    }
+    if (t.dataset.ashdel) {
+      if (!confirm("Delete this shayari for everyone?")) return;
+      await adminReq("DELETE", `/api/admin/shayari/${t.dataset.ashdel}`);
       return loadAdminChat();
     }
     if (t.dataset.adel) {
@@ -1422,7 +1530,7 @@ document.getElementById("adminOut").addEventListener("change", async (e) => {
 });
 
 // ---- Admin: tabs, overview tiles, student search, daily usage ----
-const ADM_TABS = [["overview", "📊 Overview"], ["students", "👥 Students"], ["usage", "📅 Daily usage"], ["enquiries", "✉️ Enquiries"], ["chat", "💬 Group chat"]];
+const ADM_TABS = [["overview", "📊 Overview"], ["students", "👥 Students"], ["searches", "🔍 Search Analytics"], ["usage", "📅 Daily usage"], ["enquiries", "✉️ Enquiries"], ["chat", "💬 Group chat"]];
 function admTabsHTML(newEnq) {
   return `<div class="seg adm-tabs" id="admTabs">${ADM_TABS.map(([id, label]) =>
     `<button type="button" data-adm="${id}">${label}${id === "enquiries" && newEnq ? ` <span class="badge-n">${newEnq}</span>` : ""}</button>`).join("")}</div>`;
@@ -2087,6 +2195,221 @@ if (SR) {
 
   syncFill(); syncSizes();
 })();
+
+// ---- Shayari: learn couplets and English quotes by type, write and share your own ----
+let shBank = null, shKind = "sher", shType = "all", shPoet = "all", shMode = "learn";
+let shFilter = "all", shWallType = "all", shPickType = "Love", shRx = {};
+let shSaved = [];
+try { shSaved = JSON.parse(localStorage.getItem("shSaved") || "[]").map((x) => (typeof x === "number" ? "s" + x : x)); } catch {}
+const shSave = () => { try { localStorage.setItem("shSaved", JSON.stringify(shSaved)); } catch {} };
+const SH_ICON = { Love: "❤️", Motivation: "🔥", Study: "📚", Emotional: "💧", Life: "🌿", Friendship: "🤝", Fun: "😄" };
+const shTypeLabel = (t) => `${SH_ICON[t] || "✨"} ${t}`;
+const shPoetById = (id) => shBank.poets.find((p) => p.id === id);
+const shLines = (s) => s.split("\n").map(esc).join("<br>");
+const shAll = () => [
+  ...shBank.sher.map((s) => ({ ...s, key: "s" + s.id, isQuote: false })),
+  ...shBank.quotes.map((q) => ({ ...q, key: "q" + q.id, isQuote: true })),
+];
+const shItem = (key) => shAll().find((i) => i.key === key);
+const shChips = (list, current, attr) => list.map(([id, label]) => `<button type="button" class="chipbtn ${id === current ? "on" : ""}" ${attr}="${esc(id)}">${esc(label)}</button>`).join("");
+
+// 👏 Wah / ❤️ on any card (couplets, quotes, wall posts)
+function shRxBtn(kind, key, r) {
+  const n = r?.[kind] || 0, mine = kind === "wah" ? r?.iWah : r?.iHeart;
+  return `<button type="button" class="ghost mini ${mine ? "on" : ""}" data-shrx="${kind}" data-key="${key}">${kind === "wah" ? "👏 Wah" : "❤️"}${n ? ` <b>${n}</b>` : ""}</button>`;
+}
+const shRxPair = (key, r) => shRxBtn("wah", key, r) + shRxBtn("heart", key, r);
+
+function shCard(i) {
+  const saved = shSaved.includes(i.key);
+  const words = `<div class="sher-words">${i.words.map(([w, m]) => `<span class="sher-word"><b>${esc(w)}</b> ${esc(m)}</span>`).join("")}</div>`;
+  const actions = i.isQuote
+    ? `<button class="ghost mini" data-shact="hear" title="Hear the quote">🔊 Hear</button>`
+    : `<button class="ghost mini" data-shact="hear" title="Hear the couplet">🔊 Hear</button><button class="ghost mini" data-shact="meaning" title="Hear the English meaning">🇬🇧 Meaning</button>`;
+  const save = `<button class="ghost mini ${saved ? "on" : ""}" data-shact="save" title="Save for later">${saved ? "♥ Saved" : "♡ Save"}</button><button class="ghost mini" data-shact="copy" title="Copy">📋</button>`;
+  const who = i.isQuote ? `— ${esc(i.author)}${i.note ? ` <span class="small">(${esc(i.note)})</span>` : ""}` : `— ${esc(shPoetById(i.poet).name)}`;
+  const body = i.isQuote
+    ? `<div class="quote-en">“${esc(i.en)}”</div><div class="quote-hi" lang="hi">${esc(i.hindi)}</div><p class="sher-en"><b>In simple words:</b> ${esc(i.simple)}</p>`
+    : `<div class="sher-hi" lang="hi">${shLines(i.hi)}</div><div class="sher-roman">${shLines(i.roman)}</div><p class="sher-en"><b>Meaning:</b> ${esc(i.en)}</p>`;
+  return `<article class="card sher ${i.isQuote ? "quote" : ""}" data-sid="${i.key}">
+    ${body}${words}
+    <div class="sher-foot">
+      <span class="sher-poet">${who}</span><span class="pill">${esc(shTypeLabel(i.type))}</span>
+      <span class="sher-actions">${actions}${save}</span>
+    </div>
+    <div class="sher-react">${shRxPair(i.key, shRx[i.key])}</div>
+  </article>`;
+}
+
+const shCurrent = () => shAll().filter((i) => i.isQuote === (shKind === "quotes"));
+
+function renderShLearn() {
+  const items = shCurrent();
+  const types = shBank.types.filter((t) => items.some((i) => i.type === t));
+  $("#shTypes").innerHTML = shChips([["all", "All types"], ...types.map((t) => [t, shTypeLabel(t)])], shType, "data-shtype");
+  const day = items[Math.floor(Date.now() / 86400000) % items.length];
+  $("#shDay").innerHTML = `<div class="sh-day-label">✨ ${shKind === "quotes" ? "Quote" : "Shayari"} of the day</div>${shCard(day)}`;
+  const isSher = shKind === "sher";
+  $("#shPoets").hidden = !isSher;
+  $("#shBasics").hidden = !isSher;
+  let list = items.filter((i) => shType === "all" || i.type === shType);
+  if (isSher) {
+    $("#shPoets").innerHTML = shChips([["all", "All poets"], ["saved", `♥ Saved (${shSaved.length})`], ...shBank.poets.map((p) => [p.id, p.name])], shPoet, "data-poet");
+    const poet = shBank.poets.find((p) => p.id === shPoet);
+    $("#shPoetCard").innerHTML = poet
+      ? `<div class="card sh-poet"><div class="sh-avatar" aria-hidden="true">${esc(poet.name.split(" ").map((w) => w[0]).slice(0, 2).join(""))}</div><div><b>${esc(poet.name)}</b> <span class="small">· ${esc(poet.hi)} · ${esc(poet.years)}</span><p class="small">${esc(poet.about)}</p></div></div>`
+      : "";
+    if (shPoet === "saved") list = list.filter((i) => shSaved.includes(i.key));
+    else if (poet) list = list.filter((i) => i.poet === shPoet);
+    $("#shBasicsBody").innerHTML = shBank.basics.map(([k, v]) => `<div class="g-section"><span class="g-label">${esc(k)}</span><p class="small">${esc(v)}</p></div>`).join("");
+  } else {
+    $("#shPoetCard").innerHTML = `<p class="small sh-note">Read each quote, check the Hindi meaning, learn the key words, then try to use them in your own sentence.</p>`;
+  }
+  $("#shList").innerHTML = list.length ? list.map(shCard).join("")
+    : `<p class="small sh-empty">${shPoet === "saved" && isSher ? "Tap ♡ Save on any couplet and it will wait for you here." : "Nothing here for this type yet. Try another one."}</p>`;
+}
+
+// Hindi voice for a couplet (the English voice reads meanings and quotes)
+function shSayHindi(text) {
+  if (!TTS_OK) return toast("Your browser can't read aloud.");
+  stopVoice();
+  const u = new SpeechSynthesisUtterance(text.replace(/\n/g, ". "));
+  u.lang = "hi-IN"; u.rate = 0.85;
+  currentUtterance = u;
+  u.onstart = () => { if (currentUtterance === u) setVoiceBtn(true); };
+  u.onend = u.onerror = () => { if (currentUtterance === u) { currentUtterance = null; setVoiceBtn(false); } };
+  speechSynthesis.speak(u);
+}
+
+function shRefreshRx(key, r) {
+  shRx[key] = r;
+  document.querySelectorAll(`#shayari [data-key="${key}"][data-shrx]`).forEach((b) => b.remove());
+  document.querySelectorAll(`#shayari [data-sid="${key}"] .sher-react`).forEach((el) => (el.innerHTML = shRxPair(key, r)));
+}
+
+document.getElementById("shayari").addEventListener("click", async (e) => {
+  const t = e.target;
+  const typeBtn = t.closest("[data-shtype]");
+  if (typeBtn) { shType = typeBtn.dataset.shtype; return renderShLearn(); }
+  const poetBtn = t.closest("[data-poet]");
+  if (poetBtn) { shPoet = poetBtn.dataset.poet; return renderShLearn(); }
+  const kindBtn = t.closest("[data-shkind]");
+  if (kindBtn) {
+    shKind = kindBtn.dataset.shkind; shType = "all"; shPoet = "all";
+    document.querySelectorAll("#shKind button").forEach((b) => b.classList.toggle("on", b === kindBtn));
+    return renderShLearn();
+  }
+  const pick = t.closest("[data-shpick]");
+  if (pick) { shPickType = pick.dataset.shpick; return renderShPick(); }
+  const wallType = t.closest("[data-shwtype]");
+  if (wallType) { shWallType = wallType.dataset.shwtype; renderShWallTypes(); return loadShWall(); }
+
+  const rx = t.closest("[data-shrx]");
+  if (rx) {
+    if (!student) return showWelcome();
+    const key = rx.dataset.key, kind = rx.dataset.shrx;
+    try {
+      if (rx.closest("[data-pid]")) { // a post on the wall
+        const p = await api(`/api/shayari/posts/${key}/react`, { studentId: student.id, kind });
+        rx.closest(".sh-post-foot").querySelectorAll("[data-shrx]").forEach((b) => b.remove());
+        rx.closest(".sh-post-foot").insertAdjacentHTML("afterbegin", shRxPair(key, p));
+      } else {
+        shRefreshRx(key, await api(`/api/shayari/items/${key}/react`, { studentId: student.id, kind }));
+      }
+    } catch (err) { toast(err.message); }
+    return;
+  }
+
+  const act = t.closest("[data-shact]");
+  if (act) {
+    const key = act.closest("[data-sid]").dataset.sid, item = shItem(key), kind = act.dataset.shact;
+    if (kind === "hear") return item.isQuote ? say(item.en, { force: true }) : shSayHindi(item.hi);
+    if (kind === "meaning") return say(item.en, { force: true });
+    if (kind === "copy") {
+      const text = item.isQuote ? `“${item.en}” — ${item.author}` : `${item.hi}\n${item.roman}\n— ${shPoetById(item.poet).name}`;
+      try { await navigator.clipboard.writeText(text); toast("Copied."); } catch { toast("Could not copy."); }
+      return;
+    }
+    if (kind === "save") {
+      shSaved = shSaved.includes(key) ? shSaved.filter((x) => x !== key) : [...shSaved, key];
+      shSave();
+      document.querySelectorAll(`#shayari [data-sid="${key}"] [data-shact="save"]`).forEach((b) => { b.classList.toggle("on", shSaved.includes(key)); b.textContent = shSaved.includes(key) ? "♥ Saved" : "♡ Save"; });
+      const chip = document.querySelector('#shPoets [data-poet="saved"]');
+      if (chip) chip.textContent = `♥ Saved (${shSaved.length})`;
+      if (shPoet === "saved") renderShLearn();
+    }
+    return;
+  }
+  const mode = t.closest("[data-shmode]");
+  if (mode) { shMode = mode.dataset.shmode; return shShowMode(); }
+  const filt = t.closest("[data-shf]");
+  if (filt) { shFilter = filt.dataset.shf; document.querySelectorAll("#shFilter button").forEach((b) => b.classList.toggle("on", b === filt)); return loadShWall(); }
+  const del = t.closest("[data-shdel]");
+  if (del) {
+    if (!confirm("Delete your shayari?")) return;
+    try { await api(`/api/shayari/posts/${del.closest("[data-pid]").dataset.pid}?studentId=${student.id}`, null, "DELETE"); loadShWall(); } catch (err) { toast(err.message); }
+  }
+});
+
+function renderShPick() { $("#shTypePick").innerHTML = shChips(shBank.types.map((t) => [t, shTypeLabel(t)]), shPickType, "data-shpick"); }
+function renderShWallTypes() { $("#shWallTypes").innerHTML = shChips([["all", "All types"], ...shBank.types.map((t) => [t, shTypeLabel(t)])], shWallType, "data-shwtype"); }
+function shShowMode() {
+  document.querySelectorAll("#shMode button").forEach((b) => b.classList.toggle("on", b.dataset.shmode === shMode));
+  $("#shLearn").hidden = shMode !== "learn";
+  $("#shWrite").hidden = shMode !== "write";
+  if (shMode === "write") { shChallenge(); renderShPick(); renderShWallTypes(); loadShWall(); }
+}
+function shChallenge() {
+  const day = Math.floor(Date.now() / 86400000), type = shBank.types[day % shBank.types.length];
+  $("#shChallenge").innerHTML = `🎯 <b>Today's theme: ${esc(shTypeLabel(type))}.</b> Try two lines in English or Hindi about it. Writing in English is great practice.`;
+}
+function shTimeAgo(iso) {
+  const m = Math.round((Date.now() - new Date(iso)) / 60000);
+  if (m < 1) return "just now"; if (m < 60) return `${m} min ago`;
+  const h = Math.round(m / 60); if (h < 24) return `${h} h ago`;
+  return new Date(iso).toLocaleDateString();
+}
+async function loadShWall() {
+  if (!student) return;
+  const box = $("#shWall");
+  try {
+    const q = `studentId=${student.id}${shFilter === "mine" ? "&mine=1" : ""}${shWallType !== "all" ? `&type=${encodeURIComponent(shWallType)}` : ""}`;
+    const posts = await api(`/api/shayari/posts?${q}`);
+    box.innerHTML = posts.length ? posts.map((p) => `<article class="card sh-post" data-pid="${p.id}">
+        <div class="sh-post-head"><b>${esc(p.name)}</b><span class="small">${shTimeAgo(p.at)}</span><span class="pill">${esc(shTypeLabel(p.type))}</span><span class="pill">${esc(p.lang)}</span></div>
+        <div class="sh-post-text">${shLines(p.text)}</div>
+        <div class="sh-post-foot">${shRxPair(p.id, p)}${p.mine ? '<button class="ghost mini danger" data-shdel title="Delete">🗑</button>' : ""}</div>
+      </article>`).join("")
+      : `<p class="small sh-empty">${shFilter === "mine" ? "You haven't posted yet. Write your first shayari above!" : "No shayari here yet. Be the first to share one!"}</p>`;
+  } catch (e) { box.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+}
+$("#shText").addEventListener("input", () => { $("#shCount").textContent = `${$("#shText").value.length} / 400`; $("#shErr").textContent = ""; });
+$("#shPost").onclick = async () => {
+  if (!student) return showWelcome();
+  const btn = $("#shPost");
+  btn.disabled = true;
+  try {
+    await api("/api/shayari/posts", { studentId: student.id, text: $("#shText").value, type: shPickType, lang: $("#shLang").value });
+    $("#shText").value = ""; $("#shCount").textContent = "0 / 400"; $("#shErr").textContent = "";
+    toast("Shayari posted. Wah wah!");
+    shFilter = "all"; shWallType = "all";
+    document.querySelectorAll("#shFilter button").forEach((b) => b.classList.toggle("on", b.dataset.shf === "all"));
+    renderShWallTypes(); loadShWall();
+  } catch (e) { $("#shErr").textContent = e.message; }
+  btn.disabled = false;
+};
+
+async function shStart() {
+  if (!shBank) {
+    try { shBank = await api("/api/shayari"); } catch (e) { $("#shList").innerHTML = `<p class="err">${esc(e.message)}</p>`; return; }
+  }
+  if (student) { try { shRx = await api(`/api/shayari/reactions?studentId=${student.id}`); } catch { shRx = {}; } }
+  renderShLearn();
+  shShowMode();
+}
+document.querySelector('nav button[data-tab="shayari"]').addEventListener("click", shStart);
+
+document.getElementById("gcShayariLink")?.addEventListener("click", () => openTab("shayari"));
 
 // ---- Start ----
 if (student?.id) enter(student); else showWelcome();

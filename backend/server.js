@@ -35,6 +35,8 @@ const client = process.env.OPENAI_API_KEY
   : null;
 const app = express();
 app.set("trust proxy", 1); // Render puts one proxy in front; this makes req.ip the visitor's real address
+// Resume upload: the file arrives as base64 inside JSON, so this one route may be larger.
+app.use("/api/resume/extract", express.json({ limit: "8mb" }));
 app.use(express.json({ limit: "100kb" }));
 // Frontend lives next to backend/ in the repo (../Frontend). Fall back to other common spellings
 // so a case-sensitive Linux host still finds it.
@@ -528,6 +530,22 @@ const interviewSessions = new Map();
 const INTERVIEW_MAX_ROUNDS = 6;
 
 function makeInterviewSystem(type, role, level) {
+  if (type === "hr_practice") {
+    const q = role.replace(/"/g, '\\"');
+    return `You are an expert HR coach helping a job candidate practise the interview question: "${q}"
+
+When the user sends "START": return that exact question as nextQuestion, with empty feedback, null score, empty corrections.
+
+When the user sends their answer (one round only):
+1. Give specific, constructive feedback (3–5 sentences): what worked well, what to improve, how to structure it better
+2. Score the answer 1–5
+3. List grammar or vocabulary corrections
+4. In finalSummary: write a strong model answer (3–6 sentences) they can use as inspiration
+5. Set done: true
+
+Return ONLY valid JSON — no markdown fences:
+{"feedback":string,"score":number|null,"corrections":[{"original":string,"corrected":string,"rule":string}],"nextQuestion":string,"done":boolean,"finalSummary":string}`;
+  }
   const labels = { job: "job", ielts: "IELTS Speaking Test", university: "university admission", general: "general English" };
   const roleCtx = role ? ` for the role of "${role}"` : "";
   const levelCtx = level ? ` The candidate's English level is ${level}.` : "";
@@ -548,8 +566,91 @@ Return ONLY valid JSON — no markdown fences:
 {"feedback":string,"score":number|null,"corrections":[{"original":string,"corrected":string,"rule":string}],"nextQuestion":string,"done":boolean,"finalSummary":string}`;
 }
 
+// ---- Resume Builder ----
+// Reads the text out of an uploaded PDF, Word (.docx) or .txt file. Nothing is stored.
+const RESUME_MAX_BYTES = 5 * 1024 * 1024;
+const withTimeout = (p, ms, msg) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(msg)), ms))]);
+app.post("/api/resume/extract", requireStudent, wrap(async (req, res) => {
+  const name = String(req.body.filename || "").slice(0, 120);
+  const b64 = String(req.body.data || "").replace(/^data:[^,]*,/, "");
+  if (!b64) return res.status(400).json({ error: "Choose a file first." });
+  const buf = Buffer.from(b64, "base64");
+  if (!buf.length) return res.status(400).json({ error: "That file is empty." });
+  if (buf.length > RESUME_MAX_BYTES) return res.status(413).json({ error: "That file is too large. Please use a file under 5 MB." });
+  const ext = path.extname(name).toLowerCase();
+  const isPdf = buf.subarray(0, 5).toString("latin1") === "%PDF-";
+  const isZip = buf[0] === 0x50 && buf[1] === 0x4b;
+  let text = "";
+  try {
+    if (isPdf) {
+      const { PDFParse } = await import("pdf-parse");
+      const parser = new PDFParse({ data: new Uint8Array(buf) });
+      try { text = (await withTimeout(parser.getText(), 20000, "Reading the PDF took too long.")).text || ""; } finally { await parser.destroy().catch(() => {}); }
+    } else if (isZip && ext !== ".xlsx" && ext !== ".pptx") {
+      const mammoth = (await import("mammoth")).default;
+      text = (await withTimeout(mammoth.extractRawText({ buffer: buf }), 20000, "Reading the Word file took too long.")).value || "";
+    } else if (!buf.includes(0)) {
+      text = buf.toString("utf8"); // plain text
+    } else {
+      return res.status(400).json({ error: "Please upload a PDF, a Word file (.docx) or a text file (.txt). Old .doc files are not supported: save them as .docx or PDF first." });
+    }
+  } catch (e) {
+    return res.status(422).json({ error: /took too long/.test(e.message) ? e.message : "Could not read that file. Please try a different PDF or Word file, or paste your resume text instead." });
+  }
+  text = text.replace(/\r/g, "").replace(/^-- \d+ of \d+ --$/gm, "").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  if (text.length < 40) return res.status(422).json({ error: "I could not find readable text in that file. If it is a scanned image or photo, please paste the text instead or upload a text-based PDF or Word file." });
+  res.json({ text: text.slice(0, 8000), truncated: text.length > 8000 });
+}));
+
+const clip = (v, n) => String(v || "").replace(/\r/g, "").trim().slice(0, n);
+app.post("/api/resume/build", requireStudent, wrap(async (req, res) => {
+  const b = req.body;
+  const role = clip(b.role, 80);
+  if (!role) return res.status(400).json({ error: "Job role is required." });
+  const old = clip(b.oldResume, 8000);
+  const personal = {
+    name: clip(b.fullName, 60) || req.student.name, email: clip(b.email, 80), phone: clip(b.phone, 25),
+    city: clip(b.city, 60), links: clip(b.links, 160),
+  };
+  const rewrite = old.length >= 40;
+  const system = rewrite
+    ? `You are a professional resume writer and career coach for students in India. The candidate already has a resume. Rewrite it for the target role.
+Rules:
+- Keep every real fact: employers, job titles, dates, degrees, schools, numbers. NEVER invent employers, qualifications, dates, or achievements.
+- Improve the wording: strong action verbs, short bullet points, clear structure, simple correct English.
+- Re-order and emphasise what matters most for the target role. If a job description is given, use its keywords where they honestly apply.
+- If the candidate adds details or requests changes, follow them.`
+    : `You are a professional resume writer for students in India. Build a clean resume from the details given.
+Rules:
+- Use only the facts provided. NEVER invent employers, qualifications, dates, or achievements. If a section has no information, leave it out (for a fresher, lead with education, skills and projects).
+- Write short bullet points with strong action verbs, in simple correct English.`;
+  const format = `
+Format: clean, ATS-friendly PLAIN TEXT. First line: the candidate's name. Second line: contact details separated by " | ". Then sections with ALL CAPS headers (PROFESSIONAL SUMMARY, SKILLS, EXPERIENCE, EDUCATION, plus CERTIFICATIONS / PROJECTS / LANGUAGES only if information exists). Use "– " (dash and a space) for bullets. Keep it to 1–2 pages.
+Return ONLY valid JSON, no markdown fences:
+{"resume":string,"tips":string,"changes":[string]}
+resume: the complete resume text.
+tips: 2–3 specific tips to make this candidate stand out for the role (one short paragraph).
+changes: 3–5 short points saying what you improved or changed (empty array if building from scratch).`;
+  const lines = [
+    "Candidate name: " + personal.name,
+    personal.email && "Email: " + personal.email, personal.phone && "Phone: " + personal.phone,
+    personal.city && "City: " + personal.city, personal.links && "LinkedIn / portfolio: " + personal.links,
+    "Target role: " + role,
+    b.jd && "Job description:\n" + clip(b.jd, 3000),
+    rewrite && "EXISTING RESUME (rewrite this):\n" + old,
+    b.changes && "Candidate's requests: " + clip(b.changes, 400),
+    b.experience && "Work experience: " + clip(b.experience, 2000),
+    b.skills && "Skills: " + clip(b.skills, 500),
+    b.education && "Education: " + clip(b.education, 400),
+    b.extras && "Certifications / projects / languages / achievements: " + clip(b.extras, 800),
+    b.objective && "Objective / summary they want: " + clip(b.objective, 500),
+  ].filter(Boolean).join("\n\n");
+  const out = parseJson(await askAI(system + format, [{ role: "user", content: lines }], 2600));
+  res.json({ resume: out.resume || "", tips: out.tips || "", changes: Array.isArray(out.changes) ? out.changes.map(String).slice(0, 6) : [] });
+}));
+
 app.post("/api/interview/start", requireStudent, wrap(async (req, res) => {
-  const type = ["job", "ielts", "university", "general"].includes(req.body.type) ? req.body.type : "general";
+  const type = ["job", "ielts", "university", "general", "hr_practice"].includes(req.body.type) ? req.body.type : "general";
   const role = String(req.body.role || "").trim().slice(0, 80);
   const system = makeInterviewSystem(type, role, req.student.level);
   const history = [{ role: "user", content: "START" }];

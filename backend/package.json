@@ -14,9 +14,11 @@
   "dependencies": {
     "dotenv": "^18.0.6",
     "express": "^5.2.1",
+    "mammoth": "^1.13.0",
     "mongodb": "^7.7.0",
     "nodemailer": "^10.0.16",
     "openai": "^7.30.0",
+    "pdf-parse": "^2.4.5",
     "pg": "^8.23.1"
   },
   "engines": {

@@ -12,8 +12,8 @@ All grammar topics covered by the Speak coach, Grammar Checker, Translator and T
 | Tab | What it does | Needs AI? |
 |---|---|---|
 | **Speak** | Voice or text chat with an AI coach. Corrections appear as cards under your message (category, wrong → right, rule); every coach reply has a 🔊 replay button; a "Voice replies" switch turns spoken replies on or off; while the mic is on, a strip shows the words being heard. Chat is saved per student, with a running corrections count | yes |
-| **Grammar** | Sentence-by-sentence analysis (see "Grammar Checker") | yes |
-| **Test** | Multiple-choice tests on 14 topics, adaptive difficulty, graded on the server | no |
+| **Grammar** | Sentence-by-sentence analysis (see "Grammar Checker"). Live character counter + Clear button on the textarea. Six example chips. Results: score ring (% of sentences with no errors), corrected text with 📋 Copy button, per-sentence collapsible `<details>` cards each showing a green "✓ OK" or red error-count badge; error items show category → issue → fix layout | yes |
+| **Test** | Multiple-choice tests on 14 topics, adaptive difficulty, graded on the server. Topic cards have emoji icons (⏰ 🔧 🔄 💬 etc.). Hero stats row shows "Tests taken" and "Best score %" from history. History shows bar-chart cards with score, level pill and formatted date. | no |
 | **Discuss** | 16 group-discussion topics (points for/against, questions) and 14 preset presentation topics. AI custom-topic generator: user types 2–5 words and gets a title, opening, key ideas, structure and vocabulary. Optional **word limit** (50 / 100 / 150 / 200 / 300 / 500 words) applied to AI presentations. A **3D spinning cube** lets students pick a random topic: tap the cube to spin, the chosen topic scrolls into view and glows. "Practise with coach" opens a live speaking session | yes (generator) |
 | **Group Chat** | Shared rooms where students chat; every message shows who wrote it; react with emoji, edit or delete **your own** messages; admin moderates | no |
 | **Shayari** | Own tab (✒️). Two modes: **Learn** (static bank of 31 couplets by 14 poets and 20 English quotes, filterable by type and poet, each with Hindi text, Roman transliteration, English meaning, vocabulary and reactions) and **Write & share** (community wall). **AI Shayari of the Day** is generated fresh each morning (cached per calendar day) and shown as a branded card with Hindi, Roman and English. Student posts are **auto-translated to English + Hindi** by AI (≤6 s; posted immediately if AI times out). Poster's name is always shown. Reactions: 👏 Wah and ❤️. | yes (daily + translations) |
@@ -23,6 +23,7 @@ All grammar topics covered by the Speak coach, Grammar Checker, Translator and T
 | **Dictionary** | **Word of the Day** card at the top: AI picks one interesting word per day (cached), shown with IPA pronunciation, part of speech, definition, example sentence, Hindi meaning and a usage tip. "Look up full definition →" jumps to the search. Below: full lookup via dictionaryapi.dev (Datamuse fallback). Searches logged for admin | yes (WOTD only) |
 | **Admin** | Password-protected dashboard with **six tabs**: **Overview** (tiles, age groups, levels, 📢 Announcement broadcaster, 🧹 Test-account cleanup), **Students** (search, sort, filter, inactive 💤 highlights, ⬇ Export CSV, edit, notes, mute), **Search Analytics** (14-day trend chart, top words with bars, top searchers, recent 100 entries), **Daily usage** (bar chart and table), **Enquiries**, **Group chat** moderation. Storage banner shows permanent vs. temporary. | no |
 | **Enquiry form** | "✉️ Send an enquiry" button in the footer. Pre-fills name, email and phone from the signed-in student's profile. On success shows a confirmation and auto-closes after 3 s. Saved for the admin and optionally emailed (SMTP) | no |
+| **Footer** | Dark footer with stats pre-banner (AI / 10+ Tools / Free / 🏆 Build confidence), brand mission statement, feature list, quick-access tab buttons (Speak / Grammar / Test / Interview), tech stack tags, contact links, enquiry button and a Wittgenstein quote. Footer quick-access buttons call `openTab()` to switch sections. | no |
 | **Announcement banner** | When admin posts a message, all students see a sticky yellow banner below the header on entry. Dismissible per session (sessionStorage). Managed in Admin → Overview. | no |
 
 ## Coaching rules (all AI modules)
@@ -265,7 +266,7 @@ The Grammar Checker analyses every sentence and reports:
 | Connectors | Word + connector type |
 | Clauses | Main, relative, adverbial, noun clause |
 | Articles | Flags incorrect article usage |
-| Errors | Colour-coded by category with fix + explanation |
+| Errors | Colour-coded by category with fix + explanation. Each error shown as a styled block: `[category] issue → fix` with an explanation line below. |
 
 ---
 
@@ -366,6 +367,15 @@ Question format in `backend/data/questions.json`: `{ q, options[4], answer, expl
 - **Content vs. student data:** `backend/data/shayari.json` (in git) holds the static bank. `shayari_wall.json` (runtime, database or `DATA_DIR`) holds all community posts. Both `word_of_day.json` (WOTD + daily shayari cache) and `shayari_wall.json` are in the RUNTIME set synced to MongoDB/Postgres.
 - **Admin:** Group chat moderation tab lists the latest 100 posts with a delete button.
 - API: `GET /api/shayari` (no auth), `GET /api/shayari/daily`, `GET /api/shayari/reactions`, `POST /api/shayari/items/:key/react`, `GET|POST /api/shayari/posts` (`?mine=1`, `?type=Love`), `POST /api/shayari/posts/:pid/react`, `DELETE /api/shayari/posts/:pid` (own); admin: `GET /api/admin/shayari`, `DELETE /api/admin/shayari/:pid`.
+
+## Resume Builder (Interview tab → 📄 Resume)
+- **Two ways in:** **📤 Upload old resume** (the AI rewrites it for the new job) or **✍️ Enter details** (build from scratch). Both use the same first step (target job + optional job description) and the same **contact details** (full name, phone, email, city, LinkedIn/portfolio), which are filled from the student's profile.
+- **Upload:** PDF, Word (.docx) or .txt, up to 5 MB. The server reads the text out (`pdf-parse`, `mammoth`) and shows it in a box so the student can check and fix it; they can also paste text. Scanned or photographed resumes have no text and get a clear message. Old .doc files are not supported. **The file is read in memory and not saved.** An optional "What should change?" line (for example "make it shorter, for a fresher") goes to the AI too.
+- **Manual:** work experience (or "Fresher"), skills, education, certificates/projects/languages, and an optional objective.
+- **Result:** a paper-style page (name, contact line, headings, bullets) with **Copy**, **Download** (.txt), **Save as PDF** (opens the print dialog on a clean A4 copy), **Edit text**, "What I improved" (upload mode), tips, and a button to practise the interview for that role. The AI is told never to invent employers, degrees, dates or achievements, and the page reminds students to check everything.
+- **Photo (optional):** in the contact details a student can add a picture (the phone camera or gallery works). It is cropped to a 360 px square on the device, shown on the resume page (square or round) and included in **Save as PDF**. **The photo never leaves the browser**: it is not sent to the server or the AI, and it is kept only in this browser (`rvPhoto`, `rvShape`). The .txt download is text only.
+- Drafts are kept in the browser (`rvDraft`) so a refresh does not lose typing.
+- API: `POST /api/resume/extract` (`filename`, base64 `data`; own 8 MB JSON limit; sign-in required) and `POST /api/resume/build` (`role, jd, fullName, phone, email, city, links, oldResume, changes, experience, skills, education, extras, objective`).
 
 ## Running and configuring the app
 

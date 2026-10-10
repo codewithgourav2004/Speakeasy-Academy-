@@ -112,22 +112,39 @@
       <div id="listenBar" class="listenbar" hidden><span class="wave"><i></i><i></i><i></i><i></i><i></i></span><span id="listenText">Listening… speak now</span></div>
       <div class="row">
         <button id="micBtn" class="mic" title="Click to talk, click again to stop">🎤 Speak</button>
-        <input id="chatInput" placeholder="…or type here and press Enter">
-        <button id="sendBtn">Send</button>
+        <input id="chatInput" placeholder="Message your coach…" autocomplete="off" enterkeyhint="send">
+        <button id="sendBtn" aria-label="Send">Send</button>
       </div>
       <p id="speechNote" class="small"></p>
     </section>
 
     <section id="grammar" class="tab">
-      <div class="pagehead"><h2>Grammar Check</h2><p class="small">Paste a sentence or paragraph. It checks tense, modals, passive voice, narration and non-finites.</p></div>
-      <textarea id="gText" rows="6" placeholder="Type or paste your text here…"></textarea>
-      <div class="starters" id="gExamples">
-        <span class="small">Try:</span>
-        <button class="chipbtn" data-ex="She said that she would have been invited if she had arrived earlier.">Reported speech</button>
-        <button class="chipbtn" data-ex="The report must be finished before the meeting starts.">Modal + passive</button>
-        <button class="chipbtn" data-ex="Having finished his homework, he went out to play.">Non-finite</button>
+      <div class="g-hero">
+        <div class="g-hero-icon" aria-hidden="true">✏️</div>
+        <div>
+          <h2>Grammar Check</h2>
+          <p class="small">Paste any sentence or paragraph — get instant feedback on tenses, modals, passive voice, narration &amp; more.</p>
+        </div>
       </div>
-      <button id="gBtn">Check grammar</button>
+      <div class="g-input-wrap">
+        <textarea id="gText" rows="6" placeholder="Type or paste your English text here…"></textarea>
+        <div class="g-input-foot">
+          <span id="gCounter" class="small g-counter">0 chars</span>
+          <button type="button" id="gClear" class="ghost g-clear-btn" title="Clear text">✕ Clear</button>
+        </div>
+      </div>
+      <div class="g-examples-wrap">
+        <span class="g-try-label">Try an example:</span>
+        <div class="starters" id="gExamples">
+          <button class="chipbtn" data-ex="She said that she would have been invited if she had arrived earlier.">📣 Reported speech</button>
+          <button class="chipbtn" data-ex="The report must be finished before the meeting starts.">🔧 Modal + passive</button>
+          <button class="chipbtn" data-ex="Having finished his homework, he went out to play.">📎 Non-finite</button>
+          <button class="chipbtn" data-ex="He go to school every day and don't eat his breakfast.">⚠️ Common errors</button>
+          <button class="chipbtn" data-ex="If she would study hard, she will easily pass the exam.">❓ Conditional</button>
+          <button class="chipbtn" data-ex="The letter was wrote by him and send to I yesterday.">🔄 Mixed errors</button>
+        </div>
+      </div>
+      <button id="gBtn">🔍 Check grammar</button>
       <div id="gOut"></div>
     </section>
 
@@ -139,7 +156,13 @@
         </div>
 
         <div id="grammarSetup">
-          <div class="pagehead"><h2>Grammar Test</h2><p class="small">Pick the topics you want to practise, then start.</p></div>
+          <div class="test-hero-row">
+            <div class="test-hero-text">
+              <h2>Grammar Test</h2>
+              <p class="small">Pick topics, choose difficulty &amp; start. Each question adapts to your level.</p>
+            </div>
+            <div class="test-hero-stats" id="testHeroStats"></div>
+          </div>
           <div class="topic-tools"><span id="topicCount" class="small"></span><span class="spacer"></span><button type="button" class="link-btn" id="topicAll">Select all</button><button type="button" class="link-btn" id="topicNone">Clear</button></div>
           <div id="topicBoxes" class="topics"></div>
           <div class="card diffbox">
@@ -158,8 +181,8 @@
             <div class="stepper"><span class="small">Questions</span><button type="button" data-step="-5" data-for="tCount" aria-label="Fewer questions">−</button><input id="tCount" type="number" min="1" max="100" value="10" inputmode="numeric"><button type="button" data-step="5" data-for="tCount" aria-label="More questions">+</button></div>
             <button id="tStart">Start test →</button>
           </div>
-          <h3>Recent results</h3>
-          <div id="history"></div>
+          <h3 class="hist-heading">📊 Recent results</h3>
+          <div id="history" class="hist-list"></div>
         </div>
 
         <div id="trSetup" hidden>
@@ -222,35 +245,147 @@
       <div id="discOut"></div>
     </section>
     <section id="interview" class="tab">
-      <div id="ivSetup">
-        <div class="pagehead"><h2>Interview Practice</h2><p class="small">Prepare for job interviews, IELTS speaking, or university admissions. The AI acts as your interviewer and gives detailed feedback after each answer.</p></div>
-        <div class="seg" id="ivTypeSwitch">
-          <button data-ivtype="job" class="on">💼 Job</button>
-          <button data-ivtype="ielts">📋 IELTS</button>
-          <button data-ivtype="university">🎓 University</button>
-          <button data-ivtype="general">💬 General</button>
-        </div>
-        <div id="ivRoleRow">
-          <input id="ivRole" placeholder="Job role (e.g. Software Engineer, Teacher, Sales Manager)" maxlength="80" style="width:100%;margin-bottom:12px;">
-        </div>
-        <button id="ivStart">Start interview →</button>
+      <div class="seg" id="ivModeSwitch">
+        <button data-ivmode="interview" class="on">🎤 Interview</button>
+        <button data-ivmode="resume">📄 Resume</button>
+        <button data-ivmode="hr">❓ HR Questions</button>
       </div>
-      <div id="ivRun" hidden>
-        <div class="toolbar">
-          <span id="ivProgress" class="small"></span>
-          <button id="ivEnd" class="ghost">End interview</button>
+
+      <!-- Pane: Interview -->
+      <div id="ivInterviewPane">
+        <div id="ivSetup">
+          <div class="pagehead"><h2>Interview Practice</h2><p class="small">Prepare for job interviews, IELTS speaking, or university admissions. The AI acts as your interviewer and gives detailed feedback after each answer.</p></div>
+          <div class="seg" id="ivTypeSwitch">
+            <button data-ivtype="job" class="on">💼 Job</button>
+            <button data-ivtype="ielts">📋 IELTS</button>
+            <button data-ivtype="university">🎓 University</button>
+            <button data-ivtype="general">💬 General</button>
+          </div>
+          <div id="ivRoleRow">
+            <input id="ivRole" placeholder="Job role (e.g. Software Engineer, Teacher, Sales Manager)" maxlength="80" style="width:100%;margin-bottom:12px;">
+          </div>
+          <button id="ivStart">Start interview →</button>
         </div>
-        <div id="ivLog" class="chatlog"></div>
-        <div class="row" id="ivRow">
-          <button id="ivMic" class="mic" title="Click to speak your answer">🎤 Speak</button>
-          <input id="ivInput" placeholder="Type your answer and press Enter…">
-          <button id="ivSend">Send</button>
+        <div id="ivRun" hidden>
+          <div class="toolbar">
+            <span id="ivProgress" class="small"></span>
+            <button id="ivEnd" class="ghost">End interview</button>
+          </div>
+          <div id="ivLog" class="chatlog"></div>
+          <div class="row" id="ivRow">
+            <button id="ivMic" class="mic" title="Click to speak your answer">🎤 Speak</button>
+            <input id="ivInput" placeholder="Type your answer and press Enter…">
+            <button id="ivSend" aria-label="Send">Send</button>
+          </div>
+          <p id="ivNote" class="small"></p>
         </div>
-        <p id="ivNote" class="small"></p>
+        <div id="ivSummary" hidden>
+          <div id="ivSummaryOut"></div>
+          <button id="ivAgain">Try another interview</button>
+        </div>
       </div>
-      <div id="ivSummary" hidden>
-        <div id="ivSummaryOut"></div>
-        <button id="ivAgain">Try another interview</button>
+
+      <!-- Pane: Resume Builder -->
+      <div id="ivResumePane" hidden>
+        <div class="pagehead"><h2>Resume Builder</h2><p class="small">Upload your old resume and let AI rewrite it for a new job, or type your details yourself. Then copy it, download it, or save it as a PDF.</p></div>
+        <div class="seg rv-source" id="rvSource">
+          <button type="button" data-rvsrc="upload" class="on">📤 Upload old resume</button>
+          <button type="button" data-rvsrc="manual">✍️ Enter details</button>
+        </div>
+        <div class="card rv-form">
+          <div class="rv-sec-title"><span class="rv-step">1</span> The job you want</div>
+          <label class="rv-fld"><span class="rv-label">Target job / role <span class="rv-req">*</span></span>
+            <input id="rvRole" placeholder="e.g. Sales Executive, Teacher, Software Engineer" maxlength="80" autocomplete="off">
+          </label>
+          <label class="rv-fld"><span class="rv-label">Job description <span class="rv-opt">optional · paste it from the job post so the resume matches it</span></span>
+            <textarea id="rvJD" rows="3" placeholder="Paste the job description here…" maxlength="3000"></textarea>
+          </label>
+
+          <div id="rvUploadBox">
+            <div class="rv-sec-title"><span class="rv-step">2</span> Your old resume</div>
+            <div id="rvDrop" class="rv-drop" tabindex="0" role="button" aria-label="Choose a resume file">
+              <div class="rv-drop-ico" aria-hidden="true">📄</div>
+              <b>Tap to choose a file</b>
+              <span>or drop it here</span>
+              <span class="small">PDF, Word (.docx) or text · up to 5 MB · your file is not saved</span>
+              <input type="file" id="rvFile" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" hidden>
+            </div>
+            <p id="rvFileInfo" class="small rv-info" role="status"></p>
+            <label class="rv-fld"><span class="rv-label">Text of your old resume <span class="rv-opt">check it and fix anything that looks wrong. You can also paste it here.</span></span>
+              <textarea id="rvOld" rows="8" maxlength="8000" placeholder="After you choose a file, its text appears here…"></textarea>
+            </label>
+            <label class="rv-fld"><span class="rv-label">What should change? <span class="rv-opt">optional</span></span>
+              <input id="rvChanges" placeholder="e.g. Make it shorter, for a fresher, focus on customer service" maxlength="400" autocomplete="off">
+            </label>
+          </div>
+
+          <div id="rvManualBox" hidden>
+            <div class="rv-sec-title"><span class="rv-step">2</span> Your background</div>
+            <label class="rv-fld"><span class="rv-label">Work experience <span class="rv-opt">write "Fresher" if you have none</span></span>
+              <textarea id="rvExp" rows="4" placeholder="e.g. Sales Executive at ABC Pvt. Ltd. (2022–2024): increased sales by 30%, managed a team of 5." maxlength="2000"></textarea>
+            </label>
+            <label class="rv-fld"><span class="rv-label">Key skills</span>
+              <input id="rvSkills" placeholder="e.g. Communication, MS Excel, Customer service, Team leadership" maxlength="500" autocomplete="off">
+            </label>
+            <label class="rv-fld"><span class="rv-label">Education</span>
+              <input id="rvEdu" placeholder="e.g. B.Com, Delhi University (2022); 12th, ABC School (2019)" maxlength="400" autocomplete="off">
+            </label>
+            <label class="rv-fld"><span class="rv-label">Certificates, projects, languages <span class="rv-opt">optional</span></span>
+              <textarea id="rvExtras" rows="2" placeholder="e.g. Tally certificate (2023); Languages: Hindi, English" maxlength="800"></textarea>
+            </label>
+            <label class="rv-fld"><span class="rv-label">Objective / summary <span class="rv-opt">optional · AI writes one if blank</span></span>
+              <textarea id="rvObj" rows="2" placeholder="A short professional objective…" maxlength="500"></textarea>
+            </label>
+          </div>
+
+          <div class="rv-sec-title"><span class="rv-step" id="rvStepContact">3</span> Contact details <span class="rv-opt" id="rvContactHint">shown at the top of your resume</span></div>
+          <div class="rv-photo-row">
+            <div class="rv-photo" id="rvPhotoBox"><img id="rvPhotoImg" alt="Your photo" hidden><span id="rvPhotoPh" aria-hidden="true">👤</span></div>
+            <div class="rv-photo-info">
+              <b>Photo <span class="rv-opt">optional</span></b>
+              <span class="small">Shown on your resume. It stays on this device and is never sent to the AI or saved on our server.</span>
+              <div class="rv-photo-btns">
+                <button type="button" class="chipbtn" id="rvPhotoPick">📷 Add photo</button>
+                <button type="button" class="chipbtn" id="rvPhotoRemove" hidden>🗑 Remove</button>
+                <span class="seg rv-shape" id="rvPhotoShape"><button type="button" data-shape="square" class="on">Square</button><button type="button" data-shape="round">Round</button></span>
+              </div>
+              <input type="file" id="rvPhotoFile" accept="image/*" hidden>
+              <p id="rvPhotoErr" class="err small"></p>
+            </div>
+          </div>
+          <div class="rv-grid">
+            <label class="rv-fld"><span class="rv-label">Full name</span>
+              <input id="rvName" placeholder="Your full name" maxlength="60" autocomplete="name"></label>
+            <label class="rv-fld"><span class="rv-label">Phone</span>
+              <input id="rvPhone" type="tel" placeholder="+91 98765 43210" maxlength="25" autocomplete="tel"></label>
+            <label class="rv-fld"><span class="rv-label">Email</span>
+              <input id="rvEmail" type="email" placeholder="name@example.com" maxlength="80" autocomplete="email"></label>
+            <label class="rv-fld"><span class="rv-label">City</span>
+              <input id="rvCity" placeholder="e.g. Pune, Maharashtra" maxlength="60" autocomplete="address-level2"></label>
+            <label class="rv-fld rv-wide"><span class="rv-label">LinkedIn / portfolio <span class="rv-opt">optional</span></span>
+              <input id="rvLinks" placeholder="linkedin.com/in/yourname" maxlength="160" autocomplete="off"></label>
+          </div>
+          <p id="rvErr" class="err small"></p>
+          <button id="rvBuild" type="button" class="rv-build">✨ Build my resume</button>
+        </div>
+        <div id="rvOut"></div>
+      </div>
+
+      <!-- Pane: HR Questions -->
+      <div id="ivHRPane" hidden>
+        <div class="pagehead"><h2>HR Interview Questions</h2><p class="small">Study the most common HR questions. Click any question to see a tip on how to answer it, or click Practice to answer with AI feedback and a sample answer.</p></div>
+        <div id="ivHRList"></div>
+        <div id="ivHRPractice" hidden>
+          <div class="toolbar">
+            <span id="hrPracticeTitle" class="small hr-practice-label"></span>
+            <button id="hrPracticeBack" class="ghost">← Back to questions</button>
+          </div>
+          <div id="hrPracticeLog" class="chatlog"></div>
+          <div class="row">
+            <input id="hrPracticeInput" placeholder="Type your answer and press Enter…" autocomplete="off">
+            <button id="hrPracticeSend">Send</button>
+          </div>
+        </div>
       </div>
     </section>
     <section id="groupchat" class="tab">
@@ -267,7 +402,7 @@
       <div id="gcLog" class="chatlog gclog"></div>
       <div class="row">
         <input id="gcInput" maxlength="500" placeholder="Write a message in English…" autocomplete="off">
-        <button id="gcSend">Send</button>
+        <button id="gcSend" aria-label="Send">Send</button>
       </div>
       <p id="gcBanner" class="gcbanner" hidden></p>
       <p id="gcErr" class="err small"></p>
@@ -348,6 +483,18 @@
     </section>
   </main>
 
+  <div class="footer-prebanner">
+    <div class="footer-prebanner-inner">
+      <div class="fp-stat"><span class="fp-num">AI</span><span class="fp-label">Speaking Coach</span></div>
+      <div class="fp-div"></div>
+      <div class="fp-stat"><span class="fp-num">10+</span><span class="fp-label">Learning Tools</span></div>
+      <div class="fp-div"></div>
+      <div class="fp-stat"><span class="fp-num">Free</span><span class="fp-label">Forever</span></div>
+      <div class="fp-div"></div>
+      <div class="fp-stat"><span class="fp-num">🏆</span><span class="fp-label">Build confidence</span></div>
+    </div>
+  </div>
+
   <footer class="site-footer">
     <div class="footer-glow"></div>
     <div class="footer-inner">
@@ -355,7 +502,8 @@
         <div class="footer-logo-badge">🎓</div>
         <div>
           <div class="footer-title">Speakeasy Academy</div>
-          <div class="footer-tagline">AI-powered English coach for speaking, grammar &amp; tests</div>
+          <div class="footer-tagline">Your personal AI English coach — speak, write and grow with confidence every day.</div>
+          <div class="footer-mission">🌟 Built for Indian English learners who want to speak confidently at work and in life.</div>
           <div class="footer-by">By <strong>Gourav Kumar</strong> &middot; Software Developer</div>
           <a href="https://github.com/codewithgourav2004" target="_blank" rel="noopener" class="footer-gh">⌨ GitHub</a>
         </div>
@@ -369,6 +517,8 @@
           <li><span>🔤</span> Hindi → English</li>
           <li><span>👥</span> Group Chat</li>
           <li><span>🎤</span> Interview Prep</li>
+          <li><span>📄</span> Resume Builder</li>
+          <li><span>❓</span> HR Questions</li>
         </ul>
       </div>
       <div class="footer-col">
@@ -376,6 +526,13 @@
         <div class="footer-tags">
           <span>Node.js</span><span>Express.js</span><span>Gemini AI</span>
           <span>MongoDB</span><span>Web Speech API</span><span>Vanilla JS</span>
+        </div>
+        <div class="footer-label" style="margin-top:20px">Quick access</div>
+        <div class="footer-quick">
+          <button class="footer-quick-btn" data-tab="speak">💬 Speak</button>
+          <button class="footer-quick-btn" data-tab="grammar">✏️ Grammar</button>
+          <button class="footer-quick-btn" data-tab="test">📝 Test</button>
+          <button class="footer-quick-btn" data-tab="interview">🎤 Interview</button>
         </div>
       </div>
       <div class="footer-col">
@@ -387,11 +544,12 @@
         </div>
         <button type="button" id="enquiryBtn" class="enquiry-btn">✉️ Send an enquiry</button>
         <div class="footer-cta">Need a website? <a href="mailto:gk154139@gmail.com">Get in touch &rarr;</a></div>
+        <div class="footer-quote">"The limits of my language mean the limits of my world."<span class="footer-quote-by">— Wittgenstein</span></div>
       </div>
     </div>
     <div class="footer-bottom">
       <span>&copy; 2025 <strong>Gourav Kumar</strong> &middot; Speakeasy Academy</span>
-      <span class="footer-love">Made with ♥ for English learners</span>
+      <span class="footer-love">Made with ♥ for English learners across India</span>
     </div>
   </footer>
 

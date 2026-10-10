@@ -22,6 +22,7 @@ const LABELS = { tense: "Tenses", modals: "Modals", passive: "Passive voice", na
   articles: "Articles", prepositions: "Prepositions", conditionals: "Conditionals", agreement: "Subject-verb agreement",
   relatives: "Relative clauses", comparison: "Comparison", conjunctions: "Conjunctions", tags: "Question tags",
   translation: "Hindi → English" };
+const TOPIC_ICONS = { tense:"⏰", modals:"🔧", passive:"🔄", narration:"💬", nonfinites:"📎", articles:"📰", prepositions:"📍", conditionals:"❓", agreement:"⚖️", relatives:"🔗", comparison:"📊", conjunctions:"🧩", tags:"🏷️", translation:"🔤" };
 
 // If the server no longer knows this student (e.g. its data was moved or reset), sign them in again quietly
 // with the details saved in this browser instead of throwing them back to the sign-in box.
@@ -334,10 +335,23 @@ if (!SR) {
     rec.start();
   };
 }
-// Wire grammar example chipbtns
-document.querySelectorAll("#gExamples .chipbtn").forEach((b) => {
-  b.onclick = () => { $("#gText").value = b.dataset.ex; $("#gBtn").focus(); };
-});
+// Grammar: live counter + clear button
+const gText = $("#gText"), gCounter = $("#gCounter");
+function updateGCounter() {
+  const n = gText.value.length;
+  gCounter.textContent = n ? `${n} chars` : "0 chars";
+  gCounter.classList.toggle("g-counter-warn", n > 450);
+}
+gText.addEventListener("input", updateGCounter);
+$("#gClear").onclick = () => { gText.value = ""; $("#gOut").innerHTML = ""; updateGCounter(); gText.focus(); };
+
+document.getElementById("gExamples").onclick = (e) => {
+  const b = e.target.closest("[data-ex]");
+  if (!b) return;
+  gText.value = b.dataset.ex;
+  updateGCounter();
+  gText.focus();
+};
 
 // ---- Grammar check ----
 function tag(label, val) {
@@ -346,45 +360,59 @@ function tag(label, val) {
 $("#gBtn").onclick = async () => {
   const out = $("#gOut");
   $("#gBtn").disabled = true;
-  out.textContent = "Analysing…";
+  out.innerHTML = `<div class="g-loading"><span class="g-spin">🔍</span> Analysing your text…</div>`;
   try {
-    const r = await api("/api/grammar", { text: $("#gText").value, studentId: student?.id });
+    const r = await api("/api/grammar", { text: gText.value, studentId: student?.id });
+    const sentences = r.sentences || [];
+    const totalErr = sentences.reduce((n, s) => n + (s.errors?.length || 0), 0);
+    const pct = sentences.length ? Math.round(((sentences.length - sentences.filter((s) => s.errors?.length).length) / sentences.length) * 100) : 100;
+    const scoreClass = pct >= 80 ? "g-score-good" : pct >= 50 ? "g-score-mid" : "g-score-bad";
+    const scoreEmoji = pct >= 80 ? "🟢" : pct >= 50 ? "🟡" : "🔴";
     out.innerHTML =
-      `<div class="card"><b>Corrected text</b><p>${esc(r.correctedText)}</p></div>` +
-      (r.sentences || []).map((s) => `
-        <div class="card">
-          <div class="g-sentence">${esc(s.text)}</div>
-          <div class="tags">
-            ${tag("Tense", s.tense)}
-            ${tag("Aspect", s.aspect)}
-            ${tag("Voice", s.voice)}
-            ${tag("Mood", s.mood)}
-            ${tag("Speech", s.speech)}
-            ${s.conditional && s.conditional !== "none" ? tag("Conditional", s.conditional + " conditional") : ""}
-            ${(s.clauses || []).map((c) => `<span>Clause: <b>${esc(c)}</b></span>`).join("")}
+      `<div class="card g-summary-card">
+        <div class="g-summary-row">
+          <div class="g-score-ring ${scoreClass}"><span>${pct}%</span></div>
+          <div class="g-summary-text">
+            <b>${totalErr === 0 ? "No errors found!" : `${totalErr} error${totalErr > 1 ? "s" : ""} found`}</b>
+            <span class="small">${scoreEmoji} ${sentences.length} sentence${sentences.length !== 1 ? "s" : ""} analysed</span>
           </div>
-          ${(s.modals || []).length ? `
-            <div class="g-section"><span class="g-label">Modals</span>
-              <div class="tags">${s.modals.map((m) => `<span><b>${esc(m.word)}</b> — ${esc(m.meaning)}</span>`).join("")}</div>
-            </div>` : ""}
-          ${(s.nonFinites || []).length ? `
-            <div class="g-section"><span class="g-label">Non-finites</span>
-              <div class="tags">${s.nonFinites.map((n) => `<span><b>${esc(n.word)}</b> (${esc(n.form)}) — ${esc(n.function)}</span>`).join("")}</div>
-            </div>` : ""}
-          ${(s.connectors || []).length ? `
-            <div class="g-section"><span class="g-label">Connectors</span>
-              <div class="tags">${s.connectors.map((c) => `<span><b>${esc(c.word)}</b> — ${esc(c.type)}</span>`).join("")}</div>
-            </div>` : ""}
-          ${(s.articles || []).filter((a) => !a.correct).length ? `
-            <div class="g-section"><span class="g-label">Articles</span>
-              <div class="tags">${s.articles.filter((a) => !a.correct).map((a) => `<span class="g-art-err">"${esc(a.used)}" before <b>${esc(a.noun)}</b> — ${esc(a.note)}</span>`).join("")}</div>
-            </div>` : ""}
-          ${(s.errors || []).length
-            ? `<div class="g-section"><span class="g-label">Errors</span>` +
-              s.errors.map((e) => `<p class="err g-err"><span class="g-cat">${esc(e.category)}</span> ${esc(e.issue)} → <b>${esc(e.fix)}</b><br><span class="small">${esc(e.explanation)}</span></p>`).join("") +
-              `</div>`
-            : '<p class="ok">✓ No errors</p>'}
-        </div>`).join("");
+        </div>
+        <div class="g-corrected-head">
+          <span class="g-label">✅ Corrected text</span>
+          <button type="button" class="ghost g-copy-btn" id="gCopyBtn" title="Copy corrected text">📋 Copy</button>
+        </div>
+        <p class="g-corrected-text" id="gCorrected">${esc(r.correctedText)}</p>
+      </div>` +
+      sentences.map((s, i) => `
+        <details class="card g-sent-card" ${sentences.length === 1 ? "open" : ""}>
+          <summary class="g-sent-sum">
+            <span class="g-sent-n">${i + 1}</span>
+            <span class="g-sent-text">${esc(s.text.length > 70 ? s.text.slice(0, 70) + "…" : s.text)}</span>
+            ${(s.errors?.length) ? `<span class="g-err-badge">${s.errors.length} error${s.errors.length > 1 ? "s" : ""}</span>` : `<span class="g-ok-badge">✓ OK</span>`}
+          </summary>
+          <div class="g-sent-body">
+            <div class="tags g-tags-row">
+              ${tag("Tense", s.tense)}${tag("Aspect", s.aspect)}${tag("Voice", s.voice)}${tag("Mood", s.mood)}${tag("Speech", s.speech)}
+              ${s.conditional && s.conditional !== "none" ? tag("Conditional", s.conditional + " conditional") : ""}
+              ${(s.clauses || []).map((c) => `<span>Clause: <b>${esc(c)}</b></span>`).join("")}
+            </div>
+            ${(s.modals || []).length ? `<div class="g-section"><span class="g-label">🔧 Modals</span><div class="tags">${s.modals.map((m) => `<span><b>${esc(m.word)}</b> — ${esc(m.meaning)}</span>`).join("")}</div></div>` : ""}
+            ${(s.nonFinites || []).length ? `<div class="g-section"><span class="g-label">📎 Non-finites</span><div class="tags">${s.nonFinites.map((n) => `<span><b>${esc(n.word)}</b> (${esc(n.form)}) — ${esc(n.function)}</span>`).join("")}</div></div>` : ""}
+            ${(s.connectors || []).length ? `<div class="g-section"><span class="g-label">🧩 Connectors</span><div class="tags">${s.connectors.map((c) => `<span><b>${esc(c.word)}</b> — ${esc(c.type)}</span>`).join("")}</div></div>` : ""}
+            ${(s.articles || []).filter((a) => !a.correct).length ? `<div class="g-section"><span class="g-label">📰 Articles</span><div class="tags">${s.articles.filter((a) => !a.correct).map((a) => `<span class="g-art-err">"${esc(a.used)}" before <b>${esc(a.noun)}</b> — ${esc(a.note)}</span>`).join("")}</div></div>` : ""}
+            ${(s.errors || []).length
+              ? `<div class="g-section"><span class="g-label err">⚠️ Errors</span>` +
+                s.errors.map((e) => `<div class="g-err-item"><div class="g-err-top"><span class="g-cat">${esc(e.category)}</span><span class="g-err-issue">${esc(e.issue)}</span><span class="g-err-arrow">→</span><b class="g-err-fix">${esc(e.fix)}</b></div><p class="small g-err-explain">${esc(e.explanation)}</p></div>`).join("") +
+                `</div>`
+              : `<p class="g-noerr"><span>✅</span> No errors in this sentence — well done!</p>`}
+          </div>
+        </details>`).join("");
+    document.getElementById("gCopyBtn").onclick = () => {
+      navigator.clipboard?.writeText(r.correctedText).then(() => {
+        const btn = document.getElementById("gCopyBtn"); btn.textContent = "✅ Copied!";
+        setTimeout(() => { if (btn) btn.textContent = "📋 Copy"; }, 2000);
+      });
+    };
   } catch (e) {
     out.innerHTML = `<p class="err">${esc(e.message)}</p>`;
   } finally {
@@ -412,16 +440,26 @@ async function loadTestSetup() {
   $("#testRun").hidden = $("#testResult").hidden = true;
   $("#trTestRun").hidden = $("#trTestResult").hidden = true;
   const topics = await api("/api/topics");
-  $("#topicBoxes").innerHTML = topics.map((t) => `<label><input type="checkbox" value="${t.id}" checked> ${LABELS[t.id] || t.id}</label>`).join("");
+  $("#topicBoxes").innerHTML = topics.map((t) => `<label><input type="checkbox" value="${t.id}" checked><span class="topic-icon">${TOPIC_ICONS[t.id] || "📚"}</span> ${LABELS[t.id] || t.id}</label>`).join("");
   updateTopicCount();
   const rec = await api(`/api/students/${student.id}/difficulty`);
   const recName = rec.recommended[0].toUpperCase() + rec.recommended.slice(1);
   $("#tDiff").options[0].textContent = `Auto: ${recName} (recommended)`;
   $("#diffHint").innerHTML = `Recommended for you: ${levelPill(rec.recommended)} based on your level (<b>${esc(rec.level)}</b>)${rec.age != null ? ` and age <b>${rec.age}</b>` : ""}. Auto mixes in some easier and harder questions.`;
   const hist = await api(`/api/results?studentId=${student.id}`);
+  if (hist.length) {
+    const best = hist.reduce((b, h) => Math.round((h.score / h.total) * 100) > Math.round((b.score / b.total) * 100) ? h : b, hist[0]);
+    const bestPct = Math.round((best.score / best.total) * 100);
+    const hs = document.getElementById("testHeroStats");
+    if (hs) hs.innerHTML = `<div class="test-hero-stat"><b>${hist.length}</b><span>Tests taken</span></div><div class="test-hero-stat test-hero-best"><b>${bestPct}%</b><span>Best score</span></div>`;
+  }
   $("#history").innerHTML = hist.length
-    ? hist.map((h) => `<div class="small">${h.score}/${h.total} ${h.difficulty ? levelPill(h.difficulty) : ""} — ${new Date(h.date).toLocaleString()}</div>`).join("")
-    : '<div class="small">No attempts yet.</div>';
+    ? hist.slice(0, 8).map((h) => {
+        const pct = Math.round((h.score / h.total) * 100);
+        const cls = pct >= 80 ? "ok" : pct >= 50 ? "hist-mid" : "bad";
+        return `<div class="hist-card"><div class="hist-score-wrap"><span class="hist-score ${cls}">${h.score}<span class="hist-denom">/${h.total}</span></span>${h.difficulty ? levelPill(h.difficulty) : ""}</div><div class="hist-bar-wrap"><div class="bar"><div style="width:${pct}%"></div></div><span class="small hist-date">${new Date(h.date).toLocaleDateString(undefined,{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"})}</span></div></div>`;
+      }).join("")
+    : '<div class="small hist-empty">✨ No attempts yet — take your first test!</div>';
   if (testMode === "translation") loadTrHistory();
 }
 
@@ -859,7 +897,7 @@ async function submitTest() {
   $("#tAgain").onclick = loadTestSetup;
 }
 
-$("#gExamples").onclick = (e) => { if (e.target.dataset.ex) { $("#gText").value = e.target.dataset.ex; $("#gText").focus(); } };
+// gExamples handler is set up near the grammar section above
 
 // ---- Discussion & presentation topics ----
 let disc = null, discMode = "gd", discCat = "All";
@@ -979,22 +1017,57 @@ document.getElementById("diceSoundBtn")?.addEventListener("click", () => {
 });
 syncDiceSoundBtn();
 
+let diceTapped = false;
+function diceBurst() {
+  const bar = document.getElementById("topicCubeWrap"), scene = document.getElementById("cubeScene");
+  if (!bar || !scene || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const b = bar.getBoundingClientRect(), c = scene.getBoundingClientRect();
+  const cx = c.left - b.left + c.width / 2, cy = c.top - b.top + c.height / 2;
+  const colors = ["#8b8bff", "#c084fc", "#f472b6", "#facc15", "#34d399", "#60a5fa"];
+  for (let i = 0; i < 22; i++) {
+    const p = document.createElement("span");
+    p.className = "dice-confetti";
+    p.style.cssText = `left:${cx}px;top:${cy}px;background:${colors[i % colors.length]};${i % 3 === 0 ? "border-radius:50%;" : ""}`;
+    bar.append(p);
+    const ang = (Math.PI * 2 * i) / 22 + Math.random() * 0.5, dist = 46 + Math.random() * 70;
+    p.animate([
+      { transform: "translate(-50%,-50%) scale(1) rotate(0deg)", opacity: 1 },
+      { transform: `translate(calc(-50% + ${Math.cos(ang) * dist}px), calc(-50% + ${Math.sin(ang) * dist - 18}px)) scale(.9) rotate(${Math.random() * 540}deg)`, opacity: 1, offset: 0.65 },
+      { transform: `translate(calc(-50% + ${Math.cos(ang) * dist * 1.1}px), calc(-50% + ${Math.sin(ang) * dist + 26}px)) scale(.4) rotate(${Math.random() * 720}deg)`, opacity: 0 },
+    ], { duration: 900 + Math.random() * 400, easing: "cubic-bezier(.2,.7,.3,1)" }).onfinish = () => p.remove();
+  }
+}
 function spinCube() {
-  const cube = document.getElementById("topicCube");
+  const scene = document.getElementById("cubeScene"), cube = document.getElementById("topicCube");
   if (!cube || cube.dataset.spinning === "1") return;
   const items = discItems();
   if (!items.length) return;
   const picked = items[Math.floor(Math.random() * items.length)];
   const title = discMode === "gd" ? picked.topic : picked.title;
+  diceTapped = true;
+  scene.classList.remove("nudge", "landed");
+  clearTimeout(cube._rest);
+  // start from the front face, then tumble on all three axes
+  cube.classList.add("rolling");
+  cube.style.transition = "none"; cube.style.transform = "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
+  void cube.offsetWidth;
+  cube.style.transition = "";
   cube.dataset.spinning = "1";
+  scene.classList.add("rolling");
   playDiceRoll();
   $("#cubePicked").textContent = "Rolling…";
-  cubeRotY += (2 + Math.floor(Math.random() * 3)) * 360;
-  cube.style.transform = `rotateX(${cubeRotY}deg) rotateY(${cubeRotY}deg)`;
+  $("#cubePicked").classList.remove("pop");
+  const turns = (min, max) => (min + Math.floor(Math.random() * (max - min + 1))) * 360;
+  cube.style.transform = `rotateX(${turns(3, 5)}deg) rotateY(${turns(4, 6)}deg) rotateZ(${turns(1, 2)}deg)`;
   setTimeout(() => {
     cube.dataset.spinning = "0";
+    scene.classList.remove("rolling");
+    scene.classList.add("landed");
+    diceBurst();
     playDiceDone();
-    $("#cubePicked").innerHTML = `🎯 <b>${esc(title)}</b>`;
+    const label = $("#cubePicked");
+    label.innerHTML = `🎯 <b>${esc(title)}</b>`;
+    void label.offsetWidth; label.classList.add("pop");
     document.querySelectorAll("#discOut details.topic").forEach((d) => { d.open = false; d.classList.remove("cube-picked"); });
     const el = document.getElementById(`topic-${picked.idx}`);
     if (el) {
@@ -1003,8 +1076,21 @@ function spinCube() {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
       setTimeout(() => el.classList.remove("cube-picked"), 3000);
     }
+    // after a moment the dice goes back to floating and tumbling on its own
+    cube._rest = setTimeout(() => {
+      scene.classList.remove("landed");
+      cube.style.transition = "none"; cube.style.transform = ""; cube.classList.remove("rolling");
+      void cube.offsetWidth; cube.style.transition = "";
+    }, 2600);
   }, 1250);
 }
+// until someone taps it, the dice gives a little wiggle every few seconds
+setInterval(() => {
+  const scene = document.getElementById("cubeScene");
+  if (diceTapped || !scene || !scene.offsetParent || scene.classList.contains("rolling")) return;
+  scene.classList.add("nudge");
+  setTimeout(() => scene.classList.remove("nudge"), 1000);
+}, 6000);
 document.getElementById("cubeScene")?.addEventListener("click", spinCube);
 
 async function generatePresentation() {
@@ -1273,6 +1359,9 @@ function closeEnquiry() {
   $("#enqMsg").className = "small";
 }
 $("#enquiryBtn").onclick = openEnquiry;
+document.querySelectorAll(".footer-quick-btn").forEach((btn) => {
+  btn.onclick = () => openTab(btn.dataset.tab);
+});
 $("#enquiryClose").onclick = closeEnquiry;
 $("#enquiryModal").addEventListener("mousedown", (e) => { if (e.target.id === "enquiryModal") closeEnquiry(); }); // click outside the box
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#enquiryModal").hidden) closeEnquiry(); });
@@ -2350,6 +2439,411 @@ if (SR) {
   document.getElementById("ivNote").textContent = "Speech recognition isn't supported in this browser. Use Chrome or Edge, or type instead.";
 }
 
+// ---- Interview: top-level mode switch ----
+document.getElementById("ivModeSwitch").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-ivmode]");
+  if (!btn) return;
+  const mode = btn.dataset.ivmode;
+  document.querySelectorAll("#ivModeSwitch [data-ivmode]").forEach((b) => b.classList.toggle("on", b === btn));
+  document.getElementById("ivInterviewPane").hidden = mode !== "interview";
+  document.getElementById("ivResumePane").hidden = mode !== "resume";
+  document.getElementById("ivHRPane").hidden = mode !== "hr";
+  if (mode === "hr") renderHRQuestions();
+});
+
+// ---- Resume Builder: upload an old resume or type your details ----
+let rvSrc = "upload", rvText = "";
+const RV_FIELDS = ["rvRole", "rvJD", "rvOld", "rvChanges", "rvExp", "rvSkills", "rvEdu", "rvExtras", "rvObj", "rvName", "rvPhone", "rvEmail", "rvCity", "rvLinks"];
+const rvEl = (id) => document.getElementById(id);
+
+function rvSetSource(src) {
+  rvSrc = src;
+  document.querySelectorAll("#rvSource button").forEach((b) => b.classList.toggle("on", b.dataset.rvsrc === src));
+  rvEl("rvUploadBox").hidden = src !== "upload";
+  rvEl("rvManualBox").hidden = src !== "manual";
+  rvEl("rvStepContact").textContent = "3";
+  rvEl("rvContactHint").textContent = src === "upload" ? "add or fix; otherwise they are taken from your old resume" : "shown at the top of your resume";
+  rvEl("rvBuild").textContent = src === "upload" ? "✨ Rewrite my resume" : "✨ Build my resume";
+}
+rvEl("rvSource").addEventListener("click", (e) => { const b = e.target.closest("[data-rvsrc]"); if (b) { rvSetSource(b.dataset.rvsrc); rvSaveDraft(); } });
+
+// keep what the student typed, so a refresh does not lose it
+function rvSaveDraft() {
+  try { localStorage.setItem("rvDraft", JSON.stringify({ src: rvSrc, ...Object.fromEntries(RV_FIELDS.map((id) => [id, rvEl(id).value])) })); } catch {}
+}
+function rvLoadDraft() {
+  let d = {};
+  try { d = JSON.parse(localStorage.getItem("rvDraft") || "{}"); } catch {}
+  for (const id of RV_FIELDS) if (d[id]) rvEl(id).value = d[id];
+  // first visit: fill the contact details we already know
+  if (!rvEl("rvName").value && student) rvEl("rvName").value = student.name || "";
+  if (!rvEl("rvPhone").value && student?.phone) rvEl("rvPhone").value = student.phone;
+  if (!rvEl("rvEmail").value && student?.email) rvEl("rvEmail").value = student.email;
+  if (!rvEl("rvCity").value && student?.city) rvEl("rvCity").value = student.city;
+  rvSetSource(d.src === "manual" ? "manual" : "upload");
+}
+RV_FIELDS.forEach((id) => rvEl(id).addEventListener("input", rvSaveDraft));
+rvLoadDraft();
+
+// ---- choose / drop a file ----
+const rvDrop = rvEl("rvDrop"), rvFile = rvEl("rvFile");
+rvDrop.addEventListener("click", () => rvFile.click());
+rvDrop.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); rvFile.click(); } });
+["dragenter", "dragover"].forEach((ev) => rvDrop.addEventListener(ev, (e) => { e.preventDefault(); rvDrop.classList.add("over"); }));
+["dragleave", "drop"].forEach((ev) => rvDrop.addEventListener(ev, (e) => { e.preventDefault(); rvDrop.classList.remove("over"); }));
+rvDrop.addEventListener("drop", (e) => { if (e.dataTransfer?.files?.[0]) rvReadFile(e.dataTransfer.files[0]); });
+rvFile.addEventListener("change", () => { if (rvFile.files[0]) rvReadFile(rvFile.files[0]); rvFile.value = ""; });
+
+function rvToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onerror = () => reject(new Error("Could not open that file."));
+    r.onload = () => { const bytes = new Uint8Array(r.result); let s = ""; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000)); resolve(btoa(s)); };
+    r.readAsArrayBuffer(file);
+  });
+}
+async function rvReadFile(file) {
+  const info = rvEl("rvFileInfo");
+  info.className = "small rv-info";
+  if (!student) return showWelcome();
+  if (file.size > 5 * 1024 * 1024) { info.textContent = "❌ That file is too large. Please use a file under 5 MB."; info.classList.add("bad"); return; }
+  if (!/\.(pdf|docx|txt)$/i.test(file.name)) { info.textContent = "❌ Please choose a PDF, a Word (.docx) or a text (.txt) file."; info.classList.add("bad"); return; }
+  info.textContent = `⏳ Reading ${file.name}…`;
+  rvDrop.classList.add("busy");
+  try {
+    const data = await rvToBase64(file);
+    const r = await api("/api/resume/extract", { studentId: student.id, filename: file.name, data });
+    rvEl("rvOld").value = r.text;
+    info.textContent = `✅ Read ${r.text.length.toLocaleString()} characters from ${file.name}.${r.truncated ? " It was long, so only the first part is used." : ""} Please check the text below.`;
+    info.classList.add("ok");
+    rvSaveDraft();
+  } catch (err) {
+    info.textContent = "❌ " + err.message; info.classList.add("bad");
+  } finally { rvDrop.classList.remove("busy"); }
+}
+
+// ---- photo: cropped to a square on this device, never uploaded ----
+let rvPhoto = "", rvShape = "square";
+try { rvPhoto = localStorage.getItem("rvPhoto") || ""; rvShape = localStorage.getItem("rvShape") === "round" ? "round" : "square"; } catch {}
+function rvPhotoSync() {
+  const img = rvEl("rvPhotoImg"), box = rvEl("rvPhotoBox");
+  img.hidden = !rvPhoto; rvEl("rvPhotoPh").hidden = !!rvPhoto;
+  if (rvPhoto) img.src = rvPhoto;
+  box.classList.toggle("round", rvShape === "round");
+  rvEl("rvPhotoRemove").hidden = !rvPhoto;
+  rvEl("rvPhotoPick").textContent = rvPhoto ? "📷 Change photo" : "📷 Add photo";
+  document.querySelectorAll("#rvPhotoShape button").forEach((b) => b.classList.toggle("on", b.dataset.shape === rvShape));
+  const paper = rvEl("rvPaper");
+  if (paper && !paper.hidden && rvText) paper.innerHTML = rvToHTML(rvText);
+}
+function rvPhotoSave() { try { rvPhoto ? localStorage.setItem("rvPhoto", rvPhoto) : localStorage.removeItem("rvPhoto"); localStorage.setItem("rvShape", rvShape); } catch {} }
+function rvCropPhoto(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("I could not open that picture. Please try a JPG or PNG.")); };
+    img.onload = () => {
+      const side = Math.min(img.naturalWidth, img.naturalHeight), sx = (img.naturalWidth - side) / 2;
+      const sy = (img.naturalHeight - side) * (img.naturalHeight > img.naturalWidth ? 0.2 : 0.5); // portraits: keep the face, trim from the bottom
+      const c = document.createElement("canvas"); c.width = c.height = 360;
+      const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, 360, 360);
+      ctx.drawImage(img, sx, sy, side, side, 0, 0, 360, 360);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL("image/jpeg", 0.86));
+    };
+    img.src = url;
+  });
+}
+rvEl("rvPhotoPick").onclick = () => rvEl("rvPhotoFile").click();
+rvEl("rvPhotoBox").onclick = () => rvEl("rvPhotoFile").click();
+rvEl("rvPhotoRemove").onclick = () => { rvPhoto = ""; rvPhotoSave(); rvPhotoSync(); };
+rvEl("rvPhotoShape").addEventListener("click", (e) => { const b = e.target.closest("[data-shape]"); if (b) { rvShape = b.dataset.shape; rvPhotoSave(); rvPhotoSync(); } });
+rvEl("rvPhotoFile").addEventListener("change", async () => {
+  const f = rvEl("rvPhotoFile").files[0], err = rvEl("rvPhotoErr");
+  rvEl("rvPhotoFile").value = ""; err.textContent = "";
+  if (!f) return;
+  if (!/^image\//.test(f.type)) { err.textContent = "Please choose a picture (JPG or PNG)."; return; }
+  if (f.size > 15 * 1024 * 1024) { err.textContent = "That picture is too large. Please choose one under 15 MB."; return; }
+  try { rvPhoto = await rvCropPhoto(f); rvPhotoSave(); rvPhotoSync(); } catch (e) { err.textContent = e.message; }
+});
+rvPhotoSync();
+
+// ---- turn the plain-text resume into a tidy page ----
+function rvToHTML(text) {
+  const lines = text.replace(/\r/g, "").split("\n");
+  let html = "", head = "", list = false, seenName = false, seenContact = false;
+  const closeList = () => { if (list) { html += "</ul>"; list = false; } };
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) { closeList(); continue; }
+    if (!seenName) { head += `<h1 class="rv-name">${esc(line)}</h1>`; seenName = true; continue; }
+    if (!seenContact && !/^[–\-•*]\s/.test(line) && !/^[A-Z][A-Z0-9 &/,()+\-]{2,}$/.test(line)) { head += `<div class="rv-contact">${esc(line)}</div>`; seenContact = true; continue; }
+    seenContact = true;
+    if (/^[A-Z][A-Z0-9 &/,()+\-]{2,}$/.test(line)) { closeList(); html += `<h2 class="rv-h">${esc(line)}</h2>`; continue; }
+    const bullet = line.match(/^[–\-•*]\s+(.*)$/);
+    if (bullet) { if (!list) { html += "<ul>"; list = true; } html += `<li>${esc(bullet[1])}</li>`; continue; }
+    closeList(); html += `<p>${esc(line)}</p>`;
+  }
+  closeList();
+  const photo = rvPhoto ? `<img class="rv-photo-img ${rvShape}" src="${rvPhoto}" alt="Photo">` : "";
+  return (photo ? `<div class="rv-head"><div class="rv-head-text">${head}</div>${photo}</div>` : head) + html;
+}
+const RV_PRINT_CSS = "@page{size:A4;margin:16mm}body{font-family:Calibri,Arial,Helvetica,sans-serif;color:#111;font-size:11pt;line-height:1.45;margin:0}h1{font-size:22pt;margin:0 0 2pt}.rv-contact{color:#444;font-size:10pt;margin-bottom:8pt}h2{font-size:11pt;letter-spacing:.06em;border-bottom:1.2pt solid #333;padding-bottom:2pt;margin:12pt 0 5pt}p{margin:3pt 0}ul{margin:3pt 0 3pt 16pt;padding:0}li{margin:2pt 0}.rv-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14pt}.rv-head-text{flex:1;min-width:0}.rv-photo-img{width:30mm;height:30mm;object-fit:cover;border:1pt solid #ccc;flex:none}.rv-photo-img.round{border-radius:50%}";
+function rvPrint() {
+  const frame = document.createElement("iframe");
+  frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0";
+  document.body.append(frame);
+  const doc = frame.contentWindow.document;
+  doc.open(); doc.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(rvEl("rvName").value || "Resume")}</title><style>${RV_PRINT_CSS}</style></head><body>${rvToHTML(rvText)}</body></html>`); doc.close();
+  setTimeout(() => { frame.contentWindow.focus(); frame.contentWindow.print(); setTimeout(() => frame.remove(), 1500); }, 250);
+}
+function rvDownload() {
+  const name = (rvEl("rvName").value || "resume").trim().replace(/[^\w\- ]+/g, "").replace(/\s+/g, "_") || "resume";
+  const url = URL.createObjectURL(new Blob([rvText], { type: "text/plain;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = `${name}_resume.txt`; document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+rvEl("rvBuild").onclick = async () => {
+  if (!student) return showWelcome();
+  const errEl = rvEl("rvErr"), role = rvEl("rvRole").value.trim();
+  errEl.textContent = "";
+  if (!role) { errEl.textContent = "Please enter the job you want."; rvEl("rvRole").focus(); return; }
+  if (rvSrc === "upload" && rvEl("rvOld").value.trim().length < 40) { errEl.textContent = "Choose your old resume file, or paste its text, first."; return; }
+  if (rvSrc === "manual" && !(rvEl("rvExp").value.trim() || rvEl("rvSkills").value.trim() || rvEl("rvEdu").value.trim())) { errEl.textContent = "Add some details first: your experience, skills or education."; return; }
+  const btn = rvEl("rvBuild"), label = btn.textContent;
+  btn.disabled = true; btn.textContent = "Writing your resume…";
+  try {
+    const upload = rvSrc === "upload";
+    const data = await api("/api/resume/build", {
+      studentId: student.id, role, jd: rvEl("rvJD").value.trim(),
+      fullName: rvEl("rvName").value.trim(), phone: rvEl("rvPhone").value.trim(), email: rvEl("rvEmail").value.trim(), city: rvEl("rvCity").value.trim(), links: rvEl("rvLinks").value.trim(),
+      oldResume: upload ? rvEl("rvOld").value.trim() : "", changes: upload ? rvEl("rvChanges").value.trim() : "",
+      experience: upload ? "" : rvEl("rvExp").value.trim(), skills: upload ? "" : rvEl("rvSkills").value.trim(), education: upload ? "" : rvEl("rvEdu").value.trim(),
+      extras: upload ? "" : rvEl("rvExtras").value.trim(), objective: upload ? "" : rvEl("rvObj").value.trim(),
+    });
+    rvText = data.resume;
+    const out = rvEl("rvOut");
+    out.innerHTML = `<div class="card rv-out">
+      <h3 class="rv-out-title">Your new resume</h3>
+      <div class="rv-actions">
+        <button type="button" class="chipbtn" id="rvCopyBtn">📋 Copy</button>
+        <button type="button" class="chipbtn" id="rvDownBtn">⬇️ Download</button>
+        <button type="button" class="chipbtn" id="rvPdfBtn">🖨️ Save as PDF</button>
+        <button type="button" class="chipbtn" id="rvEditBtn">✏️ Edit text</button>
+        <button type="button" class="chipbtn" id="rvPracticeBtn">🎤 Practise the interview</button>
+      </div>
+      <div class="rv-paper" id="rvPaper">${rvToHTML(rvText)}</div>
+      <textarea id="rvEditArea" class="rv-edit" rows="16" hidden></textarea>
+      ${data.changes?.length ? `<div class="rv-tips"><span class="g-label">What I improved</span><ul>${data.changes.map((c) => `<li>${esc(c)}</li>`).join("")}</ul></div>` : ""}
+      ${data.tips ? `<div class="rv-tips"><span class="g-label">Tips to stand out</span><p>${esc(data.tips)}</p></div>` : ""}
+      <p class="small rv-note">The photo is included when you use <b>Save as PDF</b>. The .txt download is text only.</p>
+      <p class="small rv-note">AI can make mistakes. Please read everything and fix anything that is not true before you send it.</p>
+    </div>`;
+    rvEl("rvCopyBtn").onclick = () => navigator.clipboard.writeText(rvText).then(() => toast("Resume copied!")).catch(() => toast("Could not copy. Please select the text and copy it."));
+    rvEl("rvDownBtn").onclick = rvDownload;
+    rvEl("rvPdfBtn").onclick = rvPrint;
+    rvEl("rvEditBtn").onclick = () => {
+      const area = rvEl("rvEditArea"), paper = rvEl("rvPaper"), editing = area.hidden;
+      if (editing) { area.value = rvText; area.hidden = false; paper.hidden = true; rvEl("rvEditBtn").textContent = "✅ Done editing"; area.focus(); }
+      else { rvText = area.value; paper.innerHTML = rvToHTML(rvText); area.hidden = true; paper.hidden = false; rvEl("rvEditBtn").textContent = "✏️ Edit text"; }
+    };
+    rvEl("rvPracticeBtn").onclick = () => {
+      document.querySelectorAll("#ivModeSwitch [data-ivmode]").forEach((b) => b.classList.toggle("on", b.dataset.ivmode === "interview"));
+      document.getElementById("ivInterviewPane").hidden = false;
+      document.getElementById("ivResumePane").hidden = true;
+      document.getElementById("ivHRPane").hidden = true;
+      document.getElementById("ivRole").value = role;
+      document.querySelectorAll("#ivTypeSwitch [data-ivtype]").forEach((b) => b.classList.toggle("on", b.dataset.ivtype === "job"));
+      ivType = "job";
+      document.getElementById("ivRoleRow").hidden = false;
+    };
+    out.scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (err) {
+    errEl.textContent = err.message;
+  } finally {
+    btn.disabled = false; btn.textContent = label;
+  }
+};
+
+// ---- HR Questions ----
+const HR_QUESTIONS = [
+  { cat: "Introduction", qs: [
+    { q: "Tell me about yourself.", tip: "Give a 2-minute professional summary: who you are, your background, your key skills, and why you're here. Keep it professional — avoid personal details unless relevant." },
+    { q: "Walk me through your resume.", tip: "Briefly explain your career journey in order. Highlight key achievements at each role and show how each step led to the next." },
+  ]},
+  { cat: "Strengths & Weaknesses", qs: [
+    { q: "What are your greatest strengths?", tip: "Pick 2–3 strengths relevant to the job. Back each one with a specific real example using STAR (Situation, Task, Action, Result)." },
+    { q: "What are your weaknesses?", tip: "Pick a real weakness you're genuinely improving. Show self-awareness and growth — don't say 'I work too hard' or pretend a strength is a weakness." },
+    { q: "Where do you see yourself in 5 years?", tip: "Align your answer with the company's growth opportunities. Show ambition balanced with commitment to the role you're applying for." },
+  ]},
+  { cat: "Motivation", qs: [
+    { q: "Why do you want this job?", tip: "Show you've researched the company. Connect your skills and career goals to what this specific role offers. Be genuine." },
+    { q: "Why do you want to leave your current job?", tip: "Keep it positive — talk about seeking growth, new challenges, or a better fit. Never criticise your current employer." },
+    { q: "What motivates you?", tip: "Be honest. Good answers: making an impact, solving problems, continuous learning, helping others. Give a real example from your work." },
+  ]},
+  { cat: "Teamwork & Leadership", qs: [
+    { q: "How do you work in a team?", tip: "Share a specific team project. Highlight communication, your role, collaboration, and the outcome. Show you can both lead and follow." },
+    { q: "Describe a conflict with a coworker and how you handled it.", tip: "Use a real example. Focus on resolution: listening actively, finding common ground, and keeping it professional. Avoid blaming the other person." },
+    { q: "Tell me about a time you showed leadership.", tip: "Leadership doesn't require a title. Leading a project, mentoring a colleague, or taking initiative all count. Use STAR format." },
+  ]},
+  { cat: "Situational (STAR Method)", qs: [
+    { q: "Tell me about a challenge you faced and how you overcame it.", tip: "Use STAR: describe the Situation, your Task, the Actions you took, and the Result. Pick a real professional challenge with a positive outcome." },
+    { q: "Describe a time you failed. What did you learn?", tip: "Be honest. Focus 70% on what you learned and how you improved. The failure itself matters less than your growth from it." },
+    { q: "How do you handle pressure or stress?", tip: "Give specific techniques: prioritising tasks, breaking work into smaller steps, communicating early. Back it with a real high-pressure example." },
+  ]},
+  { cat: "Company & Closing", qs: [
+    { q: "Why do you want to work here specifically?", tip: "Research the company's mission, values, and recent news. Mention something specific — shows you're genuinely interested, not just job-hunting." },
+    { q: "What are your salary expectations?", tip: "Research the market rate first. Give a range based on your experience and the role. Say you're open to discussing the full package." },
+    { q: "Do you have any questions for us?", tip: "Always ask something! Try: 'What does success look like in this role in the first 90 days?' or 'What growth opportunities exist here?'" },
+  ]},
+];
+
+function renderHRQuestions() {
+  const list = document.getElementById("ivHRList");
+  if (list.dataset.rendered) return;
+  list.dataset.rendered = "1";
+  list.innerHTML = HR_QUESTIONS.map((cat) =>
+    `<div class="hr-cat">
+      <h3 class="hr-cat-title">${esc(cat.cat)}</h3>
+      ${cat.qs.map((item) =>
+        `<div class="card hr-q" data-q="${esc(item.q)}">
+          <div class="hr-q-head">
+            <span class="hr-q-text">${esc(item.q)}</span>
+            <button class="chipbtn hr-practice-btn" type="button">🎤 Practice</button>
+          </div>
+          <div class="hr-tip" hidden>
+            <p class="small"><strong>💡 How to answer:</strong> ${esc(item.tip)}</p>
+          </div>
+        </div>`
+      ).join("")}
+    </div>`
+  ).join("");
+
+  list.addEventListener("click", (e) => {
+    const practiceBtn = e.target.closest(".hr-practice-btn");
+    if (practiceBtn) { startHRPractice(practiceBtn.closest(".hr-q").dataset.q); return; }
+    const card = e.target.closest(".hr-q");
+    if (card) { const tip = card.querySelector(".hr-tip"); tip.hidden = !tip.hidden; }
+  });
+}
+
+let hrPracticeId = null;
+
+async function startHRPractice(question) {
+  if (!student) return showWelcome();
+  document.getElementById("ivHRList").hidden = true;
+  const pane = document.getElementById("ivHRPractice");
+  pane.hidden = false;
+  document.getElementById("hrPracticeTitle").textContent = question;
+  const log = document.getElementById("hrPracticeLog");
+  log.innerHTML = "";
+  document.getElementById("hrPracticeInput").value = "";
+  document.getElementById("hrPracticeInput").disabled = false;
+  hrPracticeId = null;
+
+  const typing = document.createElement("div");
+  typing.className = "msg assistant typing";
+  typing.textContent = "…";
+  log.append(typing);
+
+  try {
+    const { interviewId, question: q } = await api("/api/interview/start", { studentId: student.id, type: "hr_practice", role: question });
+    hrPracticeId = interviewId;
+    typing.remove();
+    const d = document.createElement("div");
+    d.className = "msg assistant";
+    d.append(Object.assign(document.createElement("div"), { textContent: q || question, className: "msg-text" }));
+    log.append(d);
+    document.getElementById("hrPracticeInput").focus();
+  } catch (err) {
+    typing.remove();
+    toast("Could not start practice: " + err.message);
+    document.getElementById("ivHRPractice").hidden = true;
+    document.getElementById("ivHRList").hidden = false;
+  }
+}
+
+document.getElementById("hrPracticeBack").onclick = () => {
+  document.getElementById("ivHRPractice").hidden = true;
+  document.getElementById("ivHRList").hidden = false;
+  hrPracticeId = null;
+};
+
+async function hrSend(text) {
+  text = text.trim();
+  if (!text || !hrPracticeId) return;
+  document.getElementById("hrPracticeInput").value = "";
+  const log = document.getElementById("hrPracticeLog");
+
+  const ua = document.createElement("div");
+  ua.className = "msg user";
+  ua.append(Object.assign(document.createElement("div"), { textContent: text, className: "msg-text" }));
+  log.append(ua);
+
+  const typing = document.createElement("div");
+  typing.className = "msg assistant typing";
+  typing.textContent = "…";
+  log.append(typing);
+  log.scrollTop = 1e9;
+
+  try {
+    const r = await api("/api/interview/respond", { studentId: student.id, interviewId: hrPracticeId, answer: text });
+    typing.remove();
+
+    if (r.feedback || r.corrections?.length) {
+      const fc = document.createElement("div");
+      fc.className = "card";
+      let html = "";
+      if (r.feedback) html += `<div class="g-section"><span class="g-label">Feedback</span><p style="margin:4px 0">${esc(r.feedback)}</p></div>`;
+      if (r.score != null) {
+        const stars = "★".repeat(r.score) + "☆".repeat(5 - r.score);
+        html += `<div class="g-section"><span class="g-label">Score</span> <span class="pill">${stars} ${r.score}/5</span></div>`;
+      }
+      if (r.corrections?.length) {
+        html += `<div class="g-section"><span class="g-label">Language corrections</span>`;
+        for (const c of r.corrections) html += `<div class="fix"><s>${esc(c.original)}</s> → <b>${esc(c.corrected)}</b><br><span class="small">${esc(c.rule)}</span></div>`;
+        html += `</div>`;
+      }
+      fc.innerHTML = html;
+      log.append(fc);
+    }
+
+    if (r.finalSummary) {
+      const sm = document.createElement("div");
+      sm.className = "card";
+      sm.innerHTML = `<div class="g-section"><span class="g-label">Sample strong answer</span><p style="margin:4px 0;white-space:pre-wrap">${esc(r.finalSummary)}</p></div>`;
+      log.append(sm);
+    }
+
+    if (r.done) {
+      hrPracticeId = null;
+      document.getElementById("hrPracticeInput").disabled = true;
+      const done = document.createElement("div");
+      done.className = "msg assistant";
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "msg-text";
+      msgDiv.textContent = "Practice complete! ";
+      const again = document.createElement("button");
+      again.className = "chipbtn"; again.type = "button"; again.textContent = "Try again";
+      again.onclick = () => startHRPractice(document.getElementById("hrPracticeTitle").textContent);
+      msgDiv.append(again);
+      done.append(msgDiv);
+      log.append(done);
+    }
+  } catch (err) {
+    typing.remove();
+    const errEl = document.createElement("div");
+    errEl.className = "msg assistant";
+    errEl.textContent = "⚠ " + err.message;
+    log.append(errEl);
+  }
+  log.scrollTop = 1e9;
+}
+
+document.getElementById("hrPracticeSend").onclick = () => hrSend(document.getElementById("hrPracticeInput").value);
+document.getElementById("hrPracticeInput").addEventListener("keydown", (e) => { if (e.key === "Enter") hrSend(e.target.value); });
+
 // ---- Phones: full-screen sections, auto-hiding tab bar, keyboard-aware height ----
 (() => {
   const phone = matchMedia("(max-width:760px)");
@@ -2365,7 +2859,7 @@ if (SR) {
 
   function syncFill() {
     const tab = document.querySelector("main .tab.active")?.id;
-    const ivRunning = tab === "interview" && !document.getElementById("ivRun").hidden;
+    const ivRunning = tab === "interview" && !document.getElementById("ivInterviewPane").hidden && !document.getElementById("ivRun").hidden;
     const shView = tab === "groupchat" && document.getElementById("groupchat").classList.contains("gc-view-shayari");
     const fill = (FILL.includes(tab) && !shView) || ivRunning;
     if (fill) body.dataset.fill = "1"; else delete body.dataset.fill;
@@ -2408,6 +2902,8 @@ if (SR) {
   document.addEventListener("focusout", () => setTimeout(() => { if (!typing(document.activeElement)) { body.classList.remove("kbd"); showNav(); } }, 150));
 
   syncFill(); syncSizes();
+  // the web font loads after the first scroll and makes the text taller: pin to the newest message once it is ready
+  document.fonts?.ready.then(() => requestAnimationFrame(() => requestAnimationFrame(syncSizes)));
 })();
 
 // ---- Shayari: learn couplets and English quotes by type, write and share your own ----
@@ -2652,6 +3148,29 @@ function gcSetView(v) {
 }
 document.getElementById("gcSwitch").addEventListener("click", (e) => { const b = e.target.closest("[data-gcview]"); if (b) gcSetView(b.dataset.gcview); });
 
+
+// ---- "Jump to latest" button: appears when you scroll up in a chat ----
+(() => {
+  const btn = document.createElement("button");
+  btn.id = "jumpLatest"; btn.type = "button"; btn.hidden = true; btn.textContent = "↓";
+  btn.setAttribute("aria-label", "Jump to the latest message"); btn.title = "Jump to the latest message";
+  document.body.append(btn);
+  let cur = null, queued = false;
+  function update() {
+    queued = false;
+    cur = [...document.querySelectorAll("#chatLog, #gcLog, #ivLog")].find((l) => l.offsetParent !== null && l.clientHeight > 0) || null;
+    if (!cur || cur.scrollHeight - cur.scrollTop - cur.clientHeight < 160) { btn.hidden = true; return; }
+    const r = cur.getBoundingClientRect();
+    btn.style.left = Math.max(8, r.right - 54) + "px";
+    btn.style.top = Math.max(8, r.bottom - 54) + "px";
+    btn.hidden = false;
+  }
+  const soon = () => { if (!queued) { queued = true; requestAnimationFrame(update); } };
+  document.addEventListener("scroll", soon, true);
+  addEventListener("resize", soon);
+  new MutationObserver(soon).observe(document.querySelector("main"), { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
+  btn.onclick = () => { if (cur) cur.scrollTo({ top: cur.scrollHeight, behavior: "smooth" }); };
+})();
 
 // ---- Start ----
 if (student?.id) enter(student); else showWelcome();

@@ -350,7 +350,8 @@ Question format in `backend/data/questions.json`: `{ q, options[4], answer, expl
 
 ---
 
-## Shayari (separate tab, next to Chat)
+## Shayari (inside the Group Chat tab)
+- **Where it is:** the Chat tab has a **💬 Chat | ✒️ Shayari** switch at the top. There is no separate Shayari tab. The Chat view fills the screen; the Shayari view scrolls like a normal page.
 - **Types:** Love, Motivation, Study, Emotional, Life, Friendship, Fun. Every couplet, quote and post has one type, and the screen can filter by it.
 - **Learn → Shayari & dohe:** 31 couplets by 14 poets (Ghalib, Mir, Iqbal, Faiz, Faraz, Parveen Shakir, Jaun Elia, Rahat Indori, Gulzar, Kabir, Rahim, Bashir Badr, Dagh, Nida Fazli). Each has the Hindi text, a Roman transliteration, a plain-English meaning and words to learn. Shayari of the day, poet filter with a short bio, **Save** (kept in the browser), **Hear** (Hindi voice), **Meaning** (English voice), Copy, and a "Poetry words to know" box (sher, ghazal, matla/maqta, qafia/radif, nazm, doha).
 - **Learn → English quotes:** 20 well-known quotes (Mandela, Jobs, Franklin, Rumi, Maya Angelou, Shakespeare and others), each with a Hindi translation, "in simple words" and key vocabulary. Quotes that are only commonly attributed to someone are marked "(attributed)". Check attributions before adding new ones.
@@ -410,6 +411,14 @@ Notes:
 - Students see "⏱ N min left today" in the Speak header, which turns amber when time is nearly up.
 - Because there are no passwords, a blocked student could register again under a different name. The block is per name.
 - API: `POST /api/admin/students/:id/access` (`blocked`, `blockReason`, `dailyLimitMin`, `addMinutesToday`, `clearExtra`), `POST /api/admin/settings` (`defaultDailyLimitMin`), `PATCH /api/admin/students/:id`, `GET /api/students/:id/status` (used by the student app).
+
+### Admin: delete students
+- On the Students tab every row has a checkbox, and the header checkbox ticks everything currently shown (filters and search still apply, and hidden rows are never selected). A red bar appears with **Delete selected** and **Clear**. Each row also has a 🗑 button for one student.
+- **Select test accounts** ticks accounts whose name or id starts with Test, Demo or Zz, to clear out leftovers from testing.
+- A confirmation lists the names. Deleting removes the student **and everything they created**: chat history, test scores, Hindi tests, grammar checks, searches, group-chat messages and their reactions, shayari posts and reactions, and their rows in the daily-usage history. It cannot be undone.
+- The Overview tab's older "Find & remove" button deletes all name-pattern test accounts at once, using the same cleanup.
+- API: `POST /api/admin/students/delete` with `{ "ids": [...] }` (up to 300), admin key required.
+- With a shared database, only one server should be running against it, because each keeps the data in memory and writes it back. A second, older server can bring deleted records back.
 
 ### Admin: Daily usage
 - Each day the server records, per student: seconds on site (from the 15-second heartbeat), sign-ins, Speak messages, grammar tests, Hindi writing tests, grammar checks, dictionary searches and group-chat messages. One small file per day: `usage/YYYY-MM-DD.json` (a database row each when `DATABASE_URL` is set). A "day" runs midnight to midnight in `ADMIN_TZ`.

@@ -1,2 +1,7 @@
 server.log
 .claude/
+node_modules/
+package-lock.json
+Frontend/node_modules/
+Frontend/package.json
+Frontend/package-lock.json

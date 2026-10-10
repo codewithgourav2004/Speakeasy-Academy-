@@ -3174,3 +3174,12 @@ document.getElementById("gcSwitch").addEventListener("click", (e) => { const b =
 
 // ---- Start ----
 if (student?.id) enter(student); else showWelcome();
+
+// ---- PWA: register service worker ----
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js").catch(() => {});
+}
+
+// ---- PWA: handle ?tab= shortcut URLs from manifest shortcuts ----
+const pwaTab = new URLSearchParams(location.search).get("tab");
+if (pwaTab) { history.replaceState(null, "", "/"); openTab(pwaTab); }

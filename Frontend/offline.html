@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Speakeasy Academy — Offline</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 24px;
+      font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+      background: #f3f5fc;
+      color: #1a2036;
+      text-align: center;
+    }
+    .icon {
+      width: 72px; height: 72px;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      border-radius: 22px;
+      display: grid; place-items: center;
+      font-size: 2rem;
+      box-shadow: 0 8px 24px rgba(79,70,229,.35);
+    }
+    h1 { font-size: 1.4rem; font-weight: 700; }
+    p { font-size: .95rem; color: #69728c; max-width: 320px; line-height: 1.6; }
+    button {
+      padding: 12px 28px;
+      border: 0;
+      border-radius: 99px;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: #fff;
+      font: 600 1rem "Inter", system-ui, sans-serif;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(79,70,229,.35);
+    }
+    button:active { transform: scale(.97); }
+  </style>
+</head>
+<body>
+  <div class="icon">🎓</div>
+  <h1>You're offline</h1>
+  <p>Speakeasy Academy needs an internet connection for AI coaching, grammar checks and tests. Please reconnect and try again.</p>
+  <button onclick="location.reload()">Try again</button>
+</body>
+</html>

@@ -1515,20 +1515,9 @@ body[data-fill="1"] .footer-prebanner { display:none !important; }
 }
 
 
-/* ================= Mobile: no page-level scroll, each section fills the screen ================= */
+/* ================= Mobile: extra bottom padding so content clears the pagination bar ================= */
 @media (max-width:760px) {
-  /* Lock page scroll for non-chat sections; main area scrolls internally */
-  body:not([data-fill="1"]) { overflow:hidden; }
-  body:not([data-fill="1"]) main {
-    overflow-y:auto;
-    overflow-x:hidden;
-    overscroll-behavior-y:contain;
-    -webkit-overflow-scrolling:touch;
-    max-height:calc(100dvh - var(--hdr,58px));
-    padding-bottom:calc(56px + env(safe-area-inset-bottom,0px)) !important;
-  }
-  body:not([data-fill="1"]) .site-footer,
-  body:not([data-fill="1"]) .footer-prebanner { display:none; }
+  body:not([data-fill="1"]) main { padding-bottom:calc(60px + env(safe-area-inset-bottom,0px)) !important; }
 }
 
 /* ================= Pagination bar ================= */

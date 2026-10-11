@@ -4,5 +4,8 @@
   "scripts": {
     "start": "cd backend && node server.js",
     "dev": "cd backend && node --watch server.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.0"
   }
 }

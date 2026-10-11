@@ -991,9 +991,9 @@ function renderDiscuss() {
       <button data-practise="${t.idx}">🎤 Practise with coach</button>
     </details>`).join("");
   const pagination = totalPages > 1 ? `<div class="pg-bar">
-    <button class="pg-btn" data-discpg="${discPage - 1}" ${discPage === 0 ? "disabled" : ""}>‹ Prev</button>
+    <button class="pg-btn" data-discpg="${discPage - 1}" ${discPage === 0 ? "disabled" : ""}>&larr; Prev</button>
     <span class="pg-info">Page ${discPage + 1} of ${totalPages} <span class="pg-count">(${allItems.length} topics)</span></span>
-    <button class="pg-btn" data-discpg="${discPage + 1}" ${discPage >= totalPages - 1 ? "disabled" : ""}>Next ›</button>
+    <button class="pg-btn" data-discpg="${discPage + 1}" ${discPage >= totalPages - 1 ? "disabled" : ""}>Next &rarr;</button>
   </div>` : "";
   $("#discOut").innerHTML = phraseBox + (cards || '<p class="small">No topics in this category.</p>') + pagination;
 }
@@ -3036,9 +3036,9 @@ function renderShLearn() {
   if (shPage >= totalShPages) shPage = Math.max(0, totalShPages - 1);
   const pageSh = list.slice(shPage * SH_PER_PAGE, (shPage + 1) * SH_PER_PAGE);
   const shPagination = totalShPages > 1 ? `<div class="pg-bar">
-    <button class="pg-btn" data-shpg="${shPage - 1}" ${shPage === 0 ? "disabled" : ""}>‹ Prev</button>
+    <button class="pg-btn" data-shpg="${shPage - 1}" ${shPage === 0 ? "disabled" : ""}>&larr; Prev</button>
     <span class="pg-info">Page ${shPage + 1} of ${totalShPages} <span class="pg-count">(${list.length} ${shKind === "quotes" ? "quotes" : "couplets"})</span></span>
-    <button class="pg-btn" data-shpg="${shPage + 1}" ${shPage >= totalShPages - 1 ? "disabled" : ""}>Next ›</button>
+    <button class="pg-btn" data-shpg="${shPage + 1}" ${shPage >= totalShPages - 1 ? "disabled" : ""}>Next &rarr;</button>
   </div>` : "";
   $("#shList").innerHTML = (pageSh.length ? pageSh.map(shCard).join("")
     : `<p class="small sh-empty">${shPoet === "saved" && isSher ? "Tap ♡ Save on any couplet and it will wait for you here." : "Nothing here for this type yet. Try another one."}</p>`)

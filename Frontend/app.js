@@ -312,6 +312,7 @@ const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 // Shared helper: attach voice input to any button + target element
 function attachVoice(btn, targetEl, lang) {
+  if (!btn || !targetEl) return;
   if (!SR) { btn.disabled = true; btn.title = "Speech not supported — use Chrome or Edge"; return; }
   let rec = null, active = false;
   btn.onclick = () => {
@@ -930,7 +931,8 @@ async function submitTest() {
 // gExamples handler is set up near the grammar section above
 
 // ---- Discussion & presentation topics ----
-let disc = null, discMode = "gd", discCat = "All";
+let disc = null, discMode = "gd", discCat = "All", discPage = 0;
+const DISC_PER_PAGE = 6;
 const levelPill = (l) => `<span class="pill lvl-${esc(l)}">${esc(l ? l[0].toUpperCase() + l.slice(1) : "")}</span>`;
 const list = (items) => `<ul>${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>`;
 
@@ -2941,7 +2943,8 @@ attachVoice(document.getElementById("hrPracticeVoice"), document.getElementById(
 })();
 
 // ---- Shayari: learn couplets and English quotes by type, write and share your own ----
-let shBank = null, shKind = "sher", shType = "all", shPoet = "all", shMode = "learn";
+let shBank = null, shKind = "sher", shType = "all", shPoet = "all", shMode = "learn", shPage = 0;
+const SH_PER_PAGE = 8;
 let shFilter = "all", shWallType = "all", shPickType = "Love", shRx = {};
 let shSaved = [];
 try { shSaved = JSON.parse(localStorage.getItem("shSaved") || "[]").map((x) => (typeof x === "number" ? "s" + x : x)); } catch {}

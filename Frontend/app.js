@@ -958,44 +958,44 @@ function discItems() {
   return all.map((t, i) => ({ ...t, idx: i })).filter((t) => discCat === "All" || t.category === discCat);
 }
 function renderDiscuss() {
-  document.querySelectorAll(“#discMode button”).forEach((b) => b.classList.toggle(“on”, b.dataset.mode === discMode));
-  const isPresentation = discMode === “presentation”;
-  $(“#discGenRow”).hidden = !isPresentation;
-  if (!isPresentation) $(“#discGenOut”).innerHTML = “”;
-  const all = discMode === “gd” ? disc.gd : disc.presentation;
-  const cats = [“All”, ...new Set(all.map((t) => t.category))];
-  if (!cats.includes(discCat)) discCat = “All”;
-  $(“#discCats”).innerHTML = cats.map((c) => `<button class=”chipbtn ${c === discCat ? “on” : “”}” data-cat=”${esc(c)}”>${esc(c)}</button>`).join(“”);
-  const cubeWrap = $(“#topicCubeWrap”);
+  document.querySelectorAll("#discMode button").forEach((b) => b.classList.toggle("on", b.dataset.mode === discMode));
+  const isPresentation = discMode === "presentation";
+  $("#discGenRow").hidden = !isPresentation;
+  if (!isPresentation) $("#discGenOut").innerHTML = "";
+  const all = discMode === "gd" ? disc.gd : disc.presentation;
+  const cats = ["All", ...new Set(all.map((t) => t.category))];
+  if (!cats.includes(discCat)) discCat = "All";
+  $("#discCats").innerHTML = cats.map((c) => `<button class="chipbtn ${c === discCat ? "on" : ""}" data-cat="${esc(c)}">${esc(c)}</button>`).join("");
+  const cubeWrap = $("#topicCubeWrap");
   if (cubeWrap) { cubeWrap.hidden = false; refreshCubeFaces(); }
-  const phrases = disc.phrases[discMode === “gd” ? “gd” : “presentation”];
-  const phraseBox = `<details class=”card phrases”><summary><b>💡 Useful phrases</b></summary>${Object.entries(phrases).map(([k, v]) => `<div class=”g-section”><span class=”g-label”>${esc(k)}</span>${list(v)}</div>`).join(“”)}</details>`;
+  const phrases = disc.phrases[discMode === "gd" ? "gd" : "presentation"];
+  const phraseBox = `<details class="card phrases"><summary><b>💡 Useful phrases</b></summary>${Object.entries(phrases).map(([k, v]) => `<div class="g-section"><span class="g-label">${esc(k)}</span>${list(v)}</div>`).join("")}</details>`;
   const allItems = discItems();
   const totalPages = Math.ceil(allItems.length / DISC_PER_PAGE);
   if (discPage >= totalPages) discPage = Math.max(0, totalPages - 1);
   const pageItems = allItems.slice(discPage * DISC_PER_PAGE, (discPage + 1) * DISC_PER_PAGE);
-  const cards = pageItems.map((t) => discMode === “gd” ? `
-    <details class=”card topic” id=”topic-${t.idx}”>
-      <summary><span class=”ttitle”>${esc(t.topic)}</span><span class=”meta”><span class=”pill”>${esc(t.category)}</span>${levelPill(t.level)}</span></summary>
-      <div class=”cols”>
-        <div><span class=”g-label ok”>For</span>${list(t.for)}</div>
-        <div><span class=”g-label err”>Against</span>${list(t.against)}</div>
+  const cards = pageItems.map((t) => discMode === "gd" ? `
+    <details class="card topic" id="topic-${t.idx}">
+      <summary><span class="ttitle">${esc(t.topic)}</span><span class="meta"><span class="pill">${esc(t.category)}</span>${levelPill(t.level)}</span></summary>
+      <div class="cols">
+        <div><span class="g-label ok">For</span>${list(t.for)}</div>
+        <div><span class="g-label err">Against</span>${list(t.against)}</div>
       </div>
-      <span class=”g-label”>Questions to ask the group</span>${list(t.questions)}
-      <button data-practise=”${t.idx}”>🎤 Practise with coach</button>
+      <span class="g-label">Questions to ask the group</span>${list(t.questions)}
+      <button data-practise="${t.idx}">🎤 Practise with coach</button>
     </details>` : `
-    <details class=”card topic” id=”topic-${t.idx}”>
-      <summary><span class=”ttitle”>${esc(t.title)}</span><span class=”meta”><span class=”pill”>${esc(t.category)}</span><span class=”pill”>⏱ ${t.minutes} min</span>${levelPill(t.level)}</span></summary>
-      <span class=”g-label”>Ideas to cover</span>${list(t.ideas)}
-      <span class=”g-label”>Sample opening</span><p class=”opener”>”${esc(t.opener)}”</p>
-      <button data-practise=”${t.idx}”>🎤 Practise with coach</button>
-    </details>`).join(“”);
-  const pagination = totalPages > 1 ? `<div class=”pg-bar”>
-    <button class=”pg-btn” data-discpg=”${discPage - 1}” ${discPage === 0 ? “disabled” : “”}>‹ Prev</button>
-    <span class=”pg-info”>Page ${discPage + 1} of ${totalPages} <span class=”pg-count”>(${allItems.length} topics)</span></span>
-    <button class=”pg-btn” data-discpg=”${discPage + 1}” ${discPage >= totalPages - 1 ? “disabled” : “”}>Next ›</button>
-  </div>` : “”;
-  $(“#discOut”).innerHTML = phraseBox + (cards || '<p class=”small”>No topics in this category.</p>') + pagination;
+    <details class="card topic" id="topic-${t.idx}">
+      <summary><span class="ttitle">${esc(t.title)}</span><span class="meta"><span class="pill">${esc(t.category)}</span><span class="pill">⏱ ${t.minutes} min</span>${levelPill(t.level)}</span></summary>
+      <span class="g-label">Ideas to cover</span>${list(t.ideas)}
+      <span class="g-label">Sample opening</span><p class="opener">"${esc(t.opener)}"</p>
+      <button data-practise="${t.idx}">🎤 Practise with coach</button>
+    </details>`).join("");
+  const pagination = totalPages > 1 ? `<div class="pg-bar">
+    <button class="pg-btn" data-discpg="${discPage - 1}" ${discPage === 0 ? "disabled" : ""}>‹ Prev</button>
+    <span class="pg-info">Page ${discPage + 1} of ${totalPages} <span class="pg-count">(${allItems.length} topics)</span></span>
+    <button class="pg-btn" data-discpg="${discPage + 1}" ${discPage >= totalPages - 1 ? "disabled" : ""}>Next ›</button>
+  </div>` : "";
+  $("#discOut").innerHTML = phraseBox + (cards || '<p class="small">No topics in this category.</p>') + pagination;
 }
 $("#discMode").onclick = (e) => { if (e.target.dataset.mode && disc) { discMode = e.target.dataset.mode; discCat = "All"; discPage = 0; renderDiscuss(); } };
 $("#discCats").onclick = (e) => {
@@ -2996,7 +2996,7 @@ function shCard(i) {
   const save = `<button class="ghost mini ${saved ? "on" : ""}" data-shact="save" title="Save for later">${saved ? "♥ Saved" : "♡ Save"}</button><button class="ghost mini" data-shact="copy" title="Copy">📋</button>`;
   const who = i.isQuote ? `— ${esc(i.author)}${i.note ? ` <span class="small">(${esc(i.note)})</span>` : ""}` : `— ${esc(shPoetById(i.poet).name)}`;
   const body = i.isQuote
-    ? `<div class="quote-en">“${esc(i.en)}”</div><div class="quote-hi" lang="hi">${esc(i.hindi)}</div><p class="sher-en"><b>In simple words:</b> ${esc(i.simple)}</p>`
+    ? `<div class="quote-en">"${esc(i.en)}"</div><div class="quote-hi" lang="hi">${esc(i.hindi)}</div><p class="sher-en"><b>In simple words:</b> ${esc(i.simple)}</p>`
     : `<div class="sher-hi" lang="hi">${shLines(i.hi)}</div><div class="sher-roman">${shLines(i.roman)}</div><p class="sher-en"><b>Meaning:</b> ${esc(i.en)}</p>`;
   return `<article class="card sher ${i.isQuote ? "quote" : ""}" data-sid="${i.key}">
     ${body}${words}
@@ -3105,7 +3105,7 @@ document.getElementById("shayari").addEventListener("click", async (e) => {
     if (kind === "hear") return item.isQuote ? say(item.en, { force: true }) : shSayHindi(item.hi);
     if (kind === "meaning") return say(item.en, { force: true });
     if (kind === "copy") {
-      const text = item.isQuote ? `“${item.en}” — ${item.author}` : `${item.hi}\n${item.roman}\n— ${shPoetById(item.poet).name}`;
+      const text = item.isQuote ? `"${item.en}" — ${item.author}` : `${item.hi}\n${item.roman}\n— ${shPoetById(item.poet).name}`;
       try { await navigator.clipboard.writeText(text); toast("Copied."); } catch { toast("Could not copy."); }
       return;
     }

@@ -1265,8 +1265,29 @@ button.mini.on { background:var(--brand-soft) !important; color:var(--brand) !im
 .g-idle-chips { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-top:10px; }
 .g-idle-chips span { background:var(--brand-soft); color:var(--brand); border-radius:99px; padding:3px 12px; font-size:.78rem; font-weight:500; }
 .g-idle-state[hidden] { display:none !important; }
-/* full-width check btn */
+/* full-width check btn + ready glow */
 .g-check-btn { display:flex; align-items:center; gap:8px; }
+.g-check-btn.g-btn-ready { box-shadow:0 4px 18px rgba(79,70,229,.35) !important; }
+
+/* Grammar tip strip */
+.g-tip-strip { display:flex; align-items:flex-start; gap:9px; background:linear-gradient(90deg,color-mix(in srgb,var(--brand) 7%,var(--card)),var(--card)); border:1px solid color-mix(in srgb,var(--brand) 18%,var(--line)); border-radius:12px; padding:10px 14px; margin-bottom:10px; font-size:.84rem; line-height:1.5; }
+.g-tip-icon { font-size:1rem; flex-shrink:0; margin-top:1px; }
+.g-tip-text { color:var(--ink); transition:opacity .35s; }
+.g-tip-text b { color:var(--brand); }
+.g-tip-text i { color:var(--muted); }
+
+/* "Ask coach" follow-up button */
+.g-coach-btn { margin-top:14px; width:100%; background:linear-gradient(135deg,var(--brand),#7c3aed) !important; color:#fff !important; border:0 !important; border-radius:12px !important; padding:12px 18px !important; font-size:.95rem; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 16px rgba(79,70,229,.35) !important; transition:opacity .15s,transform .15s !important; }
+.g-coach-btn:hover { opacity:.9; transform:translateY(-1px) !important; }
+.g-coach-btn:active { transform:scale(.97) !important; }
+
+/* Score ring pop-in animation */
+.g-score-ring { animation:ringPop .45s cubic-bezier(.34,1.56,.64,1) both; }
+@keyframes ringPop { from { transform:scale(.4); opacity:0; } to { transform:scale(1); opacity:1; } }
+
+/* Auto-resize: no manual resize handle */
+#gText { resize:none; overflow:hidden; min-height:120px; transition:height .1s; }
+
 @media (max-width:600px) {
   .g-hero { gap:12px; }
   .g-hero-icon { width:44px; height:44px; font-size:1.6rem; border-radius:12px; }

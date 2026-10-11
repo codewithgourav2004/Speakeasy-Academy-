@@ -373,15 +373,50 @@ if (!SR) {
     rec.start();
   };
 }
-// Grammar: live counter + clear button
+// ---- Grammar: live counter, auto-resize, tip rotator ----
 const gText = $("#gText"), gCounter = $("#gCounter");
+
 function updateGCounter() {
-  const n = gText.value.length;
-  gCounter.textContent = n ? `${n} chars` : "0 chars";
-  gCounter.classList.toggle("g-counter-warn", n > 450);
+  const chars = gText.value.length;
+  const words = gText.value.trim() ? gText.value.trim().split(/\s+/).length : 0;
+  gCounter.textContent = chars ? `${words} word${words !== 1 ? "s" : ""} · ${chars} chars` : "0 words";
+  gCounter.classList.toggle("g-counter-warn", chars > 450);
+  document.getElementById("gBtn").classList.toggle("g-btn-ready", chars > 0);
+  gText.style.height = "auto";
+  gText.style.height = Math.min(gText.scrollHeight, 320) + "px";
 }
 attachVoice(document.getElementById("gVoice"), gText, "en-US");
 gText.addEventListener("input", updateGCounter);
+
+// Grammar tip rotator
+(function() {
+  const tips = [
+    "Use <b>Present Perfect</b> for recent actions: <i>'I have finished'</i> not <i>'I finished just now'</i>.",
+    "<b>Was/Were</b> with a past fact; <b>Would be</b> for hypothetical: <i>'If I were rich, I would travel.'</i>",
+    "Passive voice: <b>Subject + is/are/was/were + Past Participle</b> — <i>'The letter was written by him.'</i>",
+    "<b>Since</b> = point in time; <b>For</b> = duration. <i>'Since Monday'</i> vs <i>'For three days.'</i>",
+    "Use <b>comma + FANBOYS</b> to join two complete sentences: <i>'I studied, but I failed.'</i>",
+    "Reported speech: say → told, is → was, will → would — <i>'She said she was tired.'</i>",
+    "<b>Much/Many</b>: much for uncountable (<i>water, money</i>), many for countable (<i>bottles, coins</i>).",
+    "Don't say <i>'I am having a car'</i> — stative verbs stay in simple form: <i>'I have a car.'</i>",
+    "<b>Who</b> for people, <b>Which</b> for things, <b>That</b> for both in defining clauses.",
+    "Conditional types: <b>If + present → will</b> (real); <b>If + past → would</b> (unreal).",
+    "<b>Despite / In spite of</b> take a noun or -ing, not a full clause: <i>'Despite working hard…'</i>",
+    "Avoid double negatives: <i>'I don't know nothing'</i> → <i>'I don't know anything.'</i>",
+    "<b>Used to</b> = past habit no longer true. <b>Am used to</b> = accustomed now.",
+    "Modal perfects: <b>should have + V3</b> means a past action you regret not doing.",
+    "Articles: use <b>an</b> before vowel <i>sounds</i> (<i>an hour, an MBA</i>), not just vowel letters.",
+  ];
+  const tipEl = document.getElementById("gTipText");
+  if (!tipEl) return;
+  let idx = Math.floor(Math.random() * tips.length);
+  const show = () => { tipEl.innerHTML = tips[idx]; idx = (idx + 1) % tips.length; };
+  show();
+  setInterval(() => {
+    tipEl.style.opacity = "0";
+    setTimeout(() => { show(); tipEl.style.opacity = "1"; }, 350);
+  }, 9000);
+})();
 const G_IDLE_HTML = `<div class="g-idle-state" id="gIdle"><div class="g-idle-icon">✍️</div><p class="g-idle-title">Your analysis will appear here</p><p class="g-idle-sub">Paste or type any English text above, then tap <b>Check grammar</b></p><div class="g-idle-chips"><span>✅ Spelling</span><span>📐 Tenses</span><span>🔧 Modals</span><span>📣 Narration</span><span>🔄 Passive voice</span></div></div>`;
 function setGIdle(show) { const el = document.getElementById("gIdle"); if (el) el.hidden = !show; }
 $("#gClear").onclick = () => { gText.value = ""; $("#gOut").innerHTML = G_IDLE_HTML; updateGCounter(); gText.focus(); };
@@ -455,6 +490,21 @@ $("#gBtn").onclick = async () => {
         setTimeout(() => { if (btn) btn.textContent = "📋 Copy"; }, 2000);
       });
     };
+    // "Ask coach" follow-up when there are errors
+    if (totalErr > 0) {
+      const coachBtn = document.createElement("button");
+      coachBtn.className = "g-coach-btn";
+      coachBtn.innerHTML = "💬 Ask coach to help me fix these errors";
+      coachBtn.onclick = () => {
+        const errList = sentences.flatMap(s => (s.errors || []).map(e => `• ${e.issue} → ${e.fix}`)).slice(0, 5).join("\n");
+        openTab("speak");
+        const inp = document.getElementById("chatInput");
+        inp.value = `I made these grammar mistakes. Can you help me understand and practice them?\n${errList}`;
+        inp.focus();
+        document.getElementById("sendBtn").click();
+      };
+      out.appendChild(coachBtn);
+    }
   } catch (e) {
     out.innerHTML = `<p class="err">${esc(e.message)}</p>`;
   } finally {

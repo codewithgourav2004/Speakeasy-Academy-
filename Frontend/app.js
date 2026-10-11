@@ -949,40 +949,49 @@ function discItems() {
   return all.map((t, i) => ({ ...t, idx: i })).filter((t) => discCat === "All" || t.category === discCat);
 }
 function renderDiscuss() {
-  document.querySelectorAll("#discMode button").forEach((b) => b.classList.toggle("on", b.dataset.mode === discMode));
-  const isPresentation = discMode === "presentation";
-  $("#discGenRow").hidden = !isPresentation;
-  if (!isPresentation) $("#discGenOut").innerHTML = "";
-  const all = discMode === "gd" ? disc.gd : disc.presentation;
-  const cats = ["All", ...new Set(all.map((t) => t.category))];
-  if (!cats.includes(discCat)) discCat = "All";
-  $("#discCats").innerHTML = cats.map((c) => `<button class="chipbtn ${c === discCat ? "on" : ""}" data-cat="${esc(c)}">${esc(c)}</button>`).join("");
-  const cubeWrap = $("#topicCubeWrap");
+  document.querySelectorAll(“#discMode button”).forEach((b) => b.classList.toggle(“on”, b.dataset.mode === discMode));
+  const isPresentation = discMode === “presentation”;
+  $(“#discGenRow”).hidden = !isPresentation;
+  if (!isPresentation) $(“#discGenOut”).innerHTML = “”;
+  const all = discMode === “gd” ? disc.gd : disc.presentation;
+  const cats = [“All”, ...new Set(all.map((t) => t.category))];
+  if (!cats.includes(discCat)) discCat = “All”;
+  $(“#discCats”).innerHTML = cats.map((c) => `<button class=”chipbtn ${c === discCat ? “on” : “”}” data-cat=”${esc(c)}”>${esc(c)}</button>`).join(“”);
+  const cubeWrap = $(“#topicCubeWrap”);
   if (cubeWrap) { cubeWrap.hidden = false; refreshCubeFaces(); }
-  const phrases = disc.phrases[discMode === "gd" ? "gd" : "presentation"];
-  const phraseBox = `<details class="card phrases"><summary><b>💡 Useful phrases</b></summary>${Object.entries(phrases).map(([k, v]) => `<div class="g-section"><span class="g-label">${esc(k)}</span>${list(v)}</div>`).join("")}</details>`;
-  const cards = discItems().map((t) => discMode === "gd" ? `
-    <details class="card topic" id="topic-${t.idx}">
-      <summary><span class="ttitle">${esc(t.topic)}</span><span class="meta"><span class="pill">${esc(t.category)}</span>${levelPill(t.level)}</span></summary>
-      <div class="cols">
-        <div><span class="g-label ok">For</span>${list(t.for)}</div>
-        <div><span class="g-label err">Against</span>${list(t.against)}</div>
+  const phrases = disc.phrases[discMode === “gd” ? “gd” : “presentation”];
+  const phraseBox = `<details class=”card phrases”><summary><b>💡 Useful phrases</b></summary>${Object.entries(phrases).map(([k, v]) => `<div class=”g-section”><span class=”g-label”>${esc(k)}</span>${list(v)}</div>`).join(“”)}</details>`;
+  const allItems = discItems();
+  const totalPages = Math.ceil(allItems.length / DISC_PER_PAGE);
+  if (discPage >= totalPages) discPage = Math.max(0, totalPages - 1);
+  const pageItems = allItems.slice(discPage * DISC_PER_PAGE, (discPage + 1) * DISC_PER_PAGE);
+  const cards = pageItems.map((t) => discMode === “gd” ? `
+    <details class=”card topic” id=”topic-${t.idx}”>
+      <summary><span class=”ttitle”>${esc(t.topic)}</span><span class=”meta”><span class=”pill”>${esc(t.category)}</span>${levelPill(t.level)}</span></summary>
+      <div class=”cols”>
+        <div><span class=”g-label ok”>For</span>${list(t.for)}</div>
+        <div><span class=”g-label err”>Against</span>${list(t.against)}</div>
       </div>
-      <span class="g-label">Questions to ask the group</span>${list(t.questions)}
-      <button data-practise="${t.idx}">🎤 Practise with coach</button>
+      <span class=”g-label”>Questions to ask the group</span>${list(t.questions)}
+      <button data-practise=”${t.idx}”>🎤 Practise with coach</button>
     </details>` : `
-    <details class="card topic" id="topic-${t.idx}">
-      <summary><span class="ttitle">${esc(t.title)}</span><span class="meta"><span class="pill">${esc(t.category)}</span><span class="pill">⏱ ${t.minutes} min</span>${levelPill(t.level)}</span></summary>
-      <span class="g-label">Ideas to cover</span>${list(t.ideas)}
-      <span class="g-label">Sample opening</span><p class="opener">“${esc(t.opener)}”</p>
-      <button data-practise="${t.idx}">🎤 Practise with coach</button>
-    </details>`).join("");
-  $("#discOut").innerHTML = phraseBox + (cards || '<p class="small">No topics in this category.</p>');
+    <details class=”card topic” id=”topic-${t.idx}”>
+      <summary><span class=”ttitle”>${esc(t.title)}</span><span class=”meta”><span class=”pill”>${esc(t.category)}</span><span class=”pill”>⏱ ${t.minutes} min</span>${levelPill(t.level)}</span></summary>
+      <span class=”g-label”>Ideas to cover</span>${list(t.ideas)}
+      <span class=”g-label”>Sample opening</span><p class=”opener”>”${esc(t.opener)}”</p>
+      <button data-practise=”${t.idx}”>🎤 Practise with coach</button>
+    </details>`).join(“”);
+  const pagination = totalPages > 1 ? `<div class=”pg-bar”>
+    <button class=”pg-btn” data-discpg=”${discPage - 1}” ${discPage === 0 ? “disabled” : “”}>‹ Prev</button>
+    <span class=”pg-info”>Page ${discPage + 1} of ${totalPages} <span class=”pg-count”>(${allItems.length} topics)</span></span>
+    <button class=”pg-btn” data-discpg=”${discPage + 1}” ${discPage >= totalPages - 1 ? “disabled” : “”}>Next ›</button>
+  </div>` : “”;
+  $(“#discOut”).innerHTML = phraseBox + (cards || '<p class=”small”>No topics in this category.</p>') + pagination;
 }
-$("#discMode").onclick = (e) => { if (e.target.dataset.mode && disc) { discMode = e.target.dataset.mode; discCat = "All"; renderDiscuss(); } };
+$("#discMode").onclick = (e) => { if (e.target.dataset.mode && disc) { discMode = e.target.dataset.mode; discCat = "All"; discPage = 0; renderDiscuss(); } };
 $("#discCats").onclick = (e) => {
   if (!disc) return;
-  if (e.target.dataset.cat) { discCat = e.target.dataset.cat; renderDiscuss(); }
+  if (e.target.dataset.cat) { discCat = e.target.dataset.cat; discPage = 0; renderDiscuss(); }
   if (e.target.dataset.random) {
     const items = discItems();
     const t = items[Math.floor(Math.random() * items.length)];
@@ -993,6 +1002,8 @@ $("#discCats").onclick = (e) => {
   }
 };
 $("#discOut").onclick = (e) => {
+  const pgBtn = e.target.closest("[data-discpg]");
+  if (pgBtn && !pgBtn.disabled) { discPage = +pgBtn.dataset.discpg; renderDiscuss(); document.getElementById("discOut").scrollIntoView({ behavior: "smooth", block: "start" }); return; }
   const b = e.target.closest("[data-practise]");
   if (!b) return;
   const t = (discMode === "gd" ? disc.gd : disc.presentation)[b.dataset.practise];
@@ -3012,8 +3023,17 @@ function renderShLearn() {
   } else {
     $("#shPoetCard").innerHTML = `<p class="small sh-note">Read each quote, check the Hindi meaning, learn the key words, then try to use them in your own sentence.</p>`;
   }
-  $("#shList").innerHTML = list.length ? list.map(shCard).join("")
-    : `<p class="small sh-empty">${shPoet === "saved" && isSher ? "Tap ♡ Save on any couplet and it will wait for you here." : "Nothing here for this type yet. Try another one."}</p>`;
+  const totalShPages = Math.ceil(list.length / SH_PER_PAGE);
+  if (shPage >= totalShPages) shPage = Math.max(0, totalShPages - 1);
+  const pageSh = list.slice(shPage * SH_PER_PAGE, (shPage + 1) * SH_PER_PAGE);
+  const shPagination = totalShPages > 1 ? `<div class="pg-bar">
+    <button class="pg-btn" data-shpg="${shPage - 1}" ${shPage === 0 ? "disabled" : ""}>‹ Prev</button>
+    <span class="pg-info">Page ${shPage + 1} of ${totalShPages} <span class="pg-count">(${list.length} ${shKind === "quotes" ? "quotes" : "couplets"})</span></span>
+    <button class="pg-btn" data-shpg="${shPage + 1}" ${shPage >= totalShPages - 1 ? "disabled" : ""}>Next ›</button>
+  </div>` : "";
+  $("#shList").innerHTML = (pageSh.length ? pageSh.map(shCard).join("")
+    : `<p class="small sh-empty">${shPoet === "saved" && isSher ? "Tap ♡ Save on any couplet and it will wait for you here." : "Nothing here for this type yet. Try another one."}</p>`)
+    + shPagination;
 }
 
 // Hindi voice for a couplet (the English voice reads meanings and quotes)
@@ -3036,13 +3056,15 @@ function shRefreshRx(key, r) {
 
 document.getElementById("shayari").addEventListener("click", async (e) => {
   const t = e.target;
+  const pgBtn = t.closest("[data-shpg]");
+  if (pgBtn && !pgBtn.disabled) { shPage = +pgBtn.dataset.shpg; renderShLearn(); document.getElementById("shList").scrollIntoView({ behavior: "smooth", block: "start" }); return; }
   const typeBtn = t.closest("[data-shtype]");
-  if (typeBtn) { shType = typeBtn.dataset.shtype; return renderShLearn(); }
+  if (typeBtn) { shType = typeBtn.dataset.shtype; shPage = 0; return renderShLearn(); }
   const poetBtn = t.closest("[data-poet]");
-  if (poetBtn) { shPoet = poetBtn.dataset.poet; return renderShLearn(); }
+  if (poetBtn) { shPoet = poetBtn.dataset.poet; shPage = 0; return renderShLearn(); }
   const kindBtn = t.closest("[data-shkind]");
   if (kindBtn) {
-    shKind = kindBtn.dataset.shkind; shType = "all"; shPoet = "all";
+    shKind = kindBtn.dataset.shkind; shType = "all"; shPoet = "all"; shPage = 0;
     document.querySelectorAll("#shKind button").forEach((b) => b.classList.toggle("on", b === kindBtn));
     return renderShLearn();
   }

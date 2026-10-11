@@ -1235,6 +1235,15 @@ button.mini.on { background:var(--brand-soft) !important; color:var(--brand) !im
 .footer-quick-btn:hover { background:rgba(255,255,255,.14) !important; color:#fff !important; transform:none !important; }
 .footer-quote { margin-top:16px; font-size:.78rem; font-style:italic; color:rgba(255,255,255,.35); line-height:1.55; }
 .footer-quote-by { display:block; margin-top:4px; font-style:normal; font-weight:600; color:rgba(255,255,255,.25); }
+
+/* ================= Pagination bar ================= */
+.pg-bar { display:flex; align-items:center; justify-content:center; gap:12px; margin-top:18px; padding:10px 0; }
+.pg-btn { background:var(--card); border:1px solid var(--line); color:var(--brand); border-radius:99px; padding:7px 18px; font-size:.88rem; font-weight:600; cursor:pointer; transition:background .15s,transform .1s; }
+.pg-btn:hover:not(:disabled) { background:var(--brand-soft); transform:scale(1.04); }
+.pg-btn:disabled { opacity:.38; cursor:default; }
+.pg-info { font-size:.85rem; color:var(--muted); white-space:nowrap; }
+.pg-count { color:var(--muted); font-size:.78rem; }
+@media (max-width:480px) { .pg-btn { padding:6px 14px; font-size:.82rem; } .pg-count { display:none; } }
 @media (max-width:760px) {
   .footer-prebanner-inner { gap:18px 24px; padding:16px 18px; }
   .fp-num { font-size:1.2rem; }

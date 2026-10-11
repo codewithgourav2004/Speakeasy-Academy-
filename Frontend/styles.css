@@ -387,7 +387,7 @@ button.danger { color:var(--bad); border-color:color-mix(in srgb,var(--bad) 50%,
 .stopvoice[hidden] { display:none; }
 
 /* ---- About Section ---- */
-.about-section { background:linear-gradient(170deg,var(--bg) 0%,color-mix(in srgb,var(--brand-soft) 60%,var(--bg)) 100%); padding:64px 0 52px; border-top:1px solid var(--line); }
+.about-section { background:var(--bg); background:linear-gradient(170deg,var(--bg) 0%,color-mix(in srgb,var(--brand-soft) 60%,var(--bg)) 100%); padding:64px 0 52px; border-top:1px solid var(--line); position:relative; z-index:1; }
 .about-wrap { max-width:1040px; margin:0 auto; padding:0 24px; }
 
 .about-hero-row { display:flex; align-items:center; gap:28px; margin-bottom:48px; }
@@ -965,7 +965,9 @@ button.mini { padding:2px 9px; min-height:0 !important; font-size:.72rem; border
   body[data-fill="1"] { position:fixed; inset:0; width:100%; height:var(--vh,100dvh); display:flex; flex-direction:column; overflow:hidden; box-sizing:border-box; padding-bottom:var(--navh); }
   body[data-fill="1"] header { position:relative; flex:none; }
   body[data-fill="1"] main { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; padding:6px 10px 0; }
-  body[data-fill="1"] .site-footer { display:none; }
+  body[data-fill="1"] .site-footer,
+  body[data-fill="1"] .about-section,
+  body[data-fill="1"] .footer-prebanner { display:none; }
   body[data-fill="1"] #speak.active,
   body[data-fill="1"] #groupchat.active,
   body[data-fill="1"] #interview.active #ivRun:not([hidden]) { flex:1 1 auto; height:auto; min-height:0; }
@@ -1352,7 +1354,9 @@ button.mini.on { background:var(--brand-soft) !important; color:var(--brand) !im
   html:has(body[data-fill="1"]) { overflow:hidden; height:100%; }
   body[data-fill="1"] { height:100vh; height:100dvh; display:flex; flex-direction:column; overflow:hidden; box-sizing:border-box; }
   body[data-fill="1"] header { flex:none; }
-  body[data-fill="1"] .site-footer { display:none; }
+  body[data-fill="1"] .site-footer,
+  body[data-fill="1"] .about-section,
+  body[data-fill="1"] .footer-prebanner { display:none; }
   body[data-fill="1"] main { flex:1 1 auto; min-height:0; width:100%; max-width:none; margin:0; box-sizing:border-box; display:flex; flex-direction:column; padding:14px clamp(12px,3vw,32px) 16px; }
   body[data-fill="1"] #speak.active,
   body[data-fill="1"] #groupchat.active,

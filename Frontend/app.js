@@ -481,7 +481,7 @@ async function loadTestSetup() {
     const best = hist.reduce((b, h) => Math.round((h.score / h.total) * 100) > Math.round((b.score / b.total) * 100) ? h : b, hist[0]);
     const bestPct = Math.round((best.score / best.total) * 100);
     const hs = document.getElementById("testHeroStats");
-    if (hs) hs.innerHTML = `<div class="test-hero-stat"><b>${hist.length}</b><span>Tests taken</span></div><div class="test-hero-stat test-hero-best"><b>${bestPct}%</b><span>Best score</span></div>`;
+    if (hs) hs.innerHTML = `<div class="test-hero-stat"><div class="ths-icon">📝</div><b>${hist.length}</b><span>Tests taken</span></div><div class="test-hero-stat test-hero-best"><div class="ths-icon">🏆</div><b>${bestPct}%</b><span>Best score</span></div>`;
   }
   $("#history").innerHTML = hist.length
     ? hist.slice(0, 8).map((h) => {

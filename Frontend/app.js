@@ -3235,6 +3235,57 @@ document.getElementById("gcSwitch").addEventListener("click", (e) => { const b =
 // ---- Start ----
 if (student?.id) enter(student); else showWelcome();
 
+// ---- Mobile: pagination bar + swipe between tabs ----
+(function() {
+  const phone = matchMedia("(max-width:760px)");
+  const bar = document.getElementById("tabPg");
+  const prevBtn = document.getElementById("tabPgPrev");
+  const nextBtn = document.getElementById("tabPgNext");
+  const dotsEl = document.getElementById("tabPgDots");
+  if (!bar) return;
+
+  const visTabs = () => [...document.querySelectorAll("nav button[data-tab]")].filter(b => !b.hidden);
+  const activeI = (ts) => ts.findIndex(b => b.classList.contains("active"));
+
+  function syncBar() {
+    const fill = document.body.dataset.fill === "1";
+    if (!phone.matches || fill) { bar.hidden = true; return; }
+    const ts = visTabs(), i = activeI(ts);
+    bar.hidden = false;
+    prevBtn.disabled = i <= 0;
+    nextBtn.disabled = i >= ts.length - 1;
+    dotsEl.innerHTML = "";
+    ts.forEach((_, idx) => {
+      const d = document.createElement("span");
+      d.className = "tab-pg-dot" + (idx === i ? " on" : "");
+      d.onclick = () => ts[idx].click();
+      dotsEl.append(d);
+    });
+  }
+
+  prevBtn.onclick = () => { const ts = visTabs(), i = activeI(ts); if (i > 0) ts[i - 1].click(); };
+  nextBtn.onclick = () => { const ts = visTabs(), i = activeI(ts); if (i < ts.length - 1) ts[i + 1].click(); };
+
+  // Swipe left/right to change tabs (horizontal only)
+  let sx = 0, sy = 0;
+  document.addEventListener("touchstart", e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+  document.addEventListener("touchend", e => {
+    if (!phone.matches) return;
+    const dx = e.changedTouches[0].clientX - sx;
+    const dy = e.changedTouches[0].clientY - sy;
+    if (Math.abs(dx) < 55 || Math.abs(dy) > Math.abs(dx) * 0.8) return; // not a clean horizontal swipe
+    const ts = visTabs(), i = activeI(ts);
+    if (dx < 0 && i < ts.length - 1) ts[i + 1].click();
+    else if (dx > 0 && i > 0) ts[i - 1].click();
+  }, { passive: true });
+
+  // Keep bar in sync on tab change and fill-mode change
+  document.querySelectorAll("nav button[data-tab]").forEach(b => b.addEventListener("click", () => requestAnimationFrame(syncBar)));
+  new MutationObserver(syncBar).observe(document.body, { attributes: true, attributeFilter: ["data-fill"] });
+  phone.addEventListener("change", syncBar);
+  syncBar();
+})();
+
 // ---- PWA: register service worker ----
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(() => {});

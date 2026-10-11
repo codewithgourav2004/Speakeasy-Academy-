@@ -154,7 +154,12 @@ function openTab(name) { document.querySelector(`nav button[data-tab="${name}"]`
 
 // ---- Speak ----
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "");
+function setChatEmpty(empty) {
+  const el = document.querySelector("#chatLog .chat-empty");
+  if (el) el.hidden = !empty;
+}
 function addMsg(role, text, at, corrections = []) {
+  setChatEmpty(false);
   const d = document.createElement("div");
   d.className = "msg " + role;
   const body = document.createElement("div");
@@ -204,13 +209,14 @@ async function loadChat(replace) {
   const log = $("#chatLog");
   $("#coachLevel").textContent = student ? `${cap(student.level)} level` : "";
   if (replace) {
-    // Remove messages but keep the .chat-empty welcome placeholder
     [...log.children].forEach(c => { if (!c.classList.contains("chat-empty")) c.remove(); });
+    setChatEmpty(true);
   }
   try {
     const saved = await api(`/api/students/${student.id}/chat`);
     saved.forEach((m) => addMsg(m.role, m.content, m.at, m.corrections));
-  } catch { return; }
+    if (!saved.length) setChatEmpty(true);
+  } catch { setChatEmpty(true); return; }
   updateFixCount();
 }
 $("#chatLog").addEventListener("click", (e) => {

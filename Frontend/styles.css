@@ -691,15 +691,14 @@ nav button[hidden] { display:none !important; }
 /* conversation */
 @media (min-width:761px) { #speak .chatlog { height:calc(100vh - 380px); height:calc(100dvh - 380px); min-height:340px; max-height:none; } }
 
-/* Empty chat state */
-.chat-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:28px 20px; gap:10px; flex:1; margin-top:auto; }
-.chat-empty-avatar { width:64px; height:64px; border-radius:20px; background:var(--grad); display:grid; place-items:center; font-size:1.8rem; box-shadow:0 8px 24px rgba(79,70,229,.35); margin-bottom:4px; }
-.chat-empty-title { font-size:1.05rem; font-weight:700; color:var(--ink); }
-.chat-empty-sub { font-size:.84rem; color:var(--muted); line-height:1.55; max-width:280px; margin:0; }
-.chat-empty-chips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:6px; }
+/* Empty chat state — shown/hidden via JS (el.hidden) */
+.chat-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:32px 24px; gap:10px; min-height:260px; }
+.chat-empty[hidden] { display:none !important; }
+.chat-empty-avatar { width:68px; height:68px; border-radius:22px; background:var(--grad); display:grid; place-items:center; font-size:2rem; box-shadow:0 8px 28px rgba(79,70,229,.38); margin-bottom:4px; }
+.chat-empty-title { font-size:1.1rem; font-weight:700; }
+.chat-empty-sub { font-size:.84rem; color:var(--muted); line-height:1.6; max-width:280px; margin:0; }
+.chat-empty-chips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:8px; }
 .chat-empty-chips .chipbtn { font-size:.82rem; }
-/* Hide empty state once messages appear */
-#chatLog:has(.msg) .chat-empty { display:none; }
 .msg-text { white-space:pre-wrap; overflow-wrap:anywhere; }
 .msg-foot { display:flex; align-items:center; justify-content:flex-end; gap:6px; margin-top:4px; }
 .msg-foot .time { margin:0; }
@@ -1315,8 +1314,8 @@ button.mini.on { background:var(--brand-soft) !important; color:var(--brand) !im
 }
 @media (min-width:761px) {
   html:has(body[data-fill="1"]) { overflow:hidden; height:100%; }
-  body[data-fill="1"] { position:fixed; inset:0; width:100%; height:var(--vh,100dvh); display:flex; flex-direction:column; overflow:hidden; box-sizing:border-box; padding-bottom:0; }
-  body[data-fill="1"] header { position:relative; flex:none; }
+  body[data-fill="1"] { height:100vh; height:100dvh; display:flex; flex-direction:column; overflow:hidden; box-sizing:border-box; }
+  body[data-fill="1"] header { flex:none; }
   body[data-fill="1"] .site-footer { display:none; }
   body[data-fill="1"] main { flex:1 1 auto; min-height:0; width:100%; max-width:none; margin:0; box-sizing:border-box; display:flex; flex-direction:column; padding:14px clamp(12px,3vw,32px) 16px; }
   body[data-fill="1"] #speak.active,

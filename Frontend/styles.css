@@ -669,6 +669,11 @@ nav button[hidden] { display:none !important; }
 .coach-info h2 { margin:0; font-size:1.15rem; }
 .coach-info p { margin:2px 0 0; display:flex; align-items:center; gap:7px; }
 .live-dot { flex:none; width:8px; height:8px; border-radius:50%; background:var(--ok); box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent); }
+.sp-live-dot { flex:none; width:7px; height:7px; border-radius:50%; background:var(--ok); box-shadow:0 0 0 2px color-mix(in srgb,var(--ok) 25%,transparent); animation:pulse-dot 2s infinite; }
+@keyframes pulse-dot { 0%,100% { box-shadow:0 0 0 2px color-mix(in srgb,var(--ok) 25%,transparent); } 50% { box-shadow:0 0 0 4px color-mix(in srgb,var(--ok) 15%,transparent); } }
+/* Hide the live label when coachLevel has content (desktop) */
+@media (min-width:761px) { .sp-live-dot, .sp-live-label { display:none; } }
+#coachLevel:not(:empty) ~ .sp-live-label { display:none; }
 .coach-pills { display:flex; flex-wrap:wrap; gap:6px; }
 .coach-pills .pill:empty { display:none; }
 .sp-topbar .coach-tools { display:flex; align-items:center; gap:12px; margin:0; }
@@ -685,6 +690,16 @@ nav button[hidden] { display:none !important; }
 
 /* conversation */
 @media (min-width:761px) { #speak .chatlog { height:calc(100vh - 380px); height:calc(100dvh - 380px); min-height:340px; max-height:none; } }
+
+/* Empty chat state */
+.chat-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:28px 20px; gap:10px; flex:1; margin-top:auto; }
+.chat-empty-avatar { width:64px; height:64px; border-radius:20px; background:var(--grad); display:grid; place-items:center; font-size:1.8rem; box-shadow:0 8px 24px rgba(79,70,229,.35); margin-bottom:4px; }
+.chat-empty-title { font-size:1.05rem; font-weight:700; color:var(--ink); }
+.chat-empty-sub { font-size:.84rem; color:var(--muted); line-height:1.55; max-width:280px; margin:0; }
+.chat-empty-chips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:6px; }
+.chat-empty-chips .chipbtn { font-size:.82rem; }
+/* Hide empty state once messages appear */
+#chatLog:has(.msg) .chat-empty { display:none; }
 .msg-text { white-space:pre-wrap; overflow-wrap:anywhere; }
 .msg-foot { display:flex; align-items:center; justify-content:flex-end; gap:6px; margin-top:4px; }
 .msg-foot .time { margin:0; }

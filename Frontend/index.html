@@ -113,6 +113,8 @@
       <!-- Controls bar: joins coach-head on desktop, becomes slim topbar on mobile -->
       <div class="sp-topbar">
         <div class="coach-pills">
+          <span class="sp-live-dot"></span>
+          <span class="pill sp-live-label">AI Coach</span>
           <span class="pill" id="coachLevel"></span>
           <span class="pill" id="fixCount">✏️ 0 corrections</span>
           <span class="pill" id="timeLeftPill" hidden></span>
@@ -122,7 +124,19 @@
           <button id="clearChat" class="ghost" title="Delete all chat messages and start fresh">🗑️ <span class="btn-label">Clear chat</span></button>
         </div>
       </div>
-      <div id="chatLog" class="chatlog"></div>
+      <div id="chatLog" class="chatlog">
+        <div class="chat-empty">
+          <div class="chat-empty-avatar">🎓</div>
+          <div class="chat-empty-title">Hi! I'm your English coach</div>
+          <p class="chat-empty-sub">Speak or type anything — I'll correct your grammar as we chat and help you improve every sentence.</p>
+          <div class="chat-empty-chips">
+            <button class="chipbtn" data-starter="Tell me about yourself.">👋 About yourself</button>
+            <button class="chipbtn" data-starter="What did you do today?">📅 Your day</button>
+            <button class="chipbtn" data-starter="Describe your city or hometown.">🏙️ Your city</button>
+            <button class="chipbtn" data-starter="Tell me about your work or studies.">💼 Work / study</button>
+          </div>
+        </div>
+      </div>
       <div id="listenBar" class="listenbar" hidden><span class="wave"><i></i><i></i><i></i><i></i><i></i></span><span id="listenText">Listening… speak now</span></div>
       <div class="row">
         <button id="micBtn" class="mic" title="Click to talk, click again to stop">🎤 Speak</button>

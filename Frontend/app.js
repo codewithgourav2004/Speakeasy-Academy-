@@ -237,6 +237,15 @@ $("#clearChat").onclick = async () => {
   await api(`/api/students/${student.id}/chat`, undefined, "DELETE");
   loadChat(true);
 };
+// Empty-state starter chips
+document.getElementById("chatLog").addEventListener("click", (e) => {
+  const chip = e.target.closest("[data-starter]");
+  if (!chip) return;
+  const input = $("#chatInput");
+  input.value = chip.dataset.starter;
+  input.focus();
+  send(input.value);
+});
 // ---- Voice: every spoken reply goes through say(), and the Stop button is shown while it talks ----
 const TTS_OK = "speechSynthesis" in window;
 let currentUtterance = null;

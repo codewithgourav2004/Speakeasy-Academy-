@@ -132,6 +132,9 @@ nav { background:var(--bg); border:1px solid var(--line); border-radius:99px; pa
 nav button { border:0; background:none; color:var(--muted); padding:7px 15px; font-weight:500; transition:.18s; white-space:nowrap; border-radius:99px; }
 nav button:hover { color:var(--ink); background:color-mix(in srgb,var(--brand-soft) 60%,transparent); }
 nav button.active { background:var(--card); color:var(--brand); box-shadow:0 2px 8px rgba(79,70,229,.18); font-weight:600; }
+nav button.nav-priority { color:var(--brand); font-weight:700; border:1.5px solid color-mix(in srgb,var(--brand) 35%,transparent); background:var(--brand-soft); }
+nav button.nav-priority.active { background:var(--brand); color:#fff; border-color:var(--brand); }
+.nav-hot { font-size:.6rem; margin-left:2px; vertical-align:middle; }
 .user { gap:8px; }
 .chip { background:var(--brand-soft); border-color:transparent; color:var(--brand); font-weight:600; font-size:.85rem; }
 

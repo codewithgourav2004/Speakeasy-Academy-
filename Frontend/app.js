@@ -382,7 +382,9 @@ function updateGCounter() {
 }
 attachVoice(document.getElementById("gVoice"), gText, "en-US");
 gText.addEventListener("input", updateGCounter);
-$("#gClear").onclick = () => { gText.value = ""; $("#gOut").innerHTML = ""; updateGCounter(); gText.focus(); };
+const G_IDLE_HTML = `<div class="g-idle-state" id="gIdle"><div class="g-idle-icon">✍️</div><p class="g-idle-title">Your analysis will appear here</p><p class="g-idle-sub">Paste or type any English text above, then tap <b>Check grammar</b></p><div class="g-idle-chips"><span>✅ Spelling</span><span>📐 Tenses</span><span>🔧 Modals</span><span>📣 Narration</span><span>🔄 Passive voice</span></div></div>`;
+function setGIdle(show) { const el = document.getElementById("gIdle"); if (el) el.hidden = !show; }
+$("#gClear").onclick = () => { gText.value = ""; $("#gOut").innerHTML = G_IDLE_HTML; updateGCounter(); gText.focus(); };
 
 document.getElementById("gExamples").onclick = (e) => {
   const b = e.target.closest("[data-ex]");
@@ -399,6 +401,7 @@ function tag(label, val) {
 $("#gBtn").onclick = async () => {
   const out = $("#gOut");
   $("#gBtn").disabled = true;
+  setGIdle(false);
   out.innerHTML = `<div class="g-loading"><span class="g-spin">🔍</span> Analysing your text…</div>`;
   try {
     const r = await api("/api/grammar", { text: gText.value, studentId: student?.id });

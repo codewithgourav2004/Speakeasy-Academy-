@@ -272,8 +272,8 @@ details.phrases { background:var(--brand-soft); border-color:transparent; box-sh
 .empty-state .es-icon { font-size:3rem; margin-bottom:12px; }
 .empty-state p { margin:4px 0; }
 
-/* grammar check btn spacing */
-#gBtn { margin-bottom:4px; }
+/* grammar check btn */
+#gBtn { margin-bottom:12px; width:100%; justify-content:center; }
 
 /* interview input row */
 #ivRow { background:var(--card); border:1px solid var(--line); border-radius:99px; padding:6px; box-shadow:var(--shadow); align-items:center; margin-top:14px; }
@@ -1216,6 +1216,16 @@ button.mini.on { background:var(--brand-soft) !important; color:var(--brand) !im
 .g-err-arrow { color:var(--muted); font-size:.85rem; }
 .g-err-fix { color:var(--ok); font-size:.9rem; }
 .g-err-explain { margin:4px 0 0; }
+/* Grammar idle / empty state */
+.g-idle-state { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:28px 20px 20px; gap:6px; }
+.g-idle-icon { font-size:2.4rem; margin-bottom:4px; opacity:.7; }
+.g-idle-title { margin:0; font-weight:600; font-size:1rem; color:var(--ink); }
+.g-idle-sub { margin:0; font-size:.85rem; color:var(--muted); line-height:1.5; }
+.g-idle-chips { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-top:10px; }
+.g-idle-chips span { background:var(--brand-soft); color:var(--brand); border-radius:99px; padding:3px 12px; font-size:.78rem; font-weight:500; }
+.g-idle-state[hidden] { display:none !important; }
+/* full-width check btn */
+.g-check-btn { display:flex; align-items:center; gap:8px; }
 @media (max-width:600px) {
   .g-hero { gap:12px; }
   .g-hero-icon { width:44px; height:44px; font-size:1.6rem; border-radius:12px; }

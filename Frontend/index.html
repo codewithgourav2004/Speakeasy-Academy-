@@ -173,8 +173,17 @@
           <button class="chipbtn" data-ex="The letter was wrote by him and send to I yesterday.">🔄 Mixed errors</button>
         </div>
       </div>
-      <button id="gBtn">🔍 Check grammar</button>
-      <div id="gOut"></div>
+      <button id="gBtn" class="g-check-btn">🔍 Check grammar</button>
+      <div id="gOut">
+        <div class="g-idle-state" id="gIdle">
+          <div class="g-idle-icon">✍️</div>
+          <p class="g-idle-title">Your analysis will appear here</p>
+          <p class="g-idle-sub">Paste or type any English text above, then tap <b>Check grammar</b></p>
+          <div class="g-idle-chips">
+            <span>✅ Spelling</span><span>📐 Tenses</span><span>🔧 Modals</span><span>📣 Narration</span><span>🔄 Passive voice</span>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section id="test" class="tab">

@@ -137,7 +137,7 @@ nav button.active { background:var(--card); color:var(--brand); box-shadow:0 2px
 
 /* controls */
 button { transition:transform .12s, box-shadow .15s, opacity .15s, background .15s; font-weight:500; }
-button:not(.ghost):not(.opt):not(.chipbtn):not(.dict-audio):not([data-tab]):not(.pg-btn) { background:var(--grad); box-shadow:0 4px 14px rgba(79,70,229,.28); }
+button:not(.ghost):not(.opt):not(.chipbtn):not(.dict-audio):not([data-tab]):not(.pg-btn):not(.topic-drop-trigger) { background:var(--grad); box-shadow:0 4px 14px rgba(79,70,229,.28); }
 button:not(:disabled):hover { transform:translateY(-1px); }
 button:not(:disabled):active { transform:translateY(0) scale(.98); }
 button.ghost { border-radius:10px; }
@@ -1291,10 +1291,10 @@ button.mini.on { background:var(--brand-soft) !important; color:var(--brand) !im
 
 /* Topic dropdown */
 .topic-dropdown { position:relative; margin:6px 0 16px; }
-.topic-drop-trigger { display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:var(--card); border:1.5px solid var(--line); border-radius:12px; padding:10px 16px; cursor:pointer; font-size:.92rem; font-weight:500; box-shadow:var(--shadow); transition:border-color .15s; }
+.topic-drop-trigger { display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:var(--card); border:1.5px solid var(--line); border-radius:12px; padding:10px 16px; cursor:pointer; font-size:.92rem; font-weight:500; box-shadow:var(--shadow); transition:border-color .15s; color:var(--ink); }
 .topic-drop-trigger:hover { border-color:var(--brand); }
-.topic-drop-label { color:var(--ink); }
-.topic-drop-arrow { margin-left:auto; font-size:.85rem; color:var(--muted); display:inline-block; transition:transform .22s ease; }
+.topic-drop-label { color:var(--ink); font-weight:600; }
+.topic-drop-arrow { margin-left:auto; font-size:1.1rem; color:var(--brand); font-weight:700; display:inline-block; transition:transform .22s ease; line-height:1; }
 .topic-dropdown.open .topic-drop-trigger { border-color:var(--brand); border-bottom-left-radius:0; border-bottom-right-radius:0; }
 .topic-dropdown.open .topic-drop-arrow { transform:rotate(180deg); }
 .topic-drop-panel { background:var(--card); border:1.5px solid var(--brand); border-top:0; border-bottom-left-radius:12px; border-bottom-right-radius:12px; padding:12px 14px 14px; box-shadow:0 8px 24px rgba(79,70,229,.15); display:none; }

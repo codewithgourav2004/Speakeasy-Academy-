@@ -309,6 +309,34 @@ if (matchMedia("(max-width:760px)").matches) { // shorter hints so they are not 
   $("#gcInput").placeholder = "Message…";
 }
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+// Shared helper: attach voice input to any button + target element
+function attachVoice(btn, targetEl, lang) {
+  if (!SR) { btn.disabled = true; btn.title = "Speech not supported — use Chrome or Edge"; return; }
+  let rec = null, active = false;
+  btn.onclick = () => {
+    if (active) { rec?.stop(); return; }
+    stopVoice();
+    rec = new SR();
+    rec.lang = lang || "en-US";
+    rec.interimResults = false;
+    rec.continuous = false;
+    rec.onstart = () => { active = true; btn.classList.add("on"); btn.textContent = "⏹"; };
+    rec.onresult = (e) => {
+      const t = [...e.results].map((r) => r[0].transcript).join("").trim();
+      if (targetEl.tagName === "TEXTAREA") {
+        targetEl.value = targetEl.value ? targetEl.value.trimEnd() + " " + t : t;
+      } else {
+        targetEl.value = t;
+      }
+      targetEl.dispatchEvent(new Event("input"));
+      targetEl.focus();
+    };
+    rec.onend = rec.onerror = () => { active = false; btn.classList.remove("on"); btn.textContent = "🎤"; rec = null; };
+    try { rec.start(); } catch {}
+  };
+}
+
 if (!SR) {
   $("#micBtn").disabled = true;
   $("#speechNote").textContent = "Speech recognition isn't supported in this browser. Use Chrome or Edge, or type instead.";
@@ -342,6 +370,7 @@ function updateGCounter() {
   gCounter.textContent = n ? `${n} chars` : "0 chars";
   gCounter.classList.toggle("g-counter-warn", n > 450);
 }
+attachVoice(document.getElementById("gVoice"), gText, "en-US");
 gText.addEventListener("input", updateGCounter);
 $("#gClear").onclick = () => { gText.value = ""; $("#gOut").innerHTML = ""; updateGCounter(); gText.focus(); };
 
@@ -864,6 +893,7 @@ $("#dictOut").addEventListener("click", (e) => {
 function dictLookup(word) { $("#dictInput").value = word; lookupWord(); }
 $("#dictBtn").onclick = lookupWord;
 $("#dictInput").addEventListener("keydown", (e) => e.key === "Enter" && lookupWord());
+attachVoice(document.getElementById("dictVoice"), document.getElementById("dictInput"), "en-US");
 
 async function submitTest() {
   const unanswered = current.questions.length - Object.keys(current.answers).length;
@@ -1133,6 +1163,7 @@ async function generatePresentation() {
 }
 $("#discGenBtn").onclick = generatePresentation;
 $("#discTopicInput").addEventListener("keydown", (e) => { if (e.key === "Enter") generatePresentation(); });
+attachVoice(document.getElementById("discVoice"), document.getElementById("discTopicInput"), "en-US");
 $("#discGenOut").addEventListener("click", (e) => {
   const b = e.target.closest("[data-genpractise]");
   if (!b || !student) return;
@@ -1255,6 +1286,7 @@ async function gcSend() {
 $("#gcRooms").onclick = (e) => { const b = e.target.closest("[data-room]"); if (b && b.dataset.room !== gcRoom) gcSwitch(b.dataset.room); };
 $("#gcSend").onclick = gcSend;
 $("#gcInput").addEventListener("keydown", (e) => e.key === "Enter" && gcSend());
+attachVoice(document.getElementById("gcVoice"), document.getElementById("gcInput"), "en-US");
 // ---- Group chat: react, edit, delete ----
 const closePickers = () => document.querySelectorAll("#gcLog .gcpicker").forEach((p) => p.remove());
 function togglePicker(msgEl) {
@@ -2291,6 +2323,7 @@ document.getElementById("trOut").addEventListener("click", (e) => {
 document.getElementById("trInput").addEventListener("keydown", (e) => {
   if (e.key === "Enter" && e.ctrlKey) document.getElementById("trBtn").click();
 });
+attachVoice(document.getElementById("trVoice"), document.getElementById("trInput"), "hi-IN");
 
 // ---- Interview Preparation ----
 let ivType = "job", ivId = null;
@@ -2843,6 +2876,7 @@ async function hrSend(text) {
 
 document.getElementById("hrPracticeSend").onclick = () => hrSend(document.getElementById("hrPracticeInput").value);
 document.getElementById("hrPracticeInput").addEventListener("keydown", (e) => { if (e.key === "Enter") hrSend(e.target.value); });
+attachVoice(document.getElementById("hrPracticeVoice"), document.getElementById("hrPracticeInput"), "en-US");
 
 // ---- Phones: full-screen sections, auto-hiding tab bar, keyboard-aware height ----
 (() => {
@@ -3099,6 +3133,7 @@ async function loadShWall() {
   } catch (e) { box.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
 }
 $("#shText").addEventListener("input", () => { $("#shCount").textContent = `${$("#shText").value.length} / 400`; $("#shErr").textContent = ""; });
+attachVoice(document.getElementById("shVoice"), document.getElementById("shText"), "hi-IN");
 $("#shPost").onclick = async () => {
   if (!student) return showWelcome();
   const btn = $("#shPost");

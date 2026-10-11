@@ -144,6 +144,7 @@
         <textarea id="gText" rows="6" placeholder="Type or paste your English text here…"></textarea>
         <div class="g-input-foot">
           <span id="gCounter" class="small g-counter">0 chars</span>
+          <button type="button" id="gVoice" class="voice-btn" title="Dictate text in English">🎤</button>
           <button type="button" id="gClear" class="ghost g-clear-btn" title="Clear text">✕ Clear</button>
         </div>
       </div>
@@ -229,6 +230,7 @@
       </div>
       <div id="discGenRow" class="gen-row" hidden>
         <input id="discTopicInput" placeholder="Enter your topic, e.g. climate change, team work, AI in education…" maxlength="100" autocomplete="off">
+        <button type="button" id="discVoice" class="voice-btn" title="Speak your topic">🎤</button>
         <select id="discWordLimit" title="Word limit for your presentation">
           <option value="">Auto (by time)</option>
           <option value="50">~50 words</option>
@@ -287,7 +289,7 @@
           </div>
           <div id="ivLog" class="chatlog"></div>
           <div class="row" id="ivRow">
-            <button id="ivMic" class="mic" title="Click to speak your answer">🎤 Speak</button>
+            <button id="ivMic" class="mic" title="Click to speak your answer">🎤</button>
             <input id="ivInput" placeholder="Type your answer and press Enter…">
             <button id="ivSend" aria-label="Send">Send</button>
           </div>
@@ -396,7 +398,8 @@
           </div>
           <div id="hrPracticeLog" class="chatlog"></div>
           <div class="row">
-            <input id="hrPracticeInput" placeholder="Type your answer and press Enter…" autocomplete="off">
+            <button type="button" id="hrPracticeVoice" class="mic" title="Speak your answer">🎤</button>
+            <input id="hrPracticeInput" placeholder="Type your answer…" autocomplete="off">
             <button id="hrPracticeSend">Send</button>
           </div>
         </div>
@@ -415,6 +418,7 @@
       <div class="starters" id="gcRooms"></div>
       <div id="gcLog" class="chatlog gclog"></div>
       <div class="row">
+        <button type="button" id="gcVoice" class="mic" title="Speak your message">🎤</button>
         <input id="gcInput" maxlength="500" placeholder="Write a message in English…" autocomplete="off">
         <button id="gcSend" aria-label="Send">Send</button>
       </div>
@@ -450,6 +454,7 @@
               <label class="sh-sel"><span>Language</span>
                 <select id="shLang"><option>Roman</option><option>Hindi</option><option>Urdu</option><option>English</option></select>
               </label>
+              <button type="button" id="shVoice" class="voice-btn" title="Dictate your shayari">🎤</button>
               <span id="shCount" class="small sh-count">0 / 400</span>
               <button id="shPost" type="button">Post shayari</button>
             </div>
@@ -469,7 +474,10 @@
     </section>
     <section id="translate" class="tab">
       <div class="pagehead"><h2>Hindi → English Translator</h2><p class="small">Write in Hindi (हिंदी) or Roman letters (e.g. "mujhe waha jana hai"). You get the full English sentence, its grammar type (tense, modal, passive or simple), word-by-word vocabulary and a tip. Press Ctrl+Enter to translate.</p></div>
-      <textarea id="trInput" rows="5" placeholder="यहाँ हिंदी में लिखें… or type in Roman letters"></textarea>
+      <div class="voice-wrap">
+        <textarea id="trInput" rows="5" placeholder="यहाँ हिंदी में लिखें… or type in Roman letters"></textarea>
+        <button type="button" id="trVoice" class="voice-btn voice-float" title="Speak in Hindi">🎤</button>
+      </div>
       <div class="starters" id="trExamples">
         <span class="small">Try:</span>
         <button class="chipbtn" data-ex="मुझे अंग्रेजी सीखनी है।">I want to learn English</button>
@@ -490,6 +498,7 @@
       <div class="pagehead"><h2>Dictionary</h2><p class="small">Look up any English word — definitions, pronunciation, examples and synonyms.</p></div>
       <div id="wotdCard"></div>
       <div class="dict-search">
+        <button type="button" id="dictVoice" class="voice-btn dict-voice-btn" title="Say the word">🎤</button>
         <input id="dictInput" placeholder="Enter a word…" autocomplete="off" spellcheck="false">
         <button id="dictBtn">Look up</button>
       </div>

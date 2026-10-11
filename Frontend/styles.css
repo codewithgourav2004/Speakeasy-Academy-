@@ -1289,8 +1289,13 @@ button.mini.on { background:var(--brand-soft) !important; color:var(--brand) !im
 .topic-tool-btn:hover { border-color:var(--brand) !important; color:var(--brand) !important; }
 .topic-icon { font-size:1rem; flex-shrink:0; }
 
+/* Topic heading */
+.topic-heading { display:flex; align-items:baseline; gap:10px; margin:12px 0 6px; }
+.topic-heading-text { font-size:1rem; font-weight:700; color:var(--ink); }
+.topic-heading-hint { font-size:.78rem; color:var(--brand); font-weight:500; }
+
 /* Topic dropdown */
-.topic-dropdown { position:relative; margin:6px 0 16px; }
+.topic-dropdown { position:relative; margin:0 0 16px; }
 .topic-drop-trigger { display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:var(--card); border:1.5px solid var(--line); border-radius:12px; padding:10px 16px; cursor:pointer; font-size:.92rem; font-weight:500; box-shadow:var(--shadow); transition:border-color .15s; color:var(--ink); }
 .topic-drop-trigger:hover { border-color:var(--brand); }
 .topic-drop-label { color:var(--ink); font-weight:600; }

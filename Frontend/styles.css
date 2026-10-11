@@ -580,7 +580,6 @@ nav button[hidden] { display:none !important; }
   input[type=checkbox] { width:22px; height:22px; }
   .dict-syn { padding:6px 12px; }
   .chipbtn:active { transform:scale(.95); transition:transform .08s; }
-  .tab-pg-btn:active { transform:scale(.88); transition:transform .08s; }
 }
 
 /* Short landscape phones: the tab bar sits in the page instead of covering it */
@@ -1509,18 +1508,4 @@ body[data-fill="1"] .footer-prebanner { display:none !important; }
 }
 
 
-/* ================= Mobile: extra bottom padding so content clears the pagination bar ================= */
-@media (max-width:760px) {
-  body:not([data-fill="1"]) main { padding-bottom:calc(60px + env(safe-area-inset-bottom,0px)) !important; }
-}
 
-/* ================= Pagination bar ================= */
-.tab-pg { position:fixed; bottom:0; left:0; right:0; z-index:35; display:flex; align-items:center; justify-content:space-between; padding:8px 14px; padding-bottom:calc(8px + env(safe-area-inset-bottom,0px)); background:var(--card); border-top:1px solid var(--line); box-shadow:0 -2px 12px rgba(0,0,0,.1); }
-.tab-pg[hidden] { display:none !important; }
-body[data-fill="1"] .tab-pg { display:none; }
-.tab-pg-btn { flex:none; width:38px; height:38px; padding:0; border-radius:50%; font-size:1.3rem; font-weight:300; background:var(--brand-soft) !important; color:var(--brand) !important; border:0 !important; box-shadow:none !important; line-height:1; display:flex; align-items:center; justify-content:center; transition:opacity .15s; }
-.tab-pg-btn:disabled { opacity:.25; pointer-events:none; }
-.tab-pg-dots { display:flex; gap:5px; align-items:center; justify-content:center; flex:1; padding:0 8px; }
-.tab-pg-dot { width:6px; height:6px; border-radius:50%; background:var(--line); transition:all .22s; cursor:pointer; flex:none; }
-.tab-pg-dot.on { background:var(--brand); width:18px; border-radius:3px; }
-@media (min-width:761px) { .tab-pg { display:none !important; } }

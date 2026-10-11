@@ -543,6 +543,61 @@
     </div>
   </div>
 
+  <!-- ===== About Section ===== -->
+  <section class="about-section">
+    <div class="about-wrap">
+      <div class="about-hero-row">
+        <div class="about-avatar-wrap">
+          <div class="about-avatar">GK</div>
+          <div class="about-avatar-ring"></div>
+        </div>
+        <div class="about-hero-text">
+          <p class="about-built-by">Built by</p>
+          <h2 class="about-name">Gourav Kumar</h2>
+          <p class="about-role">Software Developer &middot; English Education Enthusiast</p>
+          <div class="about-hero-chips">
+            <span>🇮🇳 India</span><span>💻 Full Stack</span><span>🎓 EdTech</span><span>🤖 AI</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="about-cards">
+        <div class="about-card">
+          <div class="about-card-icon">📖</div>
+          <h3>The Story</h3>
+          <p>Speakeasy Academy was born from a simple observation — millions of Indian students and professionals know English grammar on paper but freeze when it's time to speak. I wanted to build something that feels like a patient coach, not a textbook.</p>
+        </div>
+        <div class="about-card">
+          <div class="about-card-icon">🔧</div>
+          <h3>How I Built It</h3>
+          <p>Built end-to-end with <b>Node.js + Express 5</b> on the backend, <b>Vanilla JS</b> on the frontend (no frameworks!), <b>Google Gemini AI</b> for the coach, <b>MongoDB</b> for data, and the browser's own <b>Web Speech API</b> for voice — all deployed on Render + Vercel.</p>
+        </div>
+        <div class="about-card">
+          <div class="about-card-icon">⚡</div>
+          <h3>Challenges I Faced</h3>
+          <p>Making AI responses feel natural and fast, designing a grammar analyser that explains errors the way a teacher would, building a real-time group chat from scratch, and making everything work beautifully on a low-end mobile — all without any frontend framework.</p>
+        </div>
+        <div class="about-card">
+          <div class="about-card-icon">❤️</div>
+          <h3>My Motivation</h3>
+          <p>Every student who once said "I know English but I can't speak it" — that's who I built this for. My own journey of learning to communicate confidently, and the students around me who face the same struggle daily, kept me going through every late night of coding.</p>
+        </div>
+        <div class="about-card about-card-wide">
+          <div class="about-card-icon">🚀</div>
+          <h3>Why Speakeasy Academy?</h3>
+          <div class="about-adv-grid">
+            <div class="about-adv"><span>🤖</span><b>AI Coach 24/7</b><p>Practice speaking anytime — no fixed schedule, no waiting.</p></div>
+            <div class="about-adv"><span>📐</span><b>Smart Grammar</b><p>Sentence-by-sentence analysis with clear, teacherly explanations.</p></div>
+            <div class="about-adv"><span>🎯</span><b>Adaptive Tests</b><p>Questions get harder or easier based on your real performance.</p></div>
+            <div class="about-adv"><span>🌐</span><b>Made for India</b><p>Hindi → English translation, common Indian English errors, real-life scenarios.</p></div>
+            <div class="about-adv"><span>📱</span><b>Works Offline</b><p>Install as a PWA and use core features without internet.</p></div>
+            <div class="about-adv"><span>💸</span><b>Free to Use</b><p>No paywall, no subscription — just open it and start learning.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <footer class="site-footer">
     <div class="footer-glow"></div>
     <div class="footer-inner">
@@ -603,14 +658,8 @@
 
   <button id="stopVoice" class="stopvoice" hidden title="Stop the voice (Esc)">⏹ Stop voice</button>
 
-  <!-- Mobile pagination bar: prev / dots / next -->
-  <div class="tab-pg" id="tabPg" hidden>
-    <button class="tab-pg-btn" id="tabPgPrev" aria-label="Previous section">‹</button>
-    <div class="tab-pg-dots" id="tabPgDots"></div>
-    <button class="tab-pg-btn" id="tabPgNext" aria-label="Next section">›</button>
-  </div>
 
-  <div id="editStudentModal" class="overlay" hidden>
+<div id="editStudentModal" class="overlay" hidden>
     <div class="modal" style="max-width:480px;width:100%;text-align:left">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <h2 id="editStudentTitle" style="margin:0;font-size:1.2rem">Edit student</h2>

@@ -1270,6 +1270,19 @@ button.mini.on { background:var(--brand-soft) !important; color:var(--brand) !im
   .g-summary-row { flex-wrap:wrap; }
 }
 
+/* ===== INTERVIEW — hero + role chips ===== */
+.iv-hero { display:flex; align-items:center; gap:14px; margin-bottom:14px; padding:14px 16px; background:linear-gradient(135deg,color-mix(in srgb,var(--brand) 8%,var(--card)),var(--card)); border:1px solid var(--line); border-radius:var(--radius); }
+.iv-hero-icon { font-size:2rem; width:52px; height:52px; border-radius:14px; background:var(--grad); display:grid; place-items:center; flex-shrink:0; box-shadow:0 5px 16px rgba(79,70,229,.28); }
+.iv-hero h2 { margin:0; }
+.iv-hero .small { margin:2px 0 0; color:var(--muted); }
+.iv-role-chips { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:14px; }
+.iv-role-chip { padding:6px 13px; font-size:.84rem; }
+.iv-role-chip.on { background:var(--brand-soft); border-color:var(--brand); color:var(--brand); font-weight:600; }
+@media (max-width:600px) {
+  .iv-hero { gap:10px; padding:10px 12px; }
+  .iv-hero-icon { width:42px; height:42px; font-size:1.5rem; border-radius:11px; }
+}
+
 /* ===== TEST — enhanced hero + topic icons + history ===== */
 .test-hero-card { background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px 20px; margin-bottom:14px; position:relative; overflow:hidden; }
 .test-hero-card::before { content:""; position:absolute; inset:0; background:var(--grad); opacity:.05; pointer-events:none; }

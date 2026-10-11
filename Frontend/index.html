@@ -77,15 +77,15 @@
   <header>
     <h1><span class="logo-mark">🎓</span> Speakeasy <b>Academy</b></h1>
     <nav>
-      <button data-tab="speak" class="active"><span class="ti">💬</span><span class="tl">Speak</span></button>
+      <button data-tab="test" class="active"><span class="ti">📝</span><span class="tl">Test</span></button>
+      <button data-tab="interview"><span class="ti">🎤</span><span class="tl">Interview</span></button>
+      <button data-tab="speak"><span class="ti">💬</span><span class="tl">Speak</span></button>
       <button data-tab="grammar"><span class="ti">✏️</span><span class="tl">Grammar</span></button>
-      <button data-tab="test"><span class="ti">📝</span><span class="tl">Test</span></button>
       <button data-tab="discuss"><span class="ti">🗣️</span><span class="tl">Discuss</span></button>
       <button data-tab="groupchat"><span class="ti">👥</span><span class="tl">Chat</span></button>
-      <button data-tab="interview"><span class="ti">🎤</span><span class="tl">Interview</span></button>
-      <button data-tab="progress"><span class="ti">📊</span><span class="tl">Progress</span></button>
       <button data-tab="dictionary"><span class="ti">📖</span><span class="tl">Dict</span></button>
       <button data-tab="translate"><span class="ti">🔤</span><span class="tl">Translate</span></button>
+      <button data-tab="progress"><span class="ti">📊</span><span class="tl">Progress</span></button>
       <button data-tab="info"><span class="ti">ℹ️</span><span class="tl">Info</span></button>
       <button data-tab="admin" id="adminTab" hidden><span class="ti">🛡️</span><span class="tl">Admin</span></button>
     </nav>
@@ -102,7 +102,7 @@
   </div>
 
   <main>
-    <section id="speak" class="tab active">
+    <section id="speak" class="tab">
       <!-- Desktop-only decorative card: avatar + title + description -->
       <div class="coach-head">
         <div class="coach-avatar" aria-hidden="true">🎓</div>
@@ -187,7 +187,7 @@
       </div>
     </section>
 
-    <section id="test" class="tab">
+    <section id="test" class="tab active">
       <div id="testSetup">
         <div class="seg" id="testModeSwitch">
           <button data-tmode="grammar" class="on">📝 Grammar MCQ</button>
@@ -312,7 +312,13 @@
       <!-- Pane: Interview -->
       <div id="ivInterviewPane">
         <div id="ivSetup">
-          <div class="pagehead"><h2>Interview Practice</h2><p class="small">Prepare for job interviews, IELTS speaking, or university admissions. The AI acts as your interviewer and gives detailed feedback after each answer.</p></div>
+          <div class="iv-hero">
+            <div class="iv-hero-icon">🎤</div>
+            <div>
+              <h2>Interview Practice</h2>
+              <p class="small">AI acts as your interviewer — answers, feedback, tips.</p>
+            </div>
+          </div>
           <div class="seg" id="ivTypeSwitch">
             <button data-ivtype="job" class="on">💼 Job</button>
             <button data-ivtype="ielts">📋 IELTS</button>
@@ -320,9 +326,17 @@
             <button data-ivtype="general">💬 General</button>
           </div>
           <div id="ivRoleRow">
-            <input id="ivRole" placeholder="Job role (e.g. Software Engineer, Teacher, Sales Manager)" maxlength="80" style="width:100%;margin-bottom:12px;">
+            <input id="ivRole" placeholder="Job role (e.g. Software Engineer, Teacher, Sales Manager)" maxlength="80" style="width:100%;margin-bottom:8px;">
+            <div class="iv-role-chips">
+              <button type="button" class="chipbtn iv-role-chip" data-role="Software Engineer">💻 Software Engineer</button>
+              <button type="button" class="chipbtn iv-role-chip" data-role="Teacher">👩‍🏫 Teacher</button>
+              <button type="button" class="chipbtn iv-role-chip" data-role="Sales Executive">📈 Sales</button>
+              <button type="button" class="chipbtn iv-role-chip" data-role="Bank PO">🏦 Bank PO</button>
+              <button type="button" class="chipbtn iv-role-chip" data-role="Customer Support">🎧 Support</button>
+              <button type="button" class="chipbtn iv-role-chip" data-role="Fresher">🎓 Fresher</button>
+            </div>
           </div>
-          <button id="ivStart">Start interview →</button>
+          <button id="ivStart">🚀 Start interview →</button>
         </div>
         <div id="ivRun" hidden>
           <div class="toolbar">

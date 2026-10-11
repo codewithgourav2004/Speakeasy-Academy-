@@ -3,7 +3,7 @@
    On offline, serve the cached shell so users see the app rather than
    a Chrome error page; API calls simply fail with the app's own error UI.
 */
-const CACHE_NAME = "speakeasy-v7";
+const CACHE_NAME = "speakeasy-v8";
 const SHELL = [
   "/",
   "/styles.css",

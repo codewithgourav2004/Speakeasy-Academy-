@@ -2372,6 +2372,14 @@ document.getElementById("ivTypeSwitch").onclick = (e) => {
   document.getElementById("ivRoleRow").hidden = ivType !== "job";
 };
 
+document.querySelectorAll(".iv-role-chip").forEach(c => {
+  c.onclick = () => {
+    document.getElementById("ivRole").value = c.dataset.role;
+    document.querySelectorAll(".iv-role-chip").forEach(x => x.classList.remove("on"));
+    c.classList.add("on");
+  };
+});
+
 document.getElementById("ivStart").onclick = async () => {
   if (!student) return showWelcome();
   const btn = document.getElementById("ivStart");

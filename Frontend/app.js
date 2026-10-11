@@ -725,6 +725,17 @@ function updateTopicCount() {
 $("#topicBoxes").addEventListener("change", updateTopicCount);
 $("#topicAll").onclick = () => { document.querySelectorAll("#topicBoxes input").forEach((i) => (i.checked = true)); updateTopicCount(); };
 $("#topicNone").onclick = () => { document.querySelectorAll("#topicBoxes input").forEach((i) => (i.checked = false)); updateTopicCount(); };
+
+// Topic dropdown toggle
+const topicDropdown = document.getElementById("topicDropdown");
+document.getElementById("topicDropTrigger").addEventListener("click", (e) => {
+  e.stopPropagation();
+  topicDropdown.classList.toggle("open");
+});
+document.addEventListener("click", (e) => {
+  if (topicDropdown && !topicDropdown.contains(e.target)) topicDropdown.classList.remove("open");
+});
+
 document.addEventListener("click", (e) => {
   const b = e.target.closest("button[data-step]"); if (!b) return;
   const inp = document.getElementById(b.dataset.for), min = Number(inp.min) || 1, max = Number(inp.max) || 100;

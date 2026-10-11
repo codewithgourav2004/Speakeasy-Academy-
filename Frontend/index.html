@@ -204,8 +204,20 @@
               <div class="test-hero-stats" id="testHeroStats"></div>
             </div>
           </div>
-          <div class="topic-tools"><span id="topicCount" class="topic-count-badge"></span><span class="spacer"></span><button type="button" class="link-btn topic-tool-btn" id="topicAll">✓ Select all</button><button type="button" class="link-btn topic-tool-btn" id="topicNone">✕ Clear</button></div>
-          <div id="topicBoxes" class="topics"></div>
+          <div class="topic-dropdown" id="topicDropdown">
+            <button type="button" class="topic-drop-trigger" id="topicDropTrigger">
+              <span class="topic-drop-label">📚 Topics</span>
+              <span id="topicCount" class="topic-count-badge"></span>
+              <span class="topic-drop-arrow">▾</span>
+            </button>
+            <div class="topic-drop-panel" id="topicDropPanel">
+              <div class="topic-drop-head">
+                <button type="button" class="link-btn topic-tool-btn" id="topicAll">✓ Select all</button>
+                <button type="button" class="link-btn topic-tool-btn" id="topicNone">✕ Clear</button>
+              </div>
+              <div id="topicBoxes" class="topics topic-drop-list"></div>
+            </div>
+          </div>
           <div class="card diffbox">
             <div class="diffhead">
               <b>Difficulty</b>

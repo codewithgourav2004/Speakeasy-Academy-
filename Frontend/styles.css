@@ -673,7 +673,7 @@ nav button[hidden] { display:none !important; }
 @keyframes pulse-dot { 0%,100% { box-shadow:0 0 0 2px color-mix(in srgb,var(--ok) 25%,transparent); } 50% { box-shadow:0 0 0 4px color-mix(in srgb,var(--ok) 15%,transparent); } }
 /* Hide the live label when coachLevel has content (desktop) */
 @media (min-width:761px) { .sp-live-dot, .sp-live-label { display:none; } }
-#coachLevel:not(:empty) ~ .sp-live-label { display:none; }
+.coach-pills:has(#coachLevel:not(:empty)) .sp-live-label { display:none; }
 .coach-pills { display:flex; flex-wrap:wrap; gap:6px; }
 .coach-pills .pill:empty { display:none; }
 .sp-topbar .coach-tools { display:flex; align-items:center; gap:12px; margin:0; }

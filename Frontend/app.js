@@ -203,21 +203,15 @@ function updateFixCount() {
 async function loadChat(replace) {
   const log = $("#chatLog");
   $("#coachLevel").textContent = student ? `${cap(student.level)} level` : "";
-  if (replace) log.innerHTML = "";
+  if (replace) {
+    // Remove messages but keep the .chat-empty welcome placeholder
+    [...log.children].forEach(c => { if (!c.classList.contains("chat-empty")) c.remove(); });
+  }
   try {
     const saved = await api(`/api/students/${student.id}/chat`);
     saved.forEach((m) => addMsg(m.role, m.content, m.at, m.corrections));
   } catch { return; }
   updateFixCount();
-  if (!log.children.length) {
-    addMsg("assistant", `Hi ${student.name}! I'm your English coach. Tell me about your day, and I'll gently correct your grammar.`);
-    const chips = document.createElement("div");
-    chips.className = "starters";
-    chips.innerHTML = ["Tell me about your day", "Let's talk about hobbies", "Help me practise past tense", "Ask me about my family"]
-      .map((t) => `<button class="chipbtn">${esc(t)}</button>`).join("");
-    chips.onclick = (e) => { if (e.target.matches(".chipbtn")) { chips.remove(); send(e.target.textContent); } };
-    log.append(chips);
-  }
 }
 $("#chatLog").addEventListener("click", (e) => {
   const b = e.target.closest(".replay");
